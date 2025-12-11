@@ -1,2 +1,6 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sharpie.CLI/Sharpie.CLI.csproj" />
+    <Project Path="src/Sharpie.Core/Sharpie.Core.csproj" />
+  </Folder>
 </Solution>
