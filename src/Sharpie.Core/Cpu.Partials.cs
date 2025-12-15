@@ -245,8 +245,201 @@ public partial class Cpu
         _registers[x] = (ushort)result;
     }
 
-    private partial void Execute_PUSH(byte opcode, ref ushort pcDelta)
+    private partial void Execute_IADD(byte opcode, ref ushort pcDelta)
     {
-        
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        ushort oldValue = _memory.ReadWord(addr);
+        ushort registerValue = _registers[x];
+
+        var result = oldValue + registerValue;
+        UpdateFlags(result, oldValue, registerValue, false);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_ISUB(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        ushort oldValue = _memory.ReadWord(addr);
+        ushort registerValue = _registers[x];
+
+        var result = oldValue - registerValue;
+        UpdateFlags(result, oldValue, registerValue, true);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_IMUL(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        ushort oldValue = _memory.ReadWord(addr);
+        ushort registerValue = _registers[x];
+
+        var result = oldValue * registerValue;
+        var truncated = (ushort)result;
+        UpdateLogicFlags(truncated);
+        SetFlag(result > ushort.MaxValue, CpuFlags.Carry);
+        SetFlag(result > ushort.MaxValue, CpuFlags.Overflow);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+
+    private partial void Execute_IDIV(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        ushort oldValue = _memory.ReadWord(addr);
+        ushort registerValue = _registers[x];
+
+        if (registerValue == 0)
+        {
+            _memory.WriteWord(addr, 0);
+            FlagRegister &= 0xFFF0;
+            SetFlag(true, CpuFlags.Carry);
+            SetFlag(true, CpuFlags.Overflow);
+            return;
+        }
+
+        var result = (ushort)(oldValue / registerValue);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_IMOD(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        ushort oldValue = _memory.ReadWord(addr);
+        ushort registerValue = _registers[x];
+
+        if (registerValue == 0)
+        {
+            _memory.WriteWord(addr, 0);
+            FlagRegister &= 0xFFF0;
+            SetFlag(true, CpuFlags.Carry);
+            SetFlag(true, CpuFlags.Overflow);
+            return;
+        }
+
+        var result = (ushort)(oldValue % registerValue);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_IAND(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        var result = (ushort)(_memory.ReadWord(addr) & _registers[x]);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        _memory.WriteWord(addr, result);
+    }
+
+    private partial void Execute_IOR(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        var result = (ushort)(_memory.ReadWord(addr) | _registers[x]);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        _memory.WriteWord(addr, result);
+    }
+
+    private partial void Execute_IXOR(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var x = _memory.ReadByte(_pc + 3);
+        var result = (ushort)(_memory.ReadWord(addr) ^ _registers[x]);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        _memory.WriteWord(addr, result);
+    }
+
+    private partial void Execute_DINC(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var oldValue = _memory.ReadWord(addr);
+        var result = oldValue + 1;
+        UpdateFlags(result, oldValue, 1);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_DDEC(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var oldValue = _memory.ReadWord(addr);
+        var result = oldValue - 1;
+        UpdateFlags(result, oldValue, 1, true);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_DADD(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var oldValue = _memory.ReadWord(addr);
+        var immediate = _memory.ReadByte(_pc + 3);
+        var result = oldValue + immediate;
+        UpdateFlags(result, oldValue, immediate);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_DSUB(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var oldValue = _memory.ReadWord(addr);
+        var immediate = _memory.ReadByte(_pc + 3);
+        var result = oldValue - immediate;
+        UpdateFlags(result, oldValue, immediate, true);
+        _memory.WriteWord(addr, (ushort)result);
+    }
+
+    private partial void Execute_DMOV(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var imm = _memory.ReadByte(_pc + 3);
+        _memory.WriteByte(addr, imm);
+    }
+
+    private partial void Execute_DSET(byte opcode, ref ushort pcDelta)
+    {
+        var addr = _memory.ReadWord(_pc + 1);
+        var imm = _memory.ReadWord(_pc + 3);
+        _memory.WriteWord(addr, imm);
+    }
+
+    private partial void Execute_JMP(byte opcode, ref ushort pcDelta)
+    {
+        var target = _memory.ReadWord(_pc + 1);
+        _pc = target;
+        pcDelta = 0;
+    }
+
+    private partial void Execute_JEQ(byte opcode, ref ushort pcDelta)
+    {
+        var target = _memory.ReadWord(_pc + 1);
+        if (IsFlagOn(CpuFlags.Zero))
+        {
+            _pc = target;
+            pcDelta = 0;
+        }
+    }
+
+    private partial void Execute_JNE(byte opcode, ref ushort pcDelta)
+    {
+        var target = _memory.ReadWord(_pc + 1);
+        if (!IsFlagOn(CpuFlags.Zero))
+        {
+            _pc = target;
+            pcDelta = 0;
+        }      
     }
 }
