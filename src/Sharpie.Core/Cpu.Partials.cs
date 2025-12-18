@@ -500,7 +500,6 @@ public partial class Cpu
         _registers[x] = value;
     }
 
-    // TODO: Implement all these
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta)
     {
         var xyPacked = _memory.ReadByte(_pc + 1);
@@ -512,6 +511,7 @@ public partial class Cpu
         _memory.WriteByte(addr + 1, spriteId);
     }
 
+    // TODO: Implement all these
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta) { }
 
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta) { }

@@ -1,7 +1,8 @@
 public interface IMotherboard
 {
+    void Run();
     void ClearScreen(byte colorIndex);
-    void AwaitUtilBlank();
+    void AwaitVBlank();
     void SetTextAttributes(byte attributes);
     void DrawChar(ushort x, ushort y, ushort charCode);
 
@@ -11,4 +12,6 @@ public interface IMotherboard
     ushort GetInputState(byte controllerIndex);
 
     void SwapColor(byte oldIndex, byte newIndex);
+
+    void StopSystem();
 }
