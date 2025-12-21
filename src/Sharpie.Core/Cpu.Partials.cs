@@ -514,15 +514,28 @@ public partial class Cpu
     }
 
     // TODO: Implement all these
-    private partial void Execute_CLS(byte opcode, ref ushort pcDelta) { }
+    private partial void Execute_CLS(byte opcode, ref ushort pcDelta)
+    {
+        var packed = (byte)((_memory.ReadByte(_pc + 1) << 4) | (_memory.ReadByte(_pc + 1) & 0x0F));
+        _mobo.ClearScreen(packed);
+    }
 
-    private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta) { }
+    private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta)
+    {
+        _mobo.AwaitVBlank();
+    }
 
     private partial void Execute_PLAY(byte opcode, ref ushort pcDelta) { }
 
     private partial void Execute_STOP(byte opcode, ref ushort pcDelta) { }
 
-    private partial void Execute_INPUT(byte opcode, ref ushort pcDelta) { }
+    private partial void Execute_INPUT(byte opcode, ref ushort pcDelta)
+    {
+        var packed = _memory.ReadByte(_pc + 1);
+        var x = packed >> 4;
+        var controller = (byte)((packed & 3) >> 1); // AND by 3 (00000011) and shift right by 1, if the last bit is 0 we have the first controller and if it is 1 we have the second.
+        _registers[x] = _mobo.GetInputState(controller);
+    }
 
     private partial void Execute_RND(byte opcode, ref ushort pcDelta)
     {
@@ -531,15 +544,25 @@ public partial class Cpu
         _registers[x] = (ushort)_rng.Next(max);
     }
 
-    private partial void Execute_TEXT(byte opcode, ref ushort pcDelta) { }
+    private partial void Execute_TEXT(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+        var charCode = _memory.ReadByte(_pc + 2);
+        Console.WriteLine($"Executing TEXT with: {x}, {y}, {charCode}");
+        _mobo.DrawChar(_registers[x], _registers[y], charCode);
+    }
 
-    private partial void Execute_ATTR(byte opcode, ref ushort pcDelta) { }
+    private partial void Execute_ATTR(byte opcode, ref ushort pcDelta)
+    {
+        var attributes = _memory.ReadByte(_pc + 1);
+        _mobo.SetTextAttributes(attributes);
+    }
 
     private partial void Execute_SWC(byte opcode, ref ushort pcDelta)
     {
-        var oldIndex = _memory.ReadByte(_pc + 1);
-        var newIndex = _memory.ReadByte(_pc + 2);
-        _memory.WriteByte(Memory.ColorPaletteStart + oldIndex, newIndex);
+        var oldIndex = (byte)(_memory.ReadByte(_pc + 1) & 0x0F); // truncate to avoid tomfoolery
+        var newIndex = (byte)(_memory.ReadByte(_pc + 2) & 0x1F);
+        _mobo.SwapColor(oldIndex, newIndex);
     }
 
     private partial void Execute_FLPH(byte opcode, ref ushort pcDelta)

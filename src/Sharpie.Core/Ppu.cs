@@ -2,8 +2,8 @@ namespace Sharpie.Core;
 
 public partial class Ppu
 {
-    private const int DisplayHeight = 255;
-    private const int DisplayWidth = 255;
+    private const int DisplayHeight = 256;
+    private const int DisplayWidth = 256;
     private const ushort OamStart = Memory.OamStart;
     private const ushort SpriteMemoryStart = 0xBFFF;
     private int _currentBuffer = 0;
@@ -34,9 +34,8 @@ public partial class Ppu
                 var pixel1 = (byte)((packed >> 4) & 0x0F);
                 var pixel2 = (byte)(packed & 0x0F);
 
-                var realColumn1 = flipH ? (7 - column * 2) : (column * 2);
-                var realColumn2 = flipH ? (7 - column * 2 + 1) : (column * 2 + 1); // pemdas amirite
-
+                var realColumn1 = flipH ? (7 - column * 2) : (column * 2); // pemdas amirite
+                var realColumn2 = flipH ? (7 - (column * 2 + 1)) : (column * 2 + 1);
                 _spriteBuffer[realRow * 8 + realColumn1] = pixel1;
                 _spriteBuffer[realRow * 8 + realColumn2] = pixel2;
             }
@@ -63,20 +62,55 @@ public partial class Ppu
         _vRam.WriteByte(RenderStart + byteOffset, existingPixel);
     }
 
+    internal void BlitCharacter(int x, int y, byte colorIndex, byte[] pixels)
+    {
+        for (var i = 0; i < pixels.Length; i++)
+        {
+            byte rowData = pixels[i];
+            for (var bit = 0; bit < 8; bit++)
+            {
+                var isPixelSet = ((rowData << bit) & 0x80) != 0;
+                if (isPixelSet)
+                    WritePixel(x + bit, y + i, colorIndex);
+            }
+        }
+    }
+
     public void VBlank()
     {
-        _vRam.ClearRange(RenderStart, RenderStart + 32768);
         for (int oamIndex = OamStart; oamIndex < OamStart + 512; oamIndex += 4)
         {
             var x = _systemRam.ReadByte(oamIndex);
-            var y = _systemRam.ReadByte(oamIndex + 1); // TODO: Write to software framebuffer/raylib util
+            var y = _systemRam.ReadByte(oamIndex + 1);
             var spriteId = _systemRam.ReadByte(oamIndex + 2);
             var attributes = _systemRam.ReadByte(oamIndex + 3);
 
             GetSprite(spriteId, attributes);
             for (int row = 0; row < 8; row++)
-            for (int column = 0; column < 8; column += 2)
+            for (int column = 0; column < 8; column++)
                 WritePixel(x + column, y + row, _spriteBuffer[row * 8 + column]);
         }
+    }
+
+    public void FillBuffer(byte colorIndex)
+    {
+        Span<byte> vramSpan = _vRam.Slice(RenderStart, 32768);
+        vramSpan.Fill(colorIndex);
+    }
+
+    public void DumpVram(ushort start, int width, int height)
+    {
+        Console.WriteLine($"--- VRAM DUMP AT {start:X4} ---");
+        for (int y = 0; y < height; y++)
+        {
+            var line = $"{y:D2}: ";
+            for (int x = 0; x < width; x++)
+            {
+                byte val = _vRam.ReadByte(RenderStart + start + (y * 128) + x);
+                line += $"{val:X2} ";
+            }
+            Console.WriteLine(line);
+        }
+        Console.WriteLine("-----------------------------------");
     }
 }

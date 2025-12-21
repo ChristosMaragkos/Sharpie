@@ -113,10 +113,18 @@ public partial class Cpu
 
         _pc = Memory.RomStart;
 
-        // 0xFEFF to not collide with color palette and above
-        _sp = 0xFEFF;
+        // 0xEFEF to not collide with color palette and above
+        _sp = 0xEFEF;
 
         IsHalted = false;
+    }
+
+    private void LoadPalette()
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            _memory.WriteByte(Memory.ColorPaletteStart + i, (byte)i);
+        }
     }
 
     public void Cycle()

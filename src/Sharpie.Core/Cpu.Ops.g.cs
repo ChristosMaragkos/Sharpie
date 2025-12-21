@@ -254,7 +254,7 @@ public partial class Cpu {
                 break;
 
             case 0xF5: //INPUT
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_INPUT(opcode, ref pcDelta);
                 break;
 

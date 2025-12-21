@@ -55,7 +55,7 @@
     { "hex": "0xF2", "name": "VBLNK",  "len": 1, "logic": null },
     { "hex": "0xF3", "name": "PLAY",   "len": 3, "logic": null },
     { "hex": "0xF4", "name": "STOP",   "len": 2, "logic": null },
-    { "hex": "0xF5", "name": "INPUT",  "len": 3, "logic": null },
+    { "hex": "0xF5", "name": "INPUT",  "len": 2, "logic": null },
     { "hex": "0xF7", "name": "TEXT",   "len": 3, "logic": null },
     { "hex": "0xF8", "name": "ATTR",   "len": 2, "logic": null },
     { "hex": "0xF9", "name": "SWC",    "len": 2, "logic": null },

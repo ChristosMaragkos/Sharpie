@@ -7,6 +7,7 @@ public class Memory
 {
     // Memory map:
     public const ushort RomStart = 0x0000; // 0x0000-0x7FFF Cartridge rom (exactly 32KB)
+    public const ushort SpriteAtlasStart = 0xBFFF; // 0xBFFF downwards for up to 256 sprites (indexed 0-255)
     public const ushort OamStart = 0xC000; // Object Address Memory. Holds data about which sprite is drawn where. Exactly 2KB
     public const ushort WorkRamStart = 0xC800; // Work RAM for patchwork and variables. 10KB.
 
@@ -67,4 +68,6 @@ public class Memory
     }
 
     public void ClearRange(int from, int amount) => Array.Clear(_contents, from, amount);
+
+    public Span<byte> Slice(int from, int amount) => _contents.AsSpan(from, amount);
 }
