@@ -22,6 +22,8 @@ public class Motherboard : IMotherboard
     private const int MusicPointerAddress = 0x0004;
     private int _musicStart = 0;
 
+    public byte[] ControllerStates { get; } = new byte[2];
+
     public Motherboard()
     {
         _memory = new Memory();
@@ -139,6 +141,7 @@ public class Motherboard : IMotherboard
 
     public void AwaitVBlank()
     {
+        GetInputState();
         _ppu.VBlank();
         _ppu.FlipBuffers();
     }
@@ -153,9 +156,9 @@ public class Motherboard : IMotherboard
         _ppu.BlitCharacter(x, y, _fontColorReg, IMotherboard.GetCharacter(charCode));
     }
 
-    public ushort GetInputState(byte controllerIndex)
+    public void GetInputState()
     {
-        ushort state = 0;
+        byte state = 0;
 
         if (Raylib.IsKeyDown(KeyboardKey.Up))
             state |= 1;
@@ -174,7 +177,8 @@ public class Motherboard : IMotherboard
         if (Raylib.IsKeyDown(KeyboardKey.Tab))
             state |= 128;
 
-        return state;
+        ControllerStates[0] = state;
+        ControllerStates[1] = 0; // TODO: Add support for second controller?
     }
 
     public void PlayNote(byte channel, byte note, byte instrument)
@@ -222,8 +226,8 @@ public class Motherboard : IMotherboard
 
     private unsafe void RenderBufferAsTexture()
     {
-        var frameData = _ppu.GetFrame();
         AwaitVBlank();
+        var frameData = _ppu.GetFrame();
         fixed (byte* pPixels = frameData)
         {
             Raylib.UpdateTexture(_screenTexture, pPixels);

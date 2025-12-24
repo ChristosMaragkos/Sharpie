@@ -1,5 +1,7 @@
 public interface IMotherboard
 {
+    byte[] ControllerStates { get; }
+
     void Run();
     void ClearScreen(byte colorIndex);
     void AwaitVBlank();
@@ -11,7 +13,7 @@ public interface IMotherboard
     void StopAllSounds();
     void StartSequencer(ushort address);
 
-    ushort GetInputState(byte controllerIndex);
+    void GetInputState();
 
     void SwapColor(byte oldIndex, byte newIndex);
     void StopSystem();

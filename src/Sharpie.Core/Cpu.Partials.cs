@@ -547,9 +547,9 @@ public partial class Cpu
     private partial void Execute_INPUT(byte opcode, ref ushort pcDelta)
     {
         var packed = _memory.ReadByte(_pc + 1);
-        var x = packed >> 4;
-        var controller = (byte)((packed & 3) >> 1); // AND by 3 (00000011) and shift right by 1, if the last bit is 0 we have the first controller and if it is 1 we have the second.
-        _registers[x] = _mobo.GetInputState(controller);
+        var x = packed & 0x0F;
+        var controller = (packed & 0x10) >> 4; // either 0 or 1.
+        _registers[x] = _mobo.ControllerStates[controller];
     }
 
     private partial void Execute_RND(byte opcode, ref ushort pcDelta)
