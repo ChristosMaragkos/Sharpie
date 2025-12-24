@@ -6,7 +6,7 @@ public interface IMotherboard
     void SetTextAttributes(byte attributes);
     void DrawChar(ushort x, ushort y, ushort charCode);
 
-    void PlayNote(byte channel, byte note);
+    void PlayNote(byte channel, byte note, byte instrument);
     void StopChannel(byte channel);
     void StopAllSounds();
     void StartSequencer(ushort address);

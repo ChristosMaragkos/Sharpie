@@ -5,301 +5,301 @@ public partial class Cpu {
         pcDelta = 0;
         switch (opcode) {
             case 0x00: //NOP
-                pcDelta = 2;
+                pcDelta = 1;
                 break;
 
             case 0x01: //MOV
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_MOV(opcode, ref pcDelta);
                 break;
 
             case >= 0x10 and <= 0x1F:
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_LDM(opcode, ref pcDelta);
                 break;
 
             case >= 0x20 and <= 0x2F:
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_LDI(opcode, ref pcDelta);
                 break;
 
             case >= 0x30 and <= 0x3F:
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_STM(opcode, ref pcDelta);
                 break;
 
             case 0x40: //ADD
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_ADD(opcode, ref pcDelta);
                 break;
 
             case 0x41: //SUB
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_SUB(opcode, ref pcDelta);
                 break;
 
             case 0x42: //MUL
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_MUL(opcode, ref pcDelta);
                 break;
 
             case 0x43: //DIV
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_DIV(opcode, ref pcDelta);
                 break;
 
             case 0x44: //MOD
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_MOD(opcode, ref pcDelta);
                 break;
 
             case 0x45: //AND
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_AND(opcode, ref pcDelta);
                 break;
 
             case 0x46: //OR
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_OR(opcode, ref pcDelta);
                 break;
 
             case 0x47: //XOR
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_XOR(opcode, ref pcDelta);
                 break;
 
             case 0x48: //SHL
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_SHL(opcode, ref pcDelta);
                 break;
 
             case 0x49: //SHR
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_SHR(opcode, ref pcDelta);
                 break;
 
             case 0x4A: //CMP
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_CMP(opcode, ref pcDelta);
                 break;
 
             case 0x4B: //ADC
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_ADC(opcode, ref pcDelta);
                 break;
 
             case 0x50: //INC
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_INC(opcode, ref pcDelta);
                 break;
 
             case 0x51: //DEC
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_DEC(opcode, ref pcDelta);
                 break;
 
             case 0x52: //NOT
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_NOT(opcode, ref pcDelta);
                 break;
 
             case 0x53: //NEG
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_NEG(opcode, ref pcDelta);
                 break;
 
             case 0x60: //IADD
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IADD(opcode, ref pcDelta);
                 break;
 
             case 0x61: //ISUB
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_ISUB(opcode, ref pcDelta);
                 break;
 
             case 0x62: //IMUL
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IMUL(opcode, ref pcDelta);
                 break;
 
             case 0x63: //IDIV
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IDIV(opcode, ref pcDelta);
                 break;
 
             case 0x64: //IMOD
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IMOD(opcode, ref pcDelta);
                 break;
 
             case 0x65: //IAND
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IAND(opcode, ref pcDelta);
                 break;
 
             case 0x66: //IOR
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IOR(opcode, ref pcDelta);
                 break;
 
             case 0x67: //IXOR
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_IXOR(opcode, ref pcDelta);
                 break;
 
             case 0x68: //DINC
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_DINC(opcode, ref pcDelta);
                 break;
 
             case 0x69: //DDEC
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_DDEC(opcode, ref pcDelta);
                 break;
 
             case 0x6A: //DADD
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_DADD(opcode, ref pcDelta);
                 break;
 
             case 0x6B: //DSUB
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_DSUB(opcode, ref pcDelta);
                 break;
 
             case 0x6C: //DMOV
-                pcDelta = 5;
+                pcDelta = 4;
                 Execute_DMOV(opcode, ref pcDelta);
                 break;
 
             case 0x6D: //DSET
-                pcDelta = 6;
+                pcDelta = 5;
                 Execute_DSET(opcode, ref pcDelta);
                 break;
 
             case 0x70: //JMP
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_JMP(opcode, ref pcDelta);
                 break;
 
             case 0x71: //JEQ
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_JEQ(opcode, ref pcDelta);
                 break;
 
             case 0x72: //JNE
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_JNE(opcode, ref pcDelta);
                 break;
 
             case 0x73: //JGT
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_JGT(opcode, ref pcDelta);
                 break;
 
             case 0x74: //JLT
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_JLT(opcode, ref pcDelta);
                 break;
 
             case 0x75: //CALL
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_CALL(opcode, ref pcDelta);
                 break;
 
             case 0x76: //RET
-                pcDelta = 2;
+                pcDelta = 1;
                 Execute_RET(opcode, ref pcDelta);
                 break;
 
             case 0x77: //PUSH
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_PUSH(opcode, ref pcDelta);
                 break;
 
             case 0x78: //POP
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_POP(opcode, ref pcDelta);
                 break;
 
             case >= 0x80 and <= 0x8F:
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_RND(opcode, ref pcDelta);
                 break;
 
             case >= 0xA0 and <= 0xAF:
-                pcDelta = 2;
+                pcDelta = 1;
                 Execute_SONG(opcode, ref pcDelta);
                 break;
 
             case 0xF0: //DRAW
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_DRAW(opcode, ref pcDelta);
                 break;
 
             case 0xF1: //CLS
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_CLS(opcode, ref pcDelta);
                 break;
 
             case 0xF2: //VBLNK
-                pcDelta = 2;
+                pcDelta = 1;
                 Execute_VBLNK(opcode, ref pcDelta);
                 break;
 
             case 0xF3: //PLAY
-                pcDelta = 3;
+                pcDelta = 4;
                 Execute_PLAY(opcode, ref pcDelta);
                 break;
 
             case 0xF4: //STOP
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_STOP(opcode, ref pcDelta);
                 break;
 
             case 0xF5: //INPUT
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_INPUT(opcode, ref pcDelta);
                 break;
 
             case 0xF7: //TEXT
-                pcDelta = 4;
+                pcDelta = 3;
                 Execute_TEXT(opcode, ref pcDelta);
                 break;
 
             case 0xF8: //ATTR
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_ATTR(opcode, ref pcDelta);
                 break;
 
             case 0xF9: //SWC
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_SWC(opcode, ref pcDelta);
                 break;
 
             case 0xFA: //FLPH
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_FLPH(opcode, ref pcDelta);
                 break;
 
             case 0xFB: //FLPV
-                pcDelta = 3;
+                pcDelta = 2;
                 Execute_FLPV(opcode, ref pcDelta);
                 break;
 
             case 0xFC: //MUTE
-                pcDelta = 2;
+                pcDelta = 1;
                 Execute_MUTE(opcode, ref pcDelta);
                 break;
 
             case 0xFE: //PREFIX
-                pcDelta = 2;
+                pcDelta = 1;
                 Execute_PREFIX(opcode, ref pcDelta);
                 break;
 
             case 0xFF: //HALT
-                pcDelta = 2;
+                pcDelta = 1;
                 IsHalted = true;
                 break;
 

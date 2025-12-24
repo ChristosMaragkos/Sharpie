@@ -18,6 +18,7 @@ public partial class Cpu
 
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta)
     {
+        Console.WriteLine("LDI");
         var x = IndexFromOpcode(opcode);
         var value = _memory.ReadWord(_pc + 1);
         _registers[x] = value;
@@ -526,12 +527,12 @@ public partial class Cpu
 
     private partial void Execute_PLAY(byte opcode, ref ushort pcDelta)
     {
-        var (rChannel, rNote) = ReadRegisterArgs();
-        var channel = (byte)_registers[rChannel];
-        var note = (byte)_registers[rNote];
+        var channel = _memory.ReadByte(_pc + 1);
+        var note = _memory.ReadByte(_pc + 2);
+        var instrument = _memory.ReadByte(_pc + 3);
         if (channel > 7)
-            channel = (byte)7;
-        _mobo.PlayNote(channel, note);
+            channel = 7;
+        _mobo.PlayNote(channel, note, instrument);
     }
 
     private partial void Execute_STOP(byte opcode, ref ushort pcDelta)
@@ -599,6 +600,7 @@ public partial class Cpu
 
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta)
     {
+        Console.WriteLine("SONG");
         var x = IndexFromOpcode(opcode);
         var songAddr = _registers[x];
         _mobo.StartSequencer(songAddr);

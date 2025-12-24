@@ -83,13 +83,35 @@ public class Motherboard : IMotherboard
         Raylib.SetTextureFilter(_target.Texture, TextureFilter.Point);
     }
 
-    public void UpdateDisplay()
+    private void UpdateDisplay()
     {
-        Raylib.BeginTextureMode(_target);
-        _ppu.FillBuffer(0);
-        AwaitVBlank();
-        _ppu.FlipBuffers();
-        Raylib.EndTextureMode();
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.Black); // This draws the black bars
+        RenderBufferAsTexture();
+
+        int screenW = Raylib.GetScreenWidth();
+        int screenH = Raylib.GetScreenHeight();
+
+        // 1. Find the smallest dimension to keep it square
+        float minDim = Math.Min(screenW, screenH);
+
+        // 2. Center the square in the window
+        float xOffset = (screenW - minDim) / 2;
+        float yOffset = (screenH - minDim) / 2;
+
+        var sourceRec = new Rectangle(0, 0, 256, -256);
+        // 3. The destination is now a centered square
+        var destRec = new Rectangle(xOffset, yOffset, minDim, minDim);
+
+        Raylib.DrawTexturePro(
+            _target.Texture,
+            sourceRec,
+            destRec,
+            System.Numerics.Vector2.Zero,
+            0f,
+            Color.White
+        );
+        Raylib.EndDrawing();
     }
 
     public void SetupAudio()
@@ -118,6 +140,7 @@ public class Motherboard : IMotherboard
     public void AwaitVBlank()
     {
         _ppu.VBlank();
+        _ppu.FlipBuffers();
     }
 
     public void ClearScreen(byte colorIndex)
@@ -154,16 +177,14 @@ public class Motherboard : IMotherboard
         return state;
     }
 
-    public void PlayNote(byte channel, byte note)
+    public void PlayNote(byte channel, byte note, byte instrument)
     {
-        var freq = 440f * Math.Pow(2f, (note - 69f) / 12f);
-        var freqRaw = (ushort)freq;
+        var freq = channel < 6 ? 440f * MathF.Pow(2f, (note - 69f) / 12f) : note;
         _apu.ResetPhase(channel);
         var baseAddr = Memory.AudioRamStart + (channel * 4);
-        _memory.WriteWord(baseAddr, freqRaw);
+        _memory.WriteWord(baseAddr, (ushort)freq);
         _memory.WriteByte(baseAddr + 2, 0xFF);
-        var control = _memory.ReadByte(baseAddr + 3);
-        _memory.WriteByte(baseAddr + 3, (byte)(control | 0x01));
+        _memory.WriteByte(baseAddr + 3, (byte)((instrument << 1) | 1));
     }
 
     public void SetTextAttributes(byte attributes)
@@ -203,7 +224,6 @@ public class Motherboard : IMotherboard
     {
         var frameData = _ppu.GetFrame();
         AwaitVBlank();
-        _ppu.FlipBuffers();
         fixed (byte* pPixels = frameData)
         {
             Raylib.UpdateTexture(_screenTexture, pPixels);
@@ -217,57 +237,15 @@ public class Motherboard : IMotherboard
     {
         SetupDisplay();
         SetupAudio();
-        // _memory.WriteByte(Memory.ColorPaletteStart + 1, 7);
-        PlayNote(6, 120);
+        _cpu.Reset();
         while (!Raylib.WindowShouldClose())
         {
             for (var i = 0; i < 16000; i++)
                 _cpu.Cycle();
 
             UpdateAudio();
-            // Hello, World!
-            // DrawChar(10, 10, 7);
-            // DrawChar(20, 10, 4);
-            // DrawChar(30, 10, 11);
-            // DrawChar(40, 10, 11);
-            // DrawChar(50, 10, 14);
-            // DrawChar(60, 10, 37);
-            // DrawChar(80, 10, 22);
-            // DrawChar(90, 10, 14);
-            // DrawChar(100, 10, 17);
-            // DrawChar(110, 10, 11);
-            // DrawChar(120, 10, 3);
-            // DrawChar(130, 10, 38);
-
-            // DrawChar(120, 120, 18);
-
-            Raylib.BeginDrawing();
-            Raylib.ClearBackground(Color.Black); // This draws the black bars
-            RenderBufferAsTexture();
-
-            int screenW = Raylib.GetScreenWidth();
-            int screenH = Raylib.GetScreenHeight();
-
-            // 1. Find the smallest dimension to keep it square
-            float minDim = Math.Min(screenW, screenH);
-
-            // 2. Center the square in the window
-            float xOffset = (screenW - minDim) / 2;
-            float yOffset = (screenH - minDim) / 2;
-
-            var sourceRec = new Rectangle(0, 0, 256, -256);
-            // 3. The destination is now a centered square
-            var destRec = new Rectangle(xOffset, yOffset, minDim, minDim);
-
-            Raylib.DrawTexturePro(
-                _target.Texture,
-                sourceRec,
-                destRec,
-                System.Numerics.Vector2.Zero,
-                0f,
-                Color.White
-            );
-            Raylib.EndDrawing();
+            _sequencer.Step(this);
+            UpdateDisplay();
         }
 
         Cleanup();

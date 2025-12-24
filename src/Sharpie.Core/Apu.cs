@@ -5,51 +5,105 @@ public class Apu
     private readonly Memory _ram;
     private readonly float[] _phases = new float[8]; // current phase for every oscillator
     private readonly float[] _volumes = new float[8];
-    private readonly float[] _lastNoiseValues = new float[8];
-    private readonly float[] _prevPhases = new float[8];
-    private readonly Random _noiseGen = new();
-    private const int VolumeDecay = 4;
+    private readonly AdsrStage[] _stages = new AdsrStage[8];
+    private readonly Random _noise = new();
 
     public Apu(Memory ram)
     {
         _ram = ram;
     }
 
+    private enum AdsrStage : byte
+    {
+        Idle, // silence
+        Attack, // volume climbing to 1.0
+        Decay, // falling toward sustain level
+        Sustain, // stay in sustain level as long as gate bit is 1
+        Release, // falling to 0.0
+    }
+
     private float GenerateSample(int channel)
     {
-        var baseAddr = (ushort)(Memory.AudioRamStart + (channel * 4));
-        var volume = _volumes[channel];
-
-        if (volume <= 0.001f)
-            return 0f;
-
+        var baseAddr = Memory.AudioRamStart + (channel * 4);
         var freq = _ram.ReadWord(baseAddr);
+        var control = _ram.ReadByte(baseAddr + 3);
+
         if (freq == 0)
+            return 0f;
+        var volume = ProcessEnvelope(channel, control);
+        if (volume <= 0f && _stages[channel] == AdsrStage.Idle)
             return 0f;
 
         _phases[channel] += freq / 44100f;
         if (_phases[channel] >= 1f)
             _phases[channel] -= 1f;
-        var phase = _phases[channel];
-        var oldPhase = _prevPhases[channel];
 
-        // waveform selection
-        var waveform = channel switch
+        var wave = channel switch
         {
-            0 or 1 => Square(phase),
-            2 or 3 => Triangle(phase),
-            4 or 5 => Sawtooth(phase),
-            _ => Noise(channel, phase, oldPhase),
+            0 or 1 => Square(_phases[channel]),
+            2 or 3 => Triangle(_phases[channel]),
+            4 or 5 => Sawtooth(_phases[channel]),
+            _ => Noise(),
         };
 
-        _lastNoiseValues[channel] = waveform;
-        _prevPhases[channel] = phase;
-        return waveform * volume;
+        return wave * volume;
     }
 
-    private float Noise(int channel, float phase, float oldPhase)
+    private float ProcessEnvelope(int channel, byte control)
     {
-        return (phase < oldPhase ? _noiseGen.NextSingle() * 2 - 1 : _lastNoiseValues[channel]);
+        var gateOn = (control & 0x01) != 0;
+        var instrumentId = (control >> 1);
+        var instrumentAddr = Memory.AudioRamStart + 32 + (instrumentId * 4);
+        var chanBaseAddr = Memory.AudioRamStart + (channel * 4);
+        var chanMaxVolume = _ram.ReadByte(chanBaseAddr + 2) / 255f;
+        const float divisor = 500000f;
+
+        var aStep = (_ram.ReadByte(instrumentAddr) / divisor) + 0.000001f;
+        var dStep = (_ram.ReadByte(instrumentAddr + 1) / divisor) + 0.000001f;
+        var sLevel = _ram.ReadByte(instrumentAddr + 2) / 255f;
+        var realSustain = sLevel * chanMaxVolume; // always a percentage of max volume
+        var rStep = (_ram.ReadByte(instrumentAddr + 3) / divisor) + 0.000001f;
+
+        if (!gateOn && _stages[channel] != AdsrStage.Idle)
+            _stages[channel] = AdsrStage.Release;
+        else if (gateOn && _stages[channel] is AdsrStage.Idle or AdsrStage.Release)
+            _stages[channel] = AdsrStage.Attack;
+
+        switch (_stages[channel])
+        {
+            case AdsrStage.Attack:
+                _volumes[channel] += aStep;
+                if (_volumes[channel] >= chanMaxVolume)
+                    _stages[channel] = AdsrStage.Decay;
+                break;
+            case AdsrStage.Decay:
+                _volumes[channel] -= dStep;
+                if (_volumes[channel] <= realSustain)
+                    _stages[channel] = AdsrStage.Sustain;
+                if (_volumes[channel] <= 0f && sLevel == 0f)
+                {
+                    _stages[channel] = AdsrStage.Idle;
+                    _ram.WriteByte(chanBaseAddr + 3, (byte)(control & 0xFE)); // force the gate to 0 to stop note from looping
+                }
+                break;
+            case AdsrStage.Sustain:
+                _volumes[channel] = realSustain;
+                break;
+            case AdsrStage.Release:
+                _volumes[channel] -= rStep;
+                if (_volumes[channel] <= 0f)
+                    _stages[channel] = AdsrStage.Idle;
+                break;
+            default:
+                break;
+        }
+
+        return _volumes[channel];
+    }
+
+    private float Noise()
+    {
+        return (_noise.NextSingle() * 2f - 1f) * 1.2f;
     }
 
     private static float Sawtooth(float phase)
@@ -66,7 +120,7 @@ public class Apu
             value = 2f - (phase * 4f);
         else
             value = (phase * 4f) - 4f;
-        return value * 1.1f;
+        return value * 1.4f;
     }
 
     private static float Square(float phase)
@@ -87,7 +141,6 @@ public class Apu
                     activeChannels++;
                 mixedSample += sample;
             }
-            UpdateVolumes();
             var divisor = MathF.Max(1.5f, activeChannels * 0.5f);
             writeBuffer[i] = (mixedSample / divisor) * 0.5f; // normalized with AGC to avoid earrape
         }
@@ -96,33 +149,15 @@ public class Apu
     internal void ResetPhase(int channel)
     {
         if (channel >= 0 && channel < _phases.Length)
+        {
             _phases[channel] = 0f;
+            _stages[channel] = AdsrStage.Idle;
+        }
     }
 
     internal void ClearPhases()
     {
         Array.Clear(_phases);
-    }
-
-    private void UpdateVolumes()
-    {
-        for (var chan = 0; chan < 8; chan++)
-        {
-            var baseAddr = Memory.AudioRamStart + (chan * 4);
-            var targetVolByte = _ram.ReadByte(baseAddr + 2);
-            var control = _ram.ReadByte(baseAddr + 3);
-
-            float targetVol = ((control & 0x01) != 0) ? (targetVolByte / 255f) : 0f;
-
-            // Smooth the volume change (linear interpolation)
-            // Adjust these values to change how "snappy" the notes are
-            float attackSpeed = 0.1f; // Higher = faster fade in
-            float releaseSpeed = 0.05f; // Higher = faster fade out
-
-            if (_volumes[chan] < targetVol)
-                _volumes[chan] = Math.Min(targetVol, _volumes[chan] + attackSpeed);
-            else if (_volumes[chan] > targetVol)
-                _volumes[chan] = Math.Max(targetVol, _volumes[chan] - releaseSpeed);
-        }
+        Array.Clear(_phases);
     }
 }
