@@ -16,13 +16,14 @@ public class Motherboard : IMotherboard
     private float[] _writeBuffer = new float[441];
     private int _actualWindowSize;
 
-    private byte _fontColorReg = 1;
+    public byte FontColorIndex { get; private set; } = 1;
     private byte _fontSizeReg = 0;
 
     private const int MusicPointerAddress = 0x0004;
     private int _musicStart = 0;
 
     public byte[] ControllerStates { get; } = new byte[2];
+    public byte[,] TextGrid { get; } = new byte[32, 32];
 
     public Motherboard()
     {
@@ -33,6 +34,9 @@ public class Motherboard : IMotherboard
         _ppu = new Ppu(_memory);
         _apu = new Apu(_memory);
         _sequencer = new Sequencer(_memory);
+        for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            TextGrid[i, j] = 0xFF;
     }
 
     public void LoadCartridge(string path)
@@ -142,7 +146,7 @@ public class Motherboard : IMotherboard
     public void AwaitVBlank()
     {
         GetInputState();
-        _ppu.VBlank();
+        _ppu.VBlank(this);
         _ppu.FlipBuffers();
     }
 
@@ -151,9 +155,9 @@ public class Motherboard : IMotherboard
         _ppu.FillBuffer(colorIndex);
     }
 
-    public void DrawChar(ushort x, ushort y, ushort charCode)
+    public void DrawChar(int x, int y, byte charCode)
     {
-        _ppu.BlitCharacter(x, y, _fontColorReg, IMotherboard.GetCharacter(charCode));
+        TextGrid[x, y] = charCode;
     }
 
     public void GetInputState()
@@ -193,7 +197,7 @@ public class Motherboard : IMotherboard
 
     public void SetTextAttributes(byte attributes)
     {
-        _fontColorReg = (byte)(attributes & 0x0F);
+        FontColorIndex = (byte)(attributes & 0x0F);
         _fontSizeReg = (byte)((attributes >> 4) & 0x0F);
     }
 

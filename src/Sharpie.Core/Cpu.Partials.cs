@@ -561,10 +561,10 @@ public partial class Cpu
 
     private partial void Execute_TEXT(byte opcode, ref ushort pcDelta)
     {
-        var (x, y) = ReadRegisterArgs();
-        var charCode = _memory.ReadByte(_pc + 2);
-        Console.WriteLine($"Executing TEXT with: {x}, {y}, {charCode}");
-        _mobo.DrawChar(_registers[x], _registers[y], charCode);
+        var x = _memory.ReadByte(_pc + 1) & 0x1F;
+        var y = _memory.ReadByte(_pc + 2) & 0x1F;
+        var charCode = _memory.ReadByte(_pc + 3);
+        _mobo.DrawChar(x, y, charCode);
     }
 
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta)

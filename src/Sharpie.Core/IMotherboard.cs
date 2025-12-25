@@ -1,12 +1,14 @@
 public interface IMotherboard
 {
     byte[] ControllerStates { get; }
+    byte[,] TextGrid { get; }
+    byte FontColorIndex { get; }
 
     void Run();
     void ClearScreen(byte colorIndex);
     void AwaitVBlank();
     void SetTextAttributes(byte attributes);
-    void DrawChar(ushort x, ushort y, ushort charCode);
+    void DrawChar(int x, int y, byte charCode);
 
     void PlayNote(byte channel, byte note, byte instrument);
     void StopChannel(byte channel);

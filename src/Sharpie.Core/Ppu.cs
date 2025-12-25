@@ -76,7 +76,7 @@ public partial class Ppu
         }
     }
 
-    public void VBlank()
+    public void VBlank(IMotherboard mobo)
     {
         for (int oamIndex = OamStart; oamIndex < OamStart + 512; oamIndex += 4)
         {
@@ -89,6 +89,19 @@ public partial class Ppu
             for (int row = 0; row < 8; row++)
             for (int column = 0; column < 8; column++)
                 WritePixel(x + column, y + row, _spriteBuffer[row * 8 + column]);
+        }
+
+        var textColor = mobo.FontColorIndex;
+        for (int charX = 0; charX < 32; charX++)
+        {
+            for (int charY = 0; charY < 32; charY++)
+            {
+                var charIndex = mobo.TextGrid[charX, charY];
+                if (charIndex == 0xFF)
+                    continue;
+                var charSprite = IMotherboard.GetCharacter(charIndex);
+                BlitCharacter(charX << 3, charY << 3, textColor, charSprite); // multiply x and y by 8 to get real screen coords
+            }
         }
     }
 

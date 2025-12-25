@@ -264,7 +264,7 @@ public partial class Cpu {
                 break;
 
             case 0xF7: //TEXT
-                pcDelta = 3;
+                pcDelta = 4;
                 Execute_TEXT(opcode, ref pcDelta);
                 break;
 
