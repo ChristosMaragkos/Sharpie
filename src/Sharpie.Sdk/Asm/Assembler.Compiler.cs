@@ -3,7 +3,7 @@ namespace Sharpie.Sdk.Asm;
 public partial class Assembler
 {
     private const int MaxRomSize = 49152;
-    private readonly byte[] Rom = new byte[MaxRomSize];
+    public readonly byte[] Rom = new byte[MaxRomSize];
 
     public void Compile()
     {

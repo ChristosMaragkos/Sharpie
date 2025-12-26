@@ -8,7 +8,7 @@ public partial class Assembler
     private static readonly char[] CommonDelimiters = [','];
 
     private IEnumerable<string>? FileContents { get; set; }
-    private Dictionary<string, ushort> LabelToMemAddr { get; } = new();
+    public Dictionary<string, ushort> LabelToMemAddr { get; } = new();
     private Dictionary<string, ushort> Constants { get; } = new();
     private Regex Regex { get; } = new("");
     public List<TokenLine> Tokens { get; } = new();
@@ -49,6 +49,7 @@ public partial class Assembler
             Tokens.Add(tokenLine);
         }
 
+        Compile();
         return;
         bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
