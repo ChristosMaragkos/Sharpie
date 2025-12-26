@@ -1,20 +1,19 @@
 public struct TokenLine
 {
-    public string? Label { get; set; }
     public string? Opcode { get; set; }
     public string[]? Args { get; set; }
 
     public TokenLine()
     {
-        (Label, Opcode, Args) = (null, null, null);
+        (Opcode, Args) = (null, null);
     }
 
     /// Returns whether all properties are null, effectively determining if a non-empty line was processed.
-    public bool ArePropertiesNull() => Label == null && Opcode == null && Args == null;
+    public bool ArePropertiesNull() => Opcode == null && Args == null;
 
     public override string ToString()
     {
-        var str = $"Token line: Label = {Label} | Opcode = {Opcode} |";
+        var str = $"Token line: Opcode = {Opcode} |";
 
         if (Args == null)
             str += "Args = null";
@@ -25,9 +24,9 @@ public struct TokenLine
         return str;
     }
 
-    public IEnumerable<string> AllTokens()
+    public IEnumerable<string> AsEnumerable()
     {
-        List<string> en = [Label ?? "", Opcode ?? ""];
+        List<string> en = [Opcode ?? ""];
 
         foreach (string arg in Args ?? [""])
         {
