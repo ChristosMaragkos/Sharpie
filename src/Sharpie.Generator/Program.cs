@@ -68,19 +68,28 @@ sb.AppendLine("");
 sb.AppendLine("public static class InstructionSet");
 sb.AppendLine("{");
 sb.AppendLine("");
-sb.AppendLine("    private static Dictionary<string, (int Length, int Hex)> OpcodeTable = new()");
+sb.AppendLine(
+    "    private static Dictionary<string, (int Length, int Hex, int RequiredWords)> OpcodeTable = new()"
+);
 sb.AppendLine("    {");
 
 foreach (var op in ops)
 {
-    sb.AppendLine($"        {{ \"{op.Name}\", ({op.Len}, {op.IntHex}) }},");
+    sb.AppendLine($"        {{ \"{op.Name}\", ({op.Len}, {op.IntHex}, {op.Words}) }},");
 }
 sb.AppendLine("    };");
 sb.AppendLine("");
-sb.AppendLine("    public static int GetOpcodeLength(string name)");
-sb.AppendLine("        => OpcodeTable[name].Length;");
-sb.AppendLine("    public static int GetOpcodeHex(string name)");
-sb.AppendLine("        => OpcodeTable[name].Hex;");
+sb.AppendLine("    public static int? GetOpcodeLength(string name)");
+sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Length : null;");
+sb.AppendLine("");
+sb.AppendLine("    public static int? GetOpcodeHex(string name)");
+sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Hex : null;");
+sb.AppendLine("");
+sb.AppendLine("    public static int? GetOpcodeWords(string name)");
+sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].RequiredWords : null;");
+sb.AppendLine("");
+sb.AppendLine("    public static bool IsValidOpcode(string name)");
+sb.AppendLine("        => OpcodeTable.ContainsKey(name);");
 sb.AppendLine("}");
 File.WriteAllText("./src/Sharpie.Sdk/Asm/InstructionSet.g.cs", sb.ToString());
 Console.WriteLine("Assembler opcode table generated successfuly. Great success!");
@@ -97,13 +106,16 @@ class Opcode
 
     public string? Logic { get; set; }
 
+    public int Words { get; set; }
+
     [JsonConstructor]
-    protected Opcode(string hex, string name, int len, string? logic, bool family)
+    protected Opcode(string hex, string name, int len, string? logic, bool family, int words)
     {
         Hex = hex;
         Name = name;
         Len = len;
         Logic = logic;
         Family = family;
+        Words = words;
     }
 }
