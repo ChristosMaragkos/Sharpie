@@ -39,14 +39,42 @@ public partial class Cpu
     private int CursorPosX
     {
         get => _cursorPosX;
-        set => _cursorPosX = Math.Clamp(_cursorPosX, 0, 31);
+        set
+        {
+            // Handle X wrapping
+            int newX = value;
+
+            // If X overflowed right (>= 32)
+            while (newX >= 32)
+            {
+                newX -= 32;
+                CursorPosY++; // Recursively calls Y setter
+            }
+
+            // If X underflowed left (< 0) - Backspace logic
+            while (newX < 0)
+            {
+                newX += 32;
+                CursorPosY--; // Recursively calls Y setter
+            }
+
+            _cursorPosX = newX;
+        }
     }
 
     private int _cursorPosY;
     private int CursorPosY
     {
         get => _cursorPosY;
-        set => _cursorPosY = Math.Clamp(_cursorPosY, 0, 31);
+        set
+        {
+            // Handle Y wrapping (0-31)
+            int newY = value;
+
+            // Standard modulo doesn't handle negatives well, so we helper it:
+            // This ensures -1 becomes 31
+            _cursorPosY = ((newY % 32) + 32) % 32;
+        }
     }
 
     // layout (right to left):
@@ -163,7 +191,7 @@ SP: 0x{_sp:X4}
     /// <summary>
     /// Reads the next memory address and formats it to two register indices
     /// </summary>
-    private (int x, int y) ReadRegisterArgs(int offset = 1)
+    private (int highNibble, int lowNibble) ReadRegisterArgs(int offset = 1)
     {
         var args = _memory.ReadByte((_pc + offset));
         var rX = (args >> 4) & 0x0F;

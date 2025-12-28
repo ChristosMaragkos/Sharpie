@@ -53,7 +53,8 @@
   
     { "hex": "0xA0", "name": "SONG",   "len": 1, "logic": null , "family": true, "words": 1 , "pattern": "R" },
     { "hex": "0xC0", "name": "SETCRS",   "len": 3, "logic": null , "words": 2 , "pattern": "BB" },
-    { "hex": "0xD0", "name": "DRAW",   "len": 3, "logic": null , "family": true, "words": 5 , "pattern": "RRRR" },
+    { "hex": "0xD0", "name": "DRAW",   "len": 3, "logic": null , "family": true, "words": 5 , "pattern": "RRRRR" },
+    { "hex": "0xE0", "name": "INSTR",   "len": 3, "logic": null , "family": true, "words": 3 , "pattern": "RBB" },
     
     { "hex": "0xF0", "name": "TAG",    "len": 2, "logic": null , "words": 2 , "pattern": "RR" },
     { "hex": "0xF1", "name": "CLS",    "len": 2, "logic": null , "words": 1 , "pattern": "R" },

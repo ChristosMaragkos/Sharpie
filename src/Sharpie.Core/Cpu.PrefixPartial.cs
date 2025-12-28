@@ -48,6 +48,38 @@ public partial class Cpu
                 break;
             }
 
+            case 0xC0: // SETCRS
+            {
+                pcDelta = 3;
+                var xDelta = (sbyte)_memory.ReadByte(_pc + 1);
+                var yDelta = (sbyte)_memory.ReadByte(_pc + 2);
+                CursorPosX += xDelta;
+                CursorPosY += yDelta;
+                break;
+            }
+
+            case >= 0xD0
+            and <= 0xDF:
+            {
+                pcDelta = 3;
+                var rOamSlot = IndexFromOpcode(prefixed);
+                var (xReg, yReg) = ReadRegisterArgs();
+                var (sprIdReg, attrReg) = ReadRegisterArgs(2);
+
+                var oamSlot = _registers[rOamSlot] % (MaxOamSlots / 4);
+                var (x, y) = (_registers[xReg], _registers[yReg]);
+                var (sprId, attr) = (_registers[sprIdReg], _registers[attrReg]);
+
+                if ((oamSlot * 4) == OamRegister)
+                    OamRegister += 4;
+                var addr = Memory.OamStart + (oamSlot * 4);
+                _memory.WriteByte(addr, (byte)x);
+                _memory.WriteByte(addr + 1, (byte)y);
+                _memory.WriteByte(addr + 2, (byte)sprId);
+                _memory.WriteByte(addr + 3, (byte)attr);
+                break;
+            }
+
             default:
                 Console.WriteLine($"Unknown Opcode: 0x{opcode:X2}");
                 IsHalted = true;

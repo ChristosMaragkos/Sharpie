@@ -243,6 +243,11 @@ public partial class Cpu {
                 Execute_DRAW(opcode, ref pcDelta);
                 break;
 
+            case >= 0xE0 and <= 0xEF:
+                pcDelta = 3;
+                Execute_INSTR(opcode, ref pcDelta);
+                break;
+
             case 0xF0: //TAG
                 pcDelta = 2;
                 Execute_TAG(opcode, ref pcDelta);
@@ -363,6 +368,7 @@ public partial class Cpu {
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta);
     private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta);
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta);
+    private partial void Execute_INSTR(byte opcode, ref ushort pcDelta);
     private partial void Execute_TAG(byte opcode, ref ushort pcDelta);
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta);
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta);

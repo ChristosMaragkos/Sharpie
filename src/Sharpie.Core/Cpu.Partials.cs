@@ -623,4 +623,23 @@ public partial class Cpu
         CursorPosX = x;
         CursorPosY = y;
     }
+
+    private partial void Execute_INSTR(byte opcode, ref ushort pcDelta)
+    {
+        var instIdReg = IndexFromOpcode(opcode);
+        var instId = _registers[instIdReg];
+        var (a, d) = ReadRegisterArgs(); // not register args but still 4-bit values
+        var (s, r) = ReadRegisterArgs(2);
+
+        var attack = (byte)(a * 17);
+        var decay = (byte)(d * 17);
+        var sustain = (byte)(s * 17);
+        var release = (byte)(r * 17);
+
+        var addr = Memory.AudioRamStart + 32 + (instId * 4);
+        _memory.WriteByte(addr, attack);
+        _memory.WriteByte(addr + 1, decay);
+        _memory.WriteByte(addr + 2, sustain);
+        _memory.WriteByte(addr + 3, release);
+    }
 }
