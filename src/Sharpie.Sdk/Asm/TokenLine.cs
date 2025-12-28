@@ -2,10 +2,11 @@ public struct TokenLine
 {
     public string? Opcode { get; set; }
     public string[]? Args { get; set; }
+    public int? SourceLine { get; set; }
 
     public TokenLine()
     {
-        (Opcode, Args) = (null, null);
+        (Opcode, Args, SourceLine) = (null, null, null);
     }
 
     /// Returns whether all properties are null, effectively determining if a non-empty line was processed.
@@ -13,7 +14,7 @@ public struct TokenLine
 
     public override string ToString()
     {
-        var str = $"Token line: Opcode = {Opcode} |";
+        var str = $"Token line: Opcode = {Opcode} | Source Line = {SourceLine} |";
 
         if (Args == null)
             str += "Args = null";
@@ -22,16 +23,5 @@ public struct TokenLine
                 str += $"\nArgs[{i}] = {Args[i]}";
 
         return str;
-    }
-
-    public IEnumerable<string> AsEnumerable()
-    {
-        List<string> en = [Opcode ?? ""];
-
-        foreach (string arg in Args ?? [""])
-        {
-            en.Add(arg);
-        }
-        return en;
     }
 }

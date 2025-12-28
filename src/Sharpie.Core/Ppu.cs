@@ -5,7 +5,7 @@ public partial class Ppu
     private const int DisplayHeight = 256;
     private const int DisplayWidth = 256;
     private const ushort OamStart = Memory.OamStart;
-    private const ushort SpriteMemoryStart = 0xBFFF;
+    private const ushort SpriteMemoryStart = Memory.SpriteAtlasStart;
     private int _currentBuffer = 0;
     private ushort DisplayStart => (ushort)(_currentBuffer == 0 ? 0x0000 : 0x8000);
     private ushort RenderStart => (ushort)(_currentBuffer == 0 ? 0x8000 : 0x0000);
@@ -84,6 +84,9 @@ public partial class Ppu
             var y = _systemRam.ReadByte(oamIndex + 1);
             var spriteId = _systemRam.ReadByte(oamIndex + 2);
             var attributes = _systemRam.ReadByte(oamIndex + 3);
+
+            if (x == 0 && y == 0 & spriteId == 0 & attributes == 0)
+                continue;
 
             GetSprite(spriteId, attributes);
             for (int row = 0; row < 8; row++)

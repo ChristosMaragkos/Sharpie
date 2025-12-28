@@ -33,6 +33,21 @@ public partial class Cpu
         get => _oamReg;
         set => _oamReg = value < MaxOamSlots ? value : (ushort)0;
     }
+    private byte[] _tagMap = new byte[512];
+
+    private int _cursorPosX;
+    private int CursorPosX
+    {
+        get => _cursorPosX;
+        set => _cursorPosX = Math.Clamp(_cursorPosX, 0, 31);
+    }
+
+    private int _cursorPosY;
+    private int CursorPosY
+    {
+        get => _cursorPosY;
+        set => _cursorPosY = Math.Clamp(_cursorPosY, 0, 31);
+    }
 
     // layout (right to left):
     // 0-Carry (unsigned overflow, result >=65535 or < 0), 0x01
@@ -40,16 +55,6 @@ public partial class Cpu
     // 2-Overflow (signed), positive + positive = negative, 0x04
     // 3-Negative (highest bit is 1), 0x08
     private ushort FlagRegister;
-
-    // layout (right to left):
-    // 0-Flip horizontally (put pixels in vram in reverse per 8 pixels)
-    // 1-Flip vertically (swap each pixel with its equivalent to the last place
-    // - first becomes last, second becomes second-to-last etc.)
-    private ushort SpriteAttributeRegister
-    {
-        get => _registers[15];
-        set => _registers[15] = value;
-    }
 
     private void UpdateFlags(int result, ushort op1, ushort op2, bool subtraction = false)
     {
@@ -119,7 +124,10 @@ public partial class Cpu
     {
         for (int i = 0; i < 16; i++)
         {
-            _memory.WriteByte(Memory.ColorPaletteStart + i, colorPalette[16]);
+            _memory.WriteByte(
+                Memory.ColorPaletteStart + i,
+                colorPalette[i] > 0x1F ? (byte)i : colorPalette[i]
+            );
         }
     }
 
@@ -155,9 +163,9 @@ SP: 0x{_sp:X4}
     /// <summary>
     /// Reads the next memory address and formats it to two register indices
     /// </summary>
-    private (int x, int y) ReadRegisterArgs()
+    private (int x, int y) ReadRegisterArgs(int offset = 1)
     {
-        var args = _memory.ReadByte((_pc + 1));
+        var args = _memory.ReadByte((_pc + offset));
         var rX = (args >> 4) & 0x0F;
         var rY = args & 0x0F;
 

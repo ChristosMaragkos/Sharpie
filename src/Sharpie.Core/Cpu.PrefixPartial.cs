@@ -39,6 +39,15 @@ public partial class Cpu
                 break;
             }
 
+            case 0xF1: // CLS
+            {
+                pcDelta = 2;
+                Execute_CLS(prefixed, ref pcDelta);
+                _memory.ClearRange(Memory.OamStart, Memory.WorkRamStart - Memory.OamStart);
+                OamRegister = 0;
+                break;
+            }
+
             default:
                 Console.WriteLine($"Unknown Opcode: 0x{opcode:X2}");
                 IsHalted = true;

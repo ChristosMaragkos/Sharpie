@@ -10,21 +10,22 @@ public partial class Assembler
     private IEnumerable<string>? FileContents { get; set; }
     public Dictionary<string, ushort> LabelToMemAddr { get; } = new();
     private Dictionary<string, ushort> Constants { get; } = new();
-    private Regex Regex { get; } = new("");
     public List<TokenLine> Tokens { get; } = new();
 
-    public void ReadFile()
+    private void ReadFile()
     {
         if (FileContents == null)
             throw new NullReferenceException("File contents are null. Check your file path.");
 
+        Console.WriteLine("Assembler: Reading file...");
+
         var lineNum = 0;
         string cleanLine;
-        TokenLine tokenLine;
         foreach (var line in FileContents!)
         {
-            tokenLine = new TokenLine();
+            var tokenLine = new TokenLine();
             lineNum++;
+            tokenLine.SourceLine = lineNum;
             cleanLine = line;
             RemoveComment(ref cleanLine);
             if (IsLineEmpty(cleanLine))
@@ -69,7 +70,11 @@ public partial class Assembler
             );
 
         var (name, valueStr) = (constant[0], constant[1]);
-        if (!IsValidInteger(valueStr, out var value, out bool _))
+        if (LabelToMemAddr.ContainsKey(name) || Constants.ContainsKey(name))
+            throw new AssemblySyntaxException($"Constant {name} is already declared", lineNumber);
+
+        var value = ParseNumberLiteral(valueStr, true);
+        if (value == null)
             throw new AssemblySyntaxException(
                 $"Unexpected token: {valueStr} - expected a number",
                 lineNumber
@@ -109,52 +114,33 @@ public partial class Assembler
                 "Expected X and Y coordinates before the string",
                 lineNumber
             );
+        for (int i = 0; i < coordArgs.Length; i++)
+            coordArgs[i] = coordArgs[i].Trim(CommonDelimiters);
 
-        int x = 0;
-        int y = 0;
-        ConstantOrParse(coordArgs[0].Trim(CommonDelimiters), ref x);
-        AssertSize(x);
-        ConstantOrParse(coordArgs[1].Trim(CommonDelimiters), ref y);
-        AssertSize(y);
+        Tokens.Add(
+            new TokenLine
+            {
+                Opcode = "SETCRS",
+                Args = new[] { coordArgs[0], coordArgs[1] },
+                SourceLine = lineNumber,
+            }
+        );
+        CurrentAddress += InstructionSet.GetOpcodeLength("SETCRS");
 
-        TokenLine tl;
+        var delta = InstructionSet.GetOpcodeLength("TEXT");
         foreach (char c in message)
         {
-            tl = new();
-            tl.Args = new string[3];
-            tl.Opcode = "TEXT";
-            tl.Args[0] = x.ToString();
-            tl.Args[1] = y.ToString();
-            tl.Args[2] = TextHelper.GetFontIndex(c).ToString();
-            x++;
+            TokenLine tl = new()
+            {
+                Opcode = "TEXT",
+                Args = new[] { TextHelper.GetFontIndex(c).ToString() },
+                SourceLine = lineNumber,
+            };
             Tokens.Add(tl);
-            CurrentAddress += InstructionSet.GetOpcodeLength("TEXT")!.Value;
+            CurrentAddress += delta;
         }
 
         line = line.Remove(0, lastQuote + 1);
-        return;
-
-        void ConstantOrParse(string numStr, ref int result)
-        {
-            if (Constants.TryGetValue(numStr, out var constant))
-                result = constant;
-            else if (IsValidInteger(numStr, out var parsed, out bool _))
-                result = parsed!.Value;
-            else
-                throw new AssemblySyntaxException(
-                    $"Token {numStr} is not a valid number",
-                    lineNumber
-                );
-        }
-
-        void AssertSize(int number)
-        {
-            if (number < 0 || number >= 32)
-                throw new AssemblySyntaxException(
-                    $"Grid index {x} must be no less than 0 and no more than 31",
-                    lineNumber
-                );
-        }
     }
 
     /// Mostly used for unit tests
@@ -172,6 +158,7 @@ public partial class Assembler
             throw new FileNotFoundException($"No file by name \"{filePath}\" was found.");
         if (!filePath.EndsWith(".asm"))
             throw new Exception($"File \"{filePath}\" is not in the \".asm\" format.");
+        Console.WriteLine("Assembler: Loading file...");
         FileContents = File.ReadAllLines(filePath);
         ReadFile();
     }
@@ -198,6 +185,10 @@ public partial class Assembler
         {
             var colonIndex = labelRegex.Index;
             var label = line.Substring(0, colonIndex).Trim();
+
+            if (Constants.ContainsKey(label) || LabelToMemAddr.ContainsKey(label))
+                throw new AssemblySyntaxException($"Label {label} is already declared", lineNumber);
+
             LabelToMemAddr[label] = (ushort)CurrentAddress;
             line = line.Substring(colonIndex + 1).Trim();
         }
@@ -206,20 +197,76 @@ public partial class Assembler
     private void Tokenize(string line, ref TokenLine tokenLine, int lineNumber)
     {
         var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var opcode = args[0];
+
         for (var i = 0; i < args.Length; i++)
             args[i] = args[i].TrimEnd(CommonDelimiters).Trim();
 
-        if (!InstructionSet.IsValidOpcode(opcode))
-            throw new AssemblySyntaxException($"Invalid Opcode: {opcode}", lineNumber);
+        tokenLine.Opcode = args[0];
+        tokenLine.Args = args.Skip(1).ToArray();
 
-        if (args.Length - 1 != InstructionSet.GetOpcodeWords(opcode))
+        if (tokenLine.Opcode.StartsWith('.'))
+        {
+            switch (tokenLine.Opcode.ToUpper())
+            {
+                case ".ORG":
+                    if (args.Length > 2)
+                        throw new AssemblySyntaxException(
+                            $"Unexpected token: {args.Last()}",
+                            lineNumber
+                        );
+                    else if (args.Length < 2)
+                        throw new AssemblySyntaxException(
+                            "Directive .ORG expected a valid memory address",
+                            lineNumber
+                        );
+                    else
+                        CurrentAddress = ParseWord(args[1], lineNumber);
+
+                    break;
+
+                case ".SPRITE":
+                    if (args.Length > 2)
+                        throw new AssemblySyntaxException(
+                            $"Unexpected token: {args.Last()}",
+                            lineNumber
+                        );
+                    else if (args.Length < 2)
+                        throw new AssemblySyntaxException(
+                            "Directive .SPRITE expected a valid memory address",
+                            lineNumber
+                        );
+                    else
+                    {
+                        var spriteIndex = ParseByte(args[1], lineNumber);
+
+                        CurrentAddress = CalculateSpriteAddress(spriteIndex);
+                    }
+
+                    break;
+
+                case ".DB":
+                case ".BYTES":
+                case ".DATA":
+                    CurrentAddress += (args.Length - 1);
+                    break;
+
+                default:
+                    throw new AssemblySyntaxException(
+                        $"Unknown directive: {tokenLine.Opcode}",
+                        lineNumber
+                    );
+            }
+            return; // no need to check for an opcode
+        }
+
+        if (!InstructionSet.IsValidOpcode(tokenLine.Opcode))
+            throw new AssemblySyntaxException($"Invalid Opcode: {tokenLine.Opcode}", lineNumber);
+
+        if (args.Length - 1 != InstructionSet.GetOpcodeWords(tokenLine.Opcode))
             throw new AssemblySyntaxException(
-                $"Invalid argument count for opcode {opcode}: expected {InstructionSet.GetOpcodeWords(opcode)} but found {args.Length}"
+                $"Invalid argument count for opcode {tokenLine.Opcode}: expected {InstructionSet.GetOpcodeWords(tokenLine.Opcode)} but found {args.Length}"
             );
 
-        tokenLine.Opcode = opcode;
-        tokenLine.Args = args.Skip(1).ToArray();
-        CurrentAddress += InstructionSet.GetOpcodeLength(opcode)!.Value;
+        CurrentAddress += InstructionSet.GetOpcodeLength(tokenLine.Opcode);
     }
 }

@@ -6,10 +6,10 @@
 public class Memory
 {
     // Memory map:
-    public const ushort RomStart = 0x0000; // 0x0000-0x7FFF Cartridge rom (exactly 32KB)
-    public const ushort SpriteAtlasStart = 0xBFFF; // 0xBFFF downwards for up to 256 sprites (indexed 0-255)
-    public const ushort OamStart = 0xC000; // Object Address Memory. Holds data about which sprite is drawn where. Exactly 2KB
-    public const ushort WorkRamStart = 0xC800; // Work RAM for patchwork and variables. 10KB.
+    public const ushort RomStart = 0x0000;
+    public const ushort SpriteAtlasStart = 0xDFFF;
+    public const ushort OamStart = 0xE000;
+    public const ushort WorkRamStart = 0xE800;
 
     // Note that the color palette is the last 16 memory slots of WRAM.
     public const ushort ColorPaletteStart = 0xEFF0; // 16 memory slots, one per color. Indexed as pointers to internal colors.

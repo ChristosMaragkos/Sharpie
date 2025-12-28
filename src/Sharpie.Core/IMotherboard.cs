@@ -19,6 +19,7 @@ public interface IMotherboard
 
     void SwapColor(byte oldIndex, byte newIndex);
     void StopSystem();
+    ushort CheckCollision(int sprIdSrc);
 
     public static ReadOnlySpan<byte> SmallFont =>
         new byte[]

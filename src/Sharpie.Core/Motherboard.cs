@@ -152,6 +152,9 @@ public class Motherboard : IMotherboard
 
     public void ClearScreen(byte colorIndex)
     {
+        for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            TextGrid[i, j] = 0xFF;
         _ppu.FillBuffer(colorIndex);
     }
 
@@ -226,6 +229,32 @@ public class Motherboard : IMotherboard
     public void StartSequencer(ushort address)
     {
         _sequencer.LoadSong(address);
+    }
+
+    public ushort CheckCollision(int sprIdSrc)
+    {
+        var xSrc = _memory.ReadByte(Memory.OamStart + sprIdSrc);
+        var ySrc = _memory.ReadByte(Memory.OamStart + sprIdSrc + 1);
+        for (int i = 0; i < 2048; i += 4)
+        {
+            var sprId = _memory.ReadByte(Memory.OamStart + i + 2);
+            if (sprId == sprIdSrc)
+                continue; // don't check against self
+
+            var x = _memory.ReadByte(Memory.OamStart + i);
+            var y = _memory.ReadByte(Memory.OamStart + i + 1);
+            var attr = _memory.ReadByte(Memory.OamStart + i + 3);
+
+            if (x == 0 && y == 0 && sprId == 0 && attr == 0)
+                continue; // don't check blank oam slot
+
+            if (Math.Abs(xSrc - x) >= 8 || Math.Abs(ySrc - y) >= 8)
+                continue; // sprites can't touch
+
+            return (ushort)i;
+        }
+
+        return 0xFFFF;
     }
 
     private unsafe void RenderBufferAsTexture()

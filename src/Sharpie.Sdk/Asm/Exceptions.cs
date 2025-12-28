@@ -18,7 +18,7 @@ public class SharpieRomSizeException : Exception
 {
     public SharpieRomSizeException() { }
 
-    private SharpieRomSizeException(string message)
+    public SharpieRomSizeException(string message)
         : base(message) { }
 
     public SharpieRomSizeException(int lastAddr)

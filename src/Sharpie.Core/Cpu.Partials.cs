@@ -18,7 +18,6 @@ public partial class Cpu
 
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta)
     {
-        Console.WriteLine("LDI");
         var x = IndexFromOpcode(opcode);
         var value = _memory.ReadWord(_pc + 1);
         _registers[x] = value;
@@ -503,9 +502,13 @@ public partial class Cpu
 
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta)
     {
-        var (x, y) = ReadRegisterArgs();
-        var spriteId = _memory.ReadByte(_pc + 2);
-        var attributes = (byte)SpriteAttributeRegister;
+        var x = IndexFromOpcode(opcode);
+        var (y, sprIdReg) = ReadRegisterArgs();
+        var (attrReg, oamSlotReg) = ReadRegisterArgs(2);
+        var spriteId = (byte)_registers[sprIdReg];
+        var attributes = (byte)_registers[attrReg];
+        _registers[oamSlotReg] = (ushort)(OamRegister / 4);
+        _tagMap[OamRegister / 4] = attributes;
         var addr = Memory.OamStart + OamRegister;
         OamRegister += 4;
         _memory.WriteByte(addr, (byte)_registers[x]);
@@ -516,7 +519,9 @@ public partial class Cpu
 
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta)
     {
-        var packed = (byte)((_memory.ReadByte(_pc + 1) << 4) | (_memory.ReadByte(_pc + 1) & 0x0F));
+        var idx = _memory.ReadByte(_pc + 1) & 0x0F;
+        var color = _registers[idx];
+        var packed = (byte)(((color << 4) & 0xF0) | (color & 0x0F));
         _mobo.ClearScreen(packed);
     }
 
@@ -527,9 +532,13 @@ public partial class Cpu
 
     private partial void Execute_PLAY(byte opcode, ref ushort pcDelta)
     {
-        var channel = _memory.ReadByte(_pc + 1);
-        var note = _memory.ReadByte(_pc + 2);
-        var instrument = _memory.ReadByte(_pc + 3);
+        var channelReg = _memory.ReadByte(_pc + 1) & 0x0F;
+        var noteReg = _memory.ReadByte(_pc + 2) & 0x0F;
+        var instrumentReg = _memory.ReadByte(_pc + 3) & 0x0F;
+
+        var channel = (byte)_registers[channelReg];
+        var note = (byte)_registers[noteReg];
+        var instrument = (byte)_registers[instrumentReg];
         if (channel > 7)
             channel = 7;
         _mobo.PlayNote(channel, note, instrument);
@@ -546,10 +555,8 @@ public partial class Cpu
 
     private partial void Execute_INPUT(byte opcode, ref ushort pcDelta)
     {
-        var packed = _memory.ReadByte(_pc + 1);
-        var x = packed & 0x0F;
-        var controller = (packed & 0x10) >> 4; // either 0 or 1.
-        _registers[x] = _mobo.ControllerStates[controller];
+        var (rController, rDest) = ReadRegisterArgs();
+        _registers[rDest] = _mobo.ControllerStates[rController & 1];
     }
 
     private partial void Execute_RND(byte opcode, ref ushort pcDelta)
@@ -561,10 +568,14 @@ public partial class Cpu
 
     private partial void Execute_TEXT(byte opcode, ref ushort pcDelta)
     {
-        var x = _memory.ReadByte(_pc + 1) & 0x1F;
-        var y = _memory.ReadByte(_pc + 2) & 0x1F;
-        var charCode = _memory.ReadByte(_pc + 3);
+        var x = CursorPosX;
+        var y = CursorPosY;
+        var charCode = _memory.ReadByte(_pc + 1);
         _mobo.DrawChar(x, y, charCode);
+
+        CursorPosX++;
+        if (CursorPosX == 0) // if the cursor wrapped
+            CursorPosY++; // change row
     }
 
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta)
@@ -575,32 +586,13 @@ public partial class Cpu
 
     private partial void Execute_SWC(byte opcode, ref ushort pcDelta)
     {
-        var oldIndex = (byte)(_memory.ReadByte(_pc + 1) & 0x0F); // truncate to avoid tomfoolery
-        var newIndex = (byte)(_memory.ReadByte(_pc + 2) & 0x1F);
-        _mobo.SwapColor(oldIndex, newIndex);
-    }
-
-    private partial void Execute_FLPH(byte opcode, ref ushort pcDelta)
-    {
-        var value = _memory.ReadByte(_pc + 1);
-        if (value != 0)
-            SpriteAttributeRegister |= 0x01; // true
-        else
-            SpriteAttributeRegister &= 0xFE; // false
-    }
-
-    private partial void Execute_FLPV(byte opcode, ref ushort pcDelta)
-    {
-        var value = _memory.ReadByte(_pc + 1);
-        if (value != 0)
-            SpriteAttributeRegister |= 0x02; // true
-        else
-            SpriteAttributeRegister &= 0xFD; // false
+        var oldIndex = _memory.ReadByte(_pc + 1) & 0x0F;
+        var newIndex = _memory.ReadByte(_pc + 2) & 0x0F;
+        _mobo.SwapColor((byte)(_registers[oldIndex] & 0x0F), (byte)(_registers[newIndex] & 0x1F));
     }
 
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta)
     {
-        Console.WriteLine("SONG");
         var x = IndexFromOpcode(opcode);
         var songAddr = _registers[x];
         _mobo.StartSequencer(songAddr);
@@ -609,5 +601,26 @@ public partial class Cpu
     private partial void Execute_MUTE(byte opcode, ref ushort pcDelta)
     {
         _mobo.StopAllSounds();
+    }
+
+    private partial void Execute_COL(byte opcode, ref ushort pcDelta)
+    {
+        var (rSource, rDest) = ReadRegisterArgs();
+        _registers[rDest] = _mobo.CheckCollision(_registers[rSource]);
+    }
+
+    private partial void Execute_TAG(byte opcode, ref ushort pcDelta)
+    {
+        var (rSource, rDest) = ReadRegisterArgs();
+        _registers[rDest] = _tagMap[rSource > 512 ? 0 : rSource];
+    }
+
+    private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta)
+    {
+        var x = _memory.ReadByte(_pc + 1) & 0x1F;
+        var y = _memory.ReadByte(_pc + 2) & 0x1F;
+
+        CursorPosX = x;
+        CursorPosY = y;
     }
 }

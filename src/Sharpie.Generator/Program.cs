@@ -69,29 +69,42 @@ sb.AppendLine("public static class InstructionSet");
 sb.AppendLine("{");
 sb.AppendLine("");
 sb.AppendLine(
-    "    private static Dictionary<string, (int Length, int Hex, int RequiredWords, bool IsFamily)> OpcodeTable = new()"
+    "    private static Dictionary<string, (int Length, int Hex, int RequiredWords, bool IsFamily, string Pattern)> OpcodeTable = new()"
 );
 sb.AppendLine("    {");
 
 foreach (var op in ops)
 {
     sb.AppendLine(
-        $"        {{ \"{op.Name}\", ({op.Len}, {op.IntHex}, {op.Words}, {op.Family.ToString().ToLower()}) }},"
+        $"        {{ \"{op.Name}\", ({op.Len}, {op.IntHex}, {op.Words}, {op.Family.ToString().ToLower()}, {(string.IsNullOrWhiteSpace(op.Pattern) ? "\"\"" : "\"" + op.Pattern + "\"")}) }},"
     );
 }
 sb.AppendLine("    };");
 sb.AppendLine("");
-sb.AppendLine("    public static int? GetOpcodeLength(string name)");
-sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Length : null;");
+sb.AppendLine("    public static int GetOpcodeLength(string name)");
+sb.AppendLine(
+    "        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Length : throw new AssemblySyntaxException($\"Unexpected token: {name}\");"
+);
 sb.AppendLine("");
-sb.AppendLine("    public static int? GetOpcodeHex(string name)");
-sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Hex : null;");
+sb.AppendLine("    public static int GetOpcodeHex(string name)");
+sb.AppendLine(
+    "        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Hex : throw new AssemblySyntaxException($\"Unexpected token: {name}\");"
+);
 sb.AppendLine("");
-sb.AppendLine("    public static int? GetOpcodeWords(string name)");
-sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].RequiredWords : null;");
+sb.AppendLine("    public static int GetOpcodeWords(string name)");
+sb.AppendLine(
+    "        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].RequiredWords : throw new AssemblySyntaxException($\"Unexpected token: {name}\");"
+);
 sb.AppendLine("");
-sb.AppendLine("    public static bool? IsOpcodeFamily(string name)");
-sb.AppendLine("        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].IsFamily : null;");
+sb.AppendLine("    public static bool IsOpcodeFamily(string name)");
+sb.AppendLine(
+    "        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].IsFamily : throw new AssemblySyntaxException($\"Unexpected token: {name}\");"
+);
+sb.AppendLine("");
+sb.AppendLine("    public static string GetOpcodePattern(string name)");
+sb.AppendLine(
+    "        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Pattern : throw new AssemblySyntaxException($\"Unexpected token: {name}\");"
+);
 sb.AppendLine("");
 sb.AppendLine("    public static bool IsValidOpcode(string name)");
 sb.AppendLine("        => OpcodeTable.ContainsKey(name);");
@@ -112,9 +125,18 @@ class Opcode
     public string? Logic { get; set; }
 
     public int Words { get; set; }
+    public string Pattern { get; set; }
 
     [JsonConstructor]
-    protected Opcode(string hex, string name, int len, string? logic, bool family, int words)
+    protected Opcode(
+        string hex,
+        string name,
+        int len,
+        string? logic,
+        bool family,
+        int words,
+        string pattern
+    )
     {
         Hex = hex;
         Name = name;
@@ -122,5 +144,6 @@ class Opcode
         Logic = logic;
         Family = family;
         Words = words;
+        Pattern = pattern;
     }
 }
