@@ -467,6 +467,33 @@ public partial class Cpu
         }
     }
 
+    private partial void Execute_JGE(byte opcode, ref ushort pcDelta)
+    {
+        var target = _memory.ReadWord(_pc + 1);
+        var negative = IsFlagOn(CpuFlags.Negative);
+        var overflow = IsFlagOn(CpuFlags.Overflow);
+
+        if (negative == overflow)
+        {
+            _pc = target;
+            pcDelta = 0;
+        }
+    }
+
+    private partial void Execute_JLE(byte opcode, ref ushort pcDelta)
+    {
+        var target = _memory.ReadWord(_pc + 1);
+        var zero = IsFlagOn(CpuFlags.Zero);
+        var negative = IsFlagOn(CpuFlags.Negative);
+        var overflow = IsFlagOn(CpuFlags.Overflow);
+
+        if (zero && negative != overflow)
+        {
+            _pc = target;
+            pcDelta = 0;
+        }
+    }
+
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta)
     {
         var target = _memory.ReadWord(_pc + 1);
