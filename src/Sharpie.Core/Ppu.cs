@@ -91,7 +91,7 @@ public partial class Ppu
             var spriteId = _systemRam.ReadByte(oamIndex + 2);
             var attributes = _systemRam.ReadByte(oamIndex + 3);
 
-            if (x == 0 && y == 0 & spriteId == 0 & attributes == 0)
+            if (x == 0xFF && y == 0xFF & spriteId == 0xFF & attributes == 0xFF)
                 continue;
 
             GetSprite(spriteId, attributes);

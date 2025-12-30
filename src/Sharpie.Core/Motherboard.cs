@@ -28,8 +28,7 @@ public class Motherboard : IMotherboard
     public Motherboard()
     {
         _memory = new Memory();
-        Span<byte> oam = _memory.Slice(Memory.OamStart, 2048);
-        oam.Fill(0xFF);
+        _memory.FillRange(Memory.OamStart, 2048, 0xFF);
         _cpu = new Cpu(_memory, this);
         _ppu = new Ppu(_memory);
         _apu = new Apu(_memory);
