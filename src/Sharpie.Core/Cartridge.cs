@@ -1,31 +1,45 @@
-public struct Cartridge
+using System.Text;
+
+namespace Sharpie.Core;
+
+public sealed class Cartridge
 {
-    public string Title { get; private set; }
-    public ushort MusicAddress { get; private set; }
-    public byte[] RomData { get; private set; }
-    public byte[] HeaderPalette { get; private set; }
+    public byte[] RomData { get; init; } = new byte[59392];
+    public string Title { get; init; } = "";
+    public ushort MinBiosVersion { get; init; } = 0;
+    public byte[] Palette { get; init; } = new byte[16];
 
-    public static Cartridge? Load(string filePath)
+    public static Cartridge Load(string filePath)
     {
-        byte[] fileBytes = File.ReadAllBytes(filePath);
+        using var fs = File.OpenRead(filePath);
+        using var reader = new BinaryReader(fs);
 
-        if (
-            fileBytes[0] != 'S'
-            || fileBytes[1] != 'H'
-            || fileBytes[2] != 'R'
-            || fileBytes[3] != 'P'
-        )
-            return null;
+        if (Encoding.ASCII.GetString(reader.ReadBytes(4)) != "SHRP")
+            throw new FormatException("Not a valid Sharpie ROM.");
 
-        var cart = new Cartridge();
-        cart.Title = System.Text.Encoding.ASCII.GetString(fileBytes, 0x09, 20).TrimEnd('\0');
-        cart.HeaderPalette = new byte[16];
-        Array.Copy(fileBytes, 0x20, cart.HeaderPalette, 0, 16);
+        var title = Encoding.ASCII.GetString(reader.ReadBytes(24)).TrimEnd('\0');
 
-        cart.MusicAddress = BitConverter.ToUInt16(fileBytes, 0x30);
-        cart.RomData = new byte[fileBytes.Length - 50];
-        Array.Copy(fileBytes, 50, cart.RomData, 0, cart.RomData.Length);
+        var author = Encoding.ASCII.GetString(reader.ReadBytes(14)).TrimEnd('0');
 
-        return cart;
+        var minVersion = reader.ReadUInt16();
+        if (minVersion > IMotherboard.VersionBinFormat) // safely fail if we try to load newer cartridge on older firmware
+            throw new ApplicationException(
+                $"ROM {title} requires BIOS version {minVersion}. Current BIOS version: {IMotherboard.VersionBinFormat}"
+            );
+
+        var checksum = reader.ReadUInt32();
+
+        var palette = reader.ReadBytes(16);
+
+        fs.Seek(0x40, SeekOrigin.Begin);
+        var rom = reader.ReadBytes((int)(fs.Length - fs.Position));
+
+        return new Cartridge
+        {
+            Title = title,
+            MinBiosVersion = minVersion,
+            Palette = palette,
+            RomData = rom,
+        };
     }
 }

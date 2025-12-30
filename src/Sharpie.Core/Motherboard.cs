@@ -39,20 +39,14 @@ public class Motherboard : IMotherboard
             TextGrid[i, j] = 0xFF;
     }
 
-    public void LoadCartridge(string path)
+    public void BootCartridge(Cartridge cart)
     {
-        var loadAttempt = Cartridge.Load(path);
-        if (!loadAttempt.HasValue)
-            return; // softlock like how the DS froze if you took the cartridge out
+        var bytesToLoad = Math.Min(cart.RomData.Length, Memory.OamStart); // capped to avoid any tomfoolery from manually edited files
+        _memory.LoadData(Memory.RomStart, cart.RomData.Take(bytesToLoad).ToArray());
 
-        var cart = loadAttempt.Value;
-        _cpu.LoadPalette(cart.HeaderPalette);
-        for (var i = 0; i < cart.RomData.Length; i++)
-        {
-            _memory.WriteByte(i, cart.RomData[i]);
-        }
-
-        _musicStart = cart.MusicAddress;
+        _cpu.LoadPalette(cart.Palette);
+        _cpu.Reset();
+        Run();
     }
 
     public void SetupDisplay()

@@ -1,5 +1,12 @@
+namespace Sharpie.Core;
+
 public interface IMotherboard
 {
+    public static readonly Version BiosVersion = new(0, 0, 1);
+    public static readonly string VersionString =
+        $"{BiosVersion.Major}.{BiosVersion.Minor}.{BiosVersion.Build}";
+    public static ushort VersionBinFormat =>
+        (ushort)(BiosVersion.Major * 10000 + BiosVersion.Minor * 100 + BiosVersion.Build);
     byte[] ControllerStates { get; }
     byte[,] TextGrid { get; }
     byte FontColorIndex { get; }
