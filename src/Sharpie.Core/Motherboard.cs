@@ -149,7 +149,7 @@ public class Motherboard : IMotherboard
         for (int i = 0; i < 32; i++)
         for (int j = 0; j < 32; j++)
             TextGrid[i, j] = 0xFF;
-        _ppu.FillBuffer(colorIndex);
+        _ppu.BackgroundColorIndex = colorIndex;
     }
 
     public void DrawChar(int x, int y, byte charCode)

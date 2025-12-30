@@ -13,6 +13,8 @@ public partial class Ppu
     private readonly Memory _vRam;
     private readonly byte[] _spriteBuffer = new byte[64]; // here so the GC doesn't cry
 
+    public byte BackgroundColorIndex { get; set; } = 0;
+
     public Ppu(Memory systemRam)
     {
         _systemRam = systemRam;
@@ -112,7 +114,7 @@ public partial class Ppu
         }
     }
 
-    public void FillBuffer(byte colorIndex)
+    private void FillBuffer(byte colorIndex)
     {
         Span<byte> vramSpan = _vRam.Slice(RenderStart, 32768);
         vramSpan.Fill((byte)((colorIndex << 4) | colorIndex));

@@ -533,9 +533,8 @@ public partial class Cpu
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta)
     {
         var idx = _memory.ReadByte(_pc + 1) & 0x0F;
-        var color = _registers[idx];
-        var packed = (byte)(((color << 4) & 0xF0) | (color & 0x0F));
-        _mobo.ClearScreen(packed);
+        var color = (byte)(_registers[idx] & 0xF);
+        _mobo.ClearScreen(color);
     }
 
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta)
