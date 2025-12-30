@@ -48,6 +48,8 @@ public partial class Ppu
     {
         if (x < 0 || x >= DisplayWidth || y < 0 || y >= DisplayHeight)
             return;
+        if (colorIndex == 0)
+            return;
 
         var pixelIndex = y * 256 + x;
         var byteOffset = pixelIndex / 2;
