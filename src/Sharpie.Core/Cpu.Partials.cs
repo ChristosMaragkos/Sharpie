@@ -203,17 +203,15 @@ public partial class Cpu
 
     private partial void Execute_INC(byte opcode, ref ushort pcDelta)
     {
-        var x = IndexFromOpcode(opcode);
-
-        var result = _registers[x] + 1;
+        var x = _memory.ReadByte(_pc + 1);
+        var result = (ushort)(_registers[x] + 1);
         UpdateFlags(result, _registers[x], 1);
-        _registers[x] = (ushort)result;
+        _registers[x] = result;
     }
 
     private partial void Execute_DEC(byte opcode, ref ushort pcDelta)
     {
-        var x = IndexFromOpcode(opcode);
-
+        var x = _memory.ReadByte(_pc + 1);
         var result = _registers[x] - 1;
         UpdateFlags(result, _registers[x], 1, true);
         _registers[x] = (ushort)result;
@@ -221,10 +219,8 @@ public partial class Cpu
 
     private partial void Execute_NOT(byte opcode, ref ushort pcDelta)
     {
-        var x = IndexFromOpcode(opcode);
-
+        var x = _memory.ReadByte(_pc + 1);
         var result = (ushort)~_registers[x];
-
         UpdateLogicFlags(result);
         SetFlag(false, CpuFlags.Carry);
         SetFlag(false, CpuFlags.Overflow);
