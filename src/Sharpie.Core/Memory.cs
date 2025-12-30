@@ -7,13 +7,13 @@ public class Memory
 {
     // Memory map:
     public const ushort RomStart = 0x0000;
-    public const ushort SpriteAtlasStart = 0xDFFF;
-    public const ushort OamStart = 0xE000;
-    public const ushort WorkRamStart = 0xE800;
+    public const ushort SpriteAtlasStart = 0xE7FF;
+    public const ushort OamStart = 0xE800;
+    public const ushort WorkRamStart = 0xF000;
 
-    // Note that the color palette is the last 16 memory slots of WRAM.
-    public const ushort ColorPaletteStart = 0xEFF0; // 16 memory slots, one per color. Indexed as pointers to internal colors.
-    public const ushort AudioRamStart = 0xF000; // 4KB of Audio Ram. No samples. Deal with it.
+    public const ushort ColorPaletteStart = 0xFA20; // 16 memory slots, one per color. Indexed as pointers to internal colors.
+    public const ushort AudioRamStart = 0xF800; // 4KB of Audio Ram. No samples. Deal with it.
+    public const ushort InstrumentTableStart = AudioRamStart + 32;
 
     // The actual RAM chip
     private readonly byte[] _contents = new byte[65536];

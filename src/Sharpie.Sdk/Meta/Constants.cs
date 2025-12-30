@@ -10,5 +10,5 @@ internal static class Constants
     public const int HeaderSize = 64;
     public const int TitleLimit = 24;
     public const int AuthorLimit = 16;
-    public const int MaxRomSize = 57344;
+    public const int MaxRomSize = 59392;
 }
