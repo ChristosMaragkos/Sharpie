@@ -36,11 +36,17 @@ public class Sequencer
             var duration = _memory.ReadByte(_cursor + 2);
             var instrument = _memory.ReadByte(_cursor + 3);
 
-            if (note == 0xFF)
+            if (channel == 0xFF) // END
             {
                 Enabled = false;
                 mobo.StopAllSounds();
                 break;
+            }
+            else if (channel == 0xFE) // GOTO
+            {
+                var jumpAddr = (ushort)(duration | (instrument << 8));
+                _cursor = jumpAddr;
+                continue;
             }
             else if (note == 0)
             {
@@ -50,6 +56,7 @@ public class Sequencer
             {
                 mobo.PlayNote(channel, note, instrument);
             }
+
             _delayFrames = duration;
             _cursor += 4;
         }
