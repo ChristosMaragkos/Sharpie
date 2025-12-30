@@ -480,16 +480,14 @@ public partial class Cpu
     {
         var target = _memory.ReadWord(_pc + 1);
         var returnAddress = (ushort)(_pc + 3);
-        _sp -= 2;
-        _memory.WriteWord(_sp, returnAddress);
+        _callStack.Push(returnAddress);
         _pc = target;
         pcDelta = 0;
     }
 
     private partial void Execute_RET(byte opcode, ref ushort pcDelta)
     {
-        var returnAddress = _memory.ReadWord(_sp);
-        _sp += 2;
+        var returnAddress = _callStack.Pop();
         _pc = returnAddress;
         pcDelta = 0;
     }
@@ -497,15 +495,14 @@ public partial class Cpu
     private partial void Execute_PUSH(byte opcode, ref ushort pcDelta)
     {
         var x = _memory.ReadByte(_pc + 1);
-        _sp -= 2;
-        _memory.WriteWord(_sp, _registers[x]);
+        var addr = _registers[x];
+        _callStack.Push(addr);
     }
 
     private partial void Execute_POP(byte opcode, ref ushort pcDelta)
     {
         var x = _memory.ReadByte(_pc + 1);
-        var value = _memory.ReadWord(_sp);
-        _sp += 2;
+        var value = _callStack.Pop();
         _registers[x] = value;
     }
 

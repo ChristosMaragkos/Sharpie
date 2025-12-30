@@ -24,7 +24,6 @@ public partial class Cpu
     }
 
     private ushort _pc;
-    private ushort _sp;
     private ushort[] _registers = new ushort[16];
     private readonly Random _rng = new();
     private ushort _oamReg = 0;
@@ -34,6 +33,7 @@ public partial class Cpu
         set => _oamReg = value < MaxOamSlots ? value : (ushort)0;
     }
     private byte[] _tagMap = new byte[512];
+    private Stack<ushort> _callStack = new();
 
     private int _cursorPosX;
     private int CursorPosX
@@ -144,10 +144,6 @@ public partial class Cpu
         Array.Clear(_registers, 0, _registers.Length);
 
         _pc = Memory.RomStart;
-
-        // 0xEFEF to not collide with color palette and above
-        _sp = 0xEFEF;
-
         IsHalted = false;
     }
 
@@ -194,7 +190,6 @@ public partial class Cpu
         return @$"
 ===SHARP-16 CPU===
 PC: 0x{_pc:X4}
-SP: 0x{_sp:X4}
 0p: 0x{_memory.ReadByte(_pc):X2}
 ";
     }
