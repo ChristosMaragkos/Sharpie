@@ -219,6 +219,8 @@ public class Motherboard : IMotherboard
     public void StopAllSounds()
     {
         _apu.ClearPhases();
+        for (byte i = 0; i < 8; i++)
+            StopChannel(i);
     }
 
     public void StartSequencer(ushort address)

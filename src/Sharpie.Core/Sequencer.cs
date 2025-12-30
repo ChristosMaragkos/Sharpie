@@ -39,6 +39,7 @@ public class Sequencer
             if (note == 0xFF)
             {
                 Enabled = false;
+                mobo.StopAllSounds();
                 break;
             }
             else if (note == 0)
