@@ -39,8 +39,6 @@ public static class InstructionSet
         { "DDEC", (3, 105, 1, false, "W") },
         { "DADD", (4, 106, 2, false, "RB") },
         { "DSUB", (4, 107, 2, false, "RB") },
-        { "DMOV", (4, 108, 2, false, "RB") },
-        { "DSET", (5, 109, 2, false, "RW") },
         { "JMP", (3, 112, 1, false, "W") },
         { "JEQ", (3, 113, 1, false, "W") },
         { "JNE", (3, 114, 1, false, "W") },

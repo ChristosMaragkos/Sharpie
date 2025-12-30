@@ -36,8 +36,6 @@
     { "hex": "0x69", "name": "DDEC",   "len": 3, "logic": null , "words": 1 , "pattern": "W" },
     { "hex": "0x6A", "name": "DADD",   "len": 4, "logic": null , "words": 2 , "pattern": "RB" },
     { "hex": "0x6B", "name": "DSUB",   "len": 4, "logic": null , "words": 2 , "pattern": "RB" },
-    { "hex": "0x6C", "name": "DMOV",   "len": 4, "logic": null , "words": 2 , "pattern": "RB" },
-    { "hex": "0x6D", "name": "DSET",   "len": 5, "logic": null , "words": 2 , "pattern": "RW" },
   
     { "hex": "0x70", "name": "JMP",    "len": 3, "logic": null , "words": 1 , "pattern": "W" },
     { "hex": "0x71", "name": "JEQ",    "len": 3, "logic": null , "words": 1 , "pattern": "W" },

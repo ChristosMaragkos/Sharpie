@@ -399,20 +399,6 @@ public partial class Cpu
         _memory.WriteWord(addr, (ushort)result);
     }
 
-    private partial void Execute_DMOV(byte opcode, ref ushort pcDelta)
-    {
-        var addr = _memory.ReadWord(_pc + 1);
-        var imm = _memory.ReadByte(_pc + 3);
-        _memory.WriteByte(addr, imm);
-    }
-
-    private partial void Execute_DSET(byte opcode, ref ushort pcDelta)
-    {
-        var addr = _memory.ReadWord(_pc + 1);
-        var imm = _memory.ReadWord(_pc + 3);
-        _memory.WriteWord(addr, imm);
-    }
-
     private partial void Execute_JMP(byte opcode, ref ushort pcDelta)
     {
         var target = _memory.ReadWord(_pc + 1);

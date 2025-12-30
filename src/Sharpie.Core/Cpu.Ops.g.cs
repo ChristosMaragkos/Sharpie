@@ -168,16 +168,6 @@ public partial class Cpu {
                 Execute_DSUB(opcode, ref pcDelta);
                 break;
 
-            case 0x6C: //DMOV
-                pcDelta = 4;
-                Execute_DMOV(opcode, ref pcDelta);
-                break;
-
-            case 0x6D: //DSET
-                pcDelta = 5;
-                Execute_DSET(opcode, ref pcDelta);
-                break;
-
             case 0x70: //JMP
                 pcDelta = 3;
                 Execute_JMP(opcode, ref pcDelta);
@@ -203,22 +193,32 @@ public partial class Cpu {
                 Execute_JLT(opcode, ref pcDelta);
                 break;
 
-            case 0x75: //CALL
+            case 0x75: //JGE
+                pcDelta = 3;
+                Execute_JGE(opcode, ref pcDelta);
+                break;
+
+            case 0x76: //JLE
+                pcDelta = 3;
+                Execute_JLE(opcode, ref pcDelta);
+                break;
+
+            case 0x77: //CALL
                 pcDelta = 3;
                 Execute_CALL(opcode, ref pcDelta);
                 break;
 
-            case 0x76: //RET
+            case 0x78: //RET
                 pcDelta = 1;
                 Execute_RET(opcode, ref pcDelta);
                 break;
 
-            case 0x77: //PUSH
+            case 0x79: //PUSH
                 pcDelta = 2;
                 Execute_PUSH(opcode, ref pcDelta);
                 break;
 
-            case 0x78: //POP
+            case 0x7A: //POP
                 pcDelta = 2;
                 Execute_POP(opcode, ref pcDelta);
                 break;
@@ -353,13 +353,13 @@ public partial class Cpu {
     private partial void Execute_DDEC(byte opcode, ref ushort pcDelta);
     private partial void Execute_DADD(byte opcode, ref ushort pcDelta);
     private partial void Execute_DSUB(byte opcode, ref ushort pcDelta);
-    private partial void Execute_DMOV(byte opcode, ref ushort pcDelta);
-    private partial void Execute_DSET(byte opcode, ref ushort pcDelta);
     private partial void Execute_JMP(byte opcode, ref ushort pcDelta);
     private partial void Execute_JEQ(byte opcode, ref ushort pcDelta);
     private partial void Execute_JNE(byte opcode, ref ushort pcDelta);
     private partial void Execute_JGT(byte opcode, ref ushort pcDelta);
     private partial void Execute_JLT(byte opcode, ref ushort pcDelta);
+    private partial void Execute_JGE(byte opcode, ref ushort pcDelta);
+    private partial void Execute_JLE(byte opcode, ref ushort pcDelta);
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta);
     private partial void Execute_RET(byte opcode, ref ushort pcDelta);
     private partial void Execute_PUSH(byte opcode, ref ushort pcDelta);
