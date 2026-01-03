@@ -10,7 +10,7 @@ var ops =
 
 var sb = new StringBuilder();
 sb.AppendLine("// auto-generated");
-sb.AppendLine("namespace Sharpie.Core;");
+sb.AppendLine("namespace Sharpie.Core.Hardware;");
 sb.AppendLine("public partial class Cpu {");
 sb.AppendLine("    private void ExecuteOpcode(byte opcode, out ushort pcDelta) {");
 sb.AppendLine("        pcDelta = 0;");
@@ -58,7 +58,7 @@ foreach (var op in ops)
 }
 
 sb.AppendLine("}");
-File.WriteAllText("./src/Sharpie.Core/Cpu.Ops.g.cs", sb.ToString());
+File.WriteAllText("./src/Sharpie.Core/Hardware/Cpu.Ops.g.cs", sb.ToString());
 Console.WriteLine("Opcode switch generated successfully. Sanity saved.");
 
 sb.Clear();

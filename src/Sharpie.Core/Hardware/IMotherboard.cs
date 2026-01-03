@@ -1,4 +1,4 @@
-namespace Sharpie.Core;
+namespace Sharpie.Core.Hardware;
 
 public interface IMotherboard
 {
@@ -11,9 +11,9 @@ public interface IMotherboard
     byte[,] TextGrid { get; }
     byte FontColorIndex { get; }
 
-    void Run();
+    void Step();
     void ClearScreen(byte colorIndex);
-    void AwaitVBlank();
+    void VBlank();
     void SetTextAttributes(byte attributes);
     void DrawChar(int x, int y, byte charCode);
 

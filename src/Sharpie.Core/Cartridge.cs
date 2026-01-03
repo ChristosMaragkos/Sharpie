@@ -1,4 +1,5 @@
 using System.Text;
+using Sharpie.Core.Hardware;
 
 namespace Sharpie.Core;
 

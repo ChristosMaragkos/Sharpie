@@ -1,4 +1,6 @@
-namespace Sharpie.Core;
+using Sharpie.Core.Hardware;
+
+namespace Sharpie.Core.Drivers;
 
 public class Sequencer
 {

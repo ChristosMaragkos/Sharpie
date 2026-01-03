@@ -1,4 +1,4 @@
-namespace Sharpie.Core;
+namespace Sharpie.Core.Hardware;
 
 public partial class Ppu
 {

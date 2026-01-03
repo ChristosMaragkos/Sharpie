@@ -1,4 +1,4 @@
-namespace Sharpie.Core;
+namespace Sharpie.Core.Hardware;
 
 [Flags]
 internal enum CpuFlags : ushort
@@ -190,7 +190,23 @@ public partial class Cpu
         return @$"
 ===SHARP-16 CPU===
 PC: 0x{_pc:X4}
-0p: 0x{_memory.ReadByte(_pc):X2}
+Registers:
+    r0  -> {_registers[0]}
+    r1  -> {_registers[1]}
+    r2  -> {_registers[2]}
+    r3  -> {_registers[3]}
+    r4  -> {_registers[4]}
+    r5  -> {_registers[5]}
+    r6  -> {_registers[6]}
+    r7  -> {_registers[7]}
+    r8  -> {_registers[8]}
+    r9  -> {_registers[9]}
+    r10 -> {_registers[10]}
+    r11 -> {_registers[11]}
+    r12 -> {_registers[12]}
+    r13 -> {_registers[13]}
+    r14 -> {_registers[14]}
+    r15 -> {_registers[15]}
 ";
     }
 

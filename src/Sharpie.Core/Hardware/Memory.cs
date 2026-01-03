@@ -1,4 +1,4 @@
-﻿namespace Sharpie.Core;
+﻿namespace Sharpie.Core.Hardware;
 
 /// <summary>
 /// The memory of the Sharpie console.
@@ -12,7 +12,8 @@ public class Memory
     public const ushort WorkRamStart = 0xF000;
 
     public const ushort ColorPaletteStart = 0xFA20; // 16 memory slots, one per color. Indexed as pointers to internal colors.
-    public const ushort AudioRamStart = 0xF800; // 4KB of Audio Ram. No samples. Deal with it.
+    public const ushort AudioRamStart = 0xF800;
+    public const ushort ReservedSpaceStart = 0xF800 + 544; // 0xFA20 - 0xFFFF is reserved. Not sure for what, but I reserved it. Might use it for BIOS.
     public const ushort InstrumentTableStart = AudioRamStart + 32;
 
     // The actual RAM chip

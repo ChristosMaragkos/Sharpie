@@ -1,4 +1,4 @@
-namespace Sharpie.Core;
+namespace Sharpie.Core.Hardware;
 
 public class Apu
 {
@@ -38,7 +38,8 @@ public class Apu
         if (channel >= 6)
             freq *= 128;
 
-        _phases[channel] += freq / 44100f;
+        var delta = freq / 44100f;
+        _phases[channel] += delta;
         if (_phases[channel] >= 1f)
         {
             _phases[channel] -= 1f;
@@ -47,9 +48,9 @@ public class Apu
 
         var wave = channel switch
         {
-            0 or 1 => Square(_phases[channel]),
+            0 or 1 => Square(_phases[channel], delta),
             2 or 3 => Triangle(_phases[channel]),
-            4 or 5 => Sawtooth(_phases[channel]),
+            4 or 5 => Sawtooth(_phases[channel], delta),
             _ => _noiseBuffer[channel],
         };
 
@@ -63,7 +64,7 @@ public class Apu
         var instrumentAddr = Memory.AudioRamStart + 32 + (instrumentId * 4);
         var chanBaseAddr = Memory.AudioRamStart + (channel * 4);
         var chanMaxVolume = _ram.ReadByte(chanBaseAddr + 2) / 255f;
-        const float divisor = 50000f;
+        const float divisor = 100000f;
 
         var aStep = (_ram.ReadByte(instrumentAddr) / divisor) + 0.000001f;
         var dStep = (_ram.ReadByte(instrumentAddr + 1) / divisor) + 0.000001f;
@@ -71,10 +72,19 @@ public class Apu
         var realSustain = sLevel * chanMaxVolume; // always a percentage of max volume
         var rStep = (_ram.ReadByte(instrumentAddr + 3) / divisor) + 0.000001f;
 
-        if (!gateOn && _stages[channel] != AdsrStage.Idle)
-            _stages[channel] = AdsrStage.Release;
-        else if (gateOn && _stages[channel] is AdsrStage.Idle or AdsrStage.Release)
-            _stages[channel] = AdsrStage.Attack;
+        if (!gateOn)
+        {
+            if (_stages[channel] != AdsrStage.Idle)
+                _stages[channel] = AdsrStage.Release;
+        }
+        else
+        {
+            if (_stages[channel] == AdsrStage.Idle)
+            {
+                _stages[channel] = AdsrStage.Attack;
+                _volumes[channel] = 0f;
+            }
+        }
 
         switch (_stages[channel])
         {
@@ -84,22 +94,32 @@ public class Apu
                     _stages[channel] = AdsrStage.Decay;
                 break;
             case AdsrStage.Decay:
-                _volumes[channel] -= dStep;
                 if (_volumes[channel] <= realSustain)
-                    _stages[channel] = AdsrStage.Sustain;
-                if (_volumes[channel] <= 0f && sLevel == 0f)
                 {
-                    _stages[channel] = AdsrStage.Idle;
-                    _ram.WriteByte(chanBaseAddr + 3, (byte)(control & 0xFE)); // force the gate to 0 to stop note from looping
+                    _volumes[channel] -= dStep;
+                    if (_volumes[channel] <= realSustain)
+                    {
+                        _volumes[channel] = realSustain;
+                        _stages[channel] = AdsrStage.Sustain;
+                    }
+                }
+                else
+                {
+                    _stages[channel] = AdsrStage.Sustain;
                 }
                 break;
             case AdsrStage.Sustain:
                 _volumes[channel] = realSustain;
+                if (realSustain <= 0f && gateOn)
+                    _stages[channel] = AdsrStage.Idle;
                 break;
             case AdsrStage.Release:
                 _volumes[channel] -= rStep;
                 if (_volumes[channel] <= 0f)
+                {
+                    _volumes[channel] = 0f;
                     _stages[channel] = AdsrStage.Idle;
+                }
                 break;
             default:
                 break;
@@ -113,9 +133,10 @@ public class Apu
         return (_noise.NextSingle() * 2f - 1f) * 0.25f;
     }
 
-    private static float Sawtooth(float phase)
+    private static float Sawtooth(float phase, float delta)
     {
-        return (phase * 2f - 1f) * 0.6f;
+        var initial = (phase * 2f - 1f);
+        return initial - PolyBlep(phase, delta);
     }
 
     private static float Triangle(float phase)
@@ -127,29 +148,30 @@ public class Apu
             value = 2f - (phase * 4f);
         else
             value = (phase * 4f) - 4f;
-        return value * 1.2f;
+        return value;
     }
 
-    private static float Square(float phase)
+    private static float Square(float phase, float delta)
     {
-        return (phase < 0.5f ? 1f : -1f) * 0.4f;
+        var initial = (phase < 0.5f ? 1f : -1f);
+        var correction = PolyBlep(phase, delta);
+        var shift = (phase + 0.5f) % 1f;
+        correction -= PolyBlep(shift, delta);
+        return initial + correction;
     }
 
     internal void FillBuffer(float[] writeBuffer)
     {
+        const float preGain = 0.3f;
+
         for (var i = 0; i < writeBuffer.Length; i++)
         {
             var mixedSample = 0f;
-            var activeChannels = 0;
             for (var chan = 0; chan < 8; chan++)
             {
-                var sample = GenerateSample(chan);
-                if (MathF.Abs(sample) > 0)
-                    activeChannels++;
-                mixedSample += sample;
+                mixedSample += GenerateSample(chan);
             }
-            var divisor = MathF.Max(1.5f, activeChannels * 0.5f);
-            writeBuffer[i] = (mixedSample / divisor) * 0.5f; // normalized with AGC to avoid earrape
+            writeBuffer[i] = MathF.Tanh(mixedSample * preGain); // only YOU can prevent earrape!
         }
     }
 
@@ -164,7 +186,6 @@ public class Apu
 
     internal void ClearPhases()
     {
-        Array.Clear(_phases);
         Array.Clear(_phases);
     }
 
@@ -181,7 +202,7 @@ public class Apu
             // 2: Slow Attack, Long Release
             new byte[] { 0x02, 0x05, 0x88, 0x40 },
             // 3: Instant Attack, Fast Decay, No Sustain
-            new byte[] { 0x0F, 0x20, 0x00, 0x00 },
+            new byte[] { 0xF0, 0x20, 0x00, 0xF0 },
         };
 
         foreach (var inst in defaults)
@@ -191,5 +212,21 @@ public class Apu
                 _ram.WriteByte(addr++, inst[i]);
             }
         }
+    }
+
+    private static float PolyBlep(float phase, float delta)
+    {
+        if (phase < delta) // are we at the start of the way?
+        {
+            phase /= delta;
+            return (phase + phase - phase * phase - 1f); // phase phase phase phase phase phase
+        }
+        else if (phase > 1f - delta) // are we at the end?
+        {
+            phase = (phase - 1f) / delta;
+            return (phase + phase + phase * phase + 1f);
+        }
+
+        return 0f; // no need to smooth non edge values
     }
 }
