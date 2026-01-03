@@ -5,12 +5,14 @@ namespace Sharpie.Sdk.Asm;
 public partial class Assembler
 {
     private int CurrentAddress = 0;
-    private static readonly char[] CommonDelimiters = [','];
+    private static readonly char[] CommonDelimiters = [',', ' '];
 
     private IEnumerable<string>? FileContents { get; set; }
     public Dictionary<string, ushort> LabelToMemAddr { get; } = new();
     private Dictionary<string, ushort> Constants { get; } = new();
     public List<TokenLine> Tokens { get; } = new();
+    private bool _isInAssetMode;
+    private int _realCursor;
 
     private void ReadFile()
     {
@@ -26,10 +28,24 @@ public partial class Assembler
             var tokenLine = new TokenLine();
             lineNum++;
             tokenLine.SourceLine = lineNum;
+            tokenLine.Address = CurrentAddress;
             cleanLine = line.Trim().ToUpper();
             RemoveComment(ref cleanLine);
             if (IsLineEmpty(cleanLine))
                 continue;
+
+            var isAssetDirective =
+                cleanLine.StartsWith(".SPRITE")
+                || cleanLine.StartsWith(".DB")
+                || cleanLine.StartsWith(".DATA")
+                || cleanLine.StartsWith(".BYTES")
+                || cleanLine.StartsWith(".DW");
+
+            if (_isInAssetMode && !isAssetDirective)
+            {
+                CurrentAddress = _realCursor;
+                _isInAssetMode = false;
+            }
 
             ParseConstantDefinition(ref cleanLine, lineNum);
             if (IsLineEmpty(cleanLine)) // should be empty but oh well
@@ -47,11 +63,13 @@ public partial class Assembler
 
             if (tokenLine.ArePropertiesNull())
                 continue;
-            Tokens.Add(tokenLine);
+            if (tokenLine.Opcode != "ALT")
+                Tokens.Add(tokenLine); // ALT is added right when tokenizing
         }
 
         Compile();
         return;
+
         bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
 
@@ -125,6 +143,7 @@ public partial class Assembler
                 Opcode = "SETCRS",
                 Args = new[] { coordArgs[0], coordArgs[1] },
                 SourceLine = lineNumber,
+                Address = CurrentAddress,
             }
         );
         CurrentAddress += InstructionSet.GetOpcodeLength("SETCRS");
@@ -161,7 +180,8 @@ public partial class Assembler
         if (!filePath.EndsWith(".asm"))
             throw new Exception($"File \"{filePath}\" is not in the \".asm\" format.");
         Console.WriteLine("Assembler: Loading file...");
-        FileContents = File.ReadAllLines(filePath);
+        var initialFile = File.ReadAllLines(filePath);
+        FileContents = PreProcess(initialFile, Path.GetDirectoryName(filePath)!);
         ReadFile();
     }
 
@@ -198,10 +218,10 @@ public partial class Assembler
 
     private void Tokenize(string line, ref TokenLine tokenLine, int lineNumber)
     {
-        var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        for (var i = 0; i < args.Length; i++)
-            args[i] = args[i].Trim(CommonDelimiters).Trim();
+        var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(str => str.Trim(CommonDelimiters))
+            .Where(str => !string.IsNullOrWhiteSpace(str))
+            .ToArray();
 
         tokenLine.Opcode = args[0];
         tokenLine.Args = args.Skip(1).ToArray();
@@ -222,7 +242,10 @@ public partial class Assembler
                             lineNumber
                         );
                     else
+                    {
                         CurrentAddress = ParseWord(args[1], lineNumber);
+                        tokenLine.Address = CurrentAddress;
+                    }
 
                     break;
 
@@ -234,13 +257,20 @@ public partial class Assembler
                         );
                     else if (args.Length < 2)
                         throw new AssemblySyntaxException(
-                            "Directive .SPRITE expected a valid memory address",
+                            "Directive .SPRITE expected a valid sprite index 0-255",
                             lineNumber
                         );
                     else
                     {
+                        if (!_isInAssetMode)
+                        {
+                            _realCursor = CurrentAddress;
+                            _isInAssetMode = true;
+                        }
+
                         var spriteIndex = ParseByte(args[1], lineNumber);
                         CurrentAddress = CalculateSpriteAddress(spriteIndex);
+                        tokenLine.Address = CurrentAddress;
                     }
 
                     break;
@@ -248,10 +278,12 @@ public partial class Assembler
                 case ".DB":
                 case ".BYTES":
                 case ".DATA":
+                    tokenLine.Address = CurrentAddress;
                     CurrentAddress += (args.Length - 1);
                     break;
 
                 case ".DW":
+                    tokenLine.Address = CurrentAddress;
                     CurrentAddress += (2 * (args.Length - 1));
                     break;
 
@@ -268,20 +300,28 @@ public partial class Assembler
             return; // no need to check for an opcode
         }
 
-        if (args[0] == "PREFIX" && args.Length > 1)
+        if (args[0] == "ALT" && args.Length > 1)
         {
             Tokens.Add(
                 new TokenLine
                 {
-                    Opcode = "PREFIX",
+                    Opcode = "ALT",
                     Args = Array.Empty<string>(),
                     SourceLine = lineNumber,
+                    Address = CurrentAddress,
                 }
             );
-            CurrentAddress += InstructionSet.GetOpcodeLength("PREFIX");
+            CurrentAddress += InstructionSet.GetOpcodeLength("ALT");
 
             var remainingLine = string.Join(' ', args.Skip(1));
-            Tokenize(remainingLine, ref tokenLine, lineNumber);
+            var nextToken = new TokenLine
+            {
+                SourceLine = lineNumber,
+                Address = CurrentAddress,
+                // Args = args.Skip(1).ToArray(),
+            };
+            Tokenize(remainingLine, ref nextToken, lineNumber);
+            Tokens.Add(nextToken);
             return;
         }
 
@@ -290,9 +330,59 @@ public partial class Assembler
 
         if (args.Length - 1 != InstructionSet.GetOpcodeWords(tokenLine.Opcode))
             throw new AssemblySyntaxException(
-                $"Invalid argument count for opcode {tokenLine.Opcode}: expected {InstructionSet.GetOpcodeWords(tokenLine.Opcode)} but found {args.Length - 1}"
+                $"Invalid argument count for opcode {tokenLine.Opcode}: expected {InstructionSet.GetOpcodeWords(tokenLine.Opcode)} but found {args.Length - 1}",
+                lineNumber
             );
 
+        if (!tokenLine.Address.HasValue)
+            tokenLine.Address = CurrentAddress;
+
         CurrentAddress += InstructionSet.GetOpcodeLength(tokenLine.Opcode);
+    }
+
+    private List<string> PreProcess(IEnumerable<string> lines, string currentDir)
+    {
+        var expandedLines = new List<string>();
+        var lineNum = 0;
+
+        foreach (var line in lines)
+        {
+            lineNum++;
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith(".INCLUDE", StringComparison.OrdinalIgnoreCase))
+            {
+                int firstQuote = line.IndexOf('"');
+                int lastQuote = line.LastIndexOf('"');
+
+                if (firstQuote != -1 && lastQuote > firstQuote)
+                {
+                    string includeFileName = line.Substring(
+                        firstQuote + 1,
+                        lastQuote - firstQuote - 1
+                    );
+
+                    if (!includeFileName.EndsWith(".asm"))
+                        throw new AssemblySyntaxException(
+                            $"Could not include non-assembly file {includeFileName}",
+                            lineNum
+                        );
+
+                    string fullPath = Path.Combine(currentDir, includeFileName);
+
+                    if (File.Exists(fullPath))
+                    {
+                        // recursively process the included file so it can have includes too
+                        var includedLines = File.ReadAllLines(fullPath);
+                        expandedLines.AddRange(
+                            PreProcess(includedLines, Path.GetDirectoryName(fullPath)!)
+                        );
+                        continue;
+                    }
+                    throw new AssemblySyntaxException($"Could not find '{fullPath}'", lineNum);
+                }
+            }
+            expandedLines.Add(line);
+        }
+        return expandedLines;
     }
 }

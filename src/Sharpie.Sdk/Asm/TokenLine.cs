@@ -3,6 +3,7 @@ public struct TokenLine
     public string? Opcode { get; set; }
     public string[]? Args { get; set; }
     public int? SourceLine { get; set; }
+    public int? Address { get; set; }
 
     public TokenLine()
     {
@@ -14,7 +15,8 @@ public struct TokenLine
 
     public override string ToString()
     {
-        var str = $"Token line: Opcode = {Opcode} | Source Line = {SourceLine} |";
+        var str =
+            $"Token line: Opcode = {Opcode} | Source Line = {SourceLine} | Address = {Address} | ";
 
         if (Args == null)
             str += "Args = null";

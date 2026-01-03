@@ -3,6 +3,7 @@ namespace Sharpie.Sdk.Asm;
 public partial class Assembler
 {
     public readonly byte[] Rom = new byte[Meta.Constants.MaxRomSize];
+    private readonly bool[] TouchedBytes = new bool[Meta.Constants.MaxRomSize];
 
     public void Compile()
     {
@@ -11,13 +12,19 @@ public partial class Assembler
         int lineNum = 0;
         foreach (var token in Tokens)
         {
+            if (token.Opcode == ".SPRITE" || token.Opcode == ".DEF" || token.Opcode == ".ORG")
+                continue;
             lineNum = token.SourceLine!.Value;
+            CurrentAddress = token.Address!.Value;
 
             if (token.Args == null)
                 throw new AssemblySyntaxException(
                     $"Expected arguments for opcode {token.Opcode}",
                     lineNum
                 );
+
+            for (int i = 0; i < token.Args.Length; i++)
+                token.Args[i] = token.Args[i].Trim(' ', ',');
 
             if (token.Opcode!.StartsWith('.'))
             {
@@ -44,19 +51,17 @@ public partial class Assembler
                     case ".DB":
                     case ".BYTES":
                     case ".DATA":
-                        foreach (var arg in token.Args)
+                        for (int i = 0; i < token.Args.Length; i++)
                         {
-                            WriteToRom(ParseByte(arg, lineNum));
-                            CurrentAddress++;
+                            WriteToRom(ParseByte(token.Args[i], lineNum), i);
                         }
                         break;
 
                     case ".DW":
                     case ".WORDS":
-                        foreach (var arg in token.Args)
+                        for (int i = 0; i < token.Args.Length; i += 2)
                         {
-                            WriteToRom(ParseWord(arg, lineNum));
-                            CurrentAddress += 2;
+                            WriteToRom(ParseWord(token.Args[i], lineNum), i);
                         }
                         break;
                 }
@@ -69,18 +74,20 @@ public partial class Assembler
             var isFam = InstructionSet.IsOpcodeFamily(token.Opcode);
             var argIndex = 0;
 
+            var localOffset = 0;
+
             if (isFam)
             {
                 var arg = token.Args[argIndex];
                 argIndex++;
                 int regIdx = ParseRegister(arg, lineNum);
-                WriteToRom((byte)(opHex | regIdx));
+                WriteToRom((byte)(opHex | regIdx), localOffset);
+                localOffset++;
             }
             else
             {
-                WriteToRom((byte)opHex);
+                WriteToRom((byte)opHex, localOffset++);
             }
-            CurrentAddress++;
 
             for (int p = isFam ? 1 : 0; p < pattern.Length; p++)
             {
@@ -93,23 +100,24 @@ public partial class Assembler
                         {
                             byte rA = ParseRegister(token.Args[argIndex++], lineNum);
                             byte rB = ParseRegister(token.Args[argIndex++], lineNum);
-                            WriteToRom((byte)(rA << 4 | rB));
+                            WriteToRom((byte)(rA << 4 | rB), localOffset++);
                             p++;
                         }
                         else
                         {
-                            WriteToRom(ParseRegister(token.Args[argIndex++], lineNum));
+                            WriteToRom(
+                                ParseRegister(token.Args[argIndex++], lineNum),
+                                localOffset++
+                            );
                         }
-                        CurrentAddress++;
                         break;
 
                     case 'W':
-                        WriteToRom(ParseWord(token.Args[argIndex++], lineNum));
-                        CurrentAddress += 2;
+                        WriteToRom(ParseWord(token.Args[argIndex++], lineNum), localOffset);
+                        localOffset += 2;
                         break;
                     case 'B':
-                        WriteToRom(ParseByte(token.Args[argIndex++], lineNum));
-                        CurrentAddress++;
+                        WriteToRom(ParseByte(token.Args[argIndex++], lineNum), localOffset++);
                         break;
                     default:
                         throw new AssemblySyntaxException(
@@ -126,19 +134,24 @@ public partial class Assembler
         var realAddr = CurrentAddress + offset;
         if (realAddr >= Meta.Constants.MaxRomSize) // >= because MaxRomSize will throw as an index
             throw new SharpieRomSizeException(CurrentAddress);
+        if (TouchedBytes[realAddr])
+            throw new SharpieRomSizeException(
+                $"Overlap error: Attempted to write to address 0x{realAddr:X2} ({realAddr}) twice. Check your .SPRITE / .ORG / .INCLUDE directives."
+            );
 
         Rom[realAddr] = value;
+        TouchedBytes[realAddr] = true;
     }
 
     private void WriteToRom(string? opcode) =>
         WriteToRom((byte)InstructionSet.GetOpcodeHex(opcode)!);
 
-    private void WriteToRom(ushort value)
+    private void WriteToRom(ushort value, int offset = 0)
     {
         var low = (byte)(value & 0x00FF);
         var high = (byte)((value & 0xFF00) >> 8); // low endian
 
-        WriteToRom(low);
-        WriteToRom(high, 1);
+        WriteToRom(low, offset);
+        WriteToRom(high, offset + 1);
     }
 }
