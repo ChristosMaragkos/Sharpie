@@ -5,4 +5,8 @@
     <Project Path="src/Sharpie.Sdk/Sharpie.Sdk.csproj" />
     <Project Path="src/Sharpie.Tests/Sharpie.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/Sharpie.Runner/" />
+  <Folder Name="/src/Sharpie.Runner/Raylib/">
+    <Project Path="src/Sharpie.Runner/Raylib/Sharpie.Runner.Raylib.csproj" />
+  </Folder>
 </Solution>
