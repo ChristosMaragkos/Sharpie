@@ -6,9 +6,6 @@ public class Apu
     private readonly float[] _phases = new float[8]; // current phase for every oscillator
     private readonly float[] _volumes = new float[8];
     private readonly AdsrStage[] _stages = new AdsrStage[8];
-    private readonly Random _noiseGen = new();
-    private readonly float[] _noiseBuffer = new float[8];
-    private readonly int[] _noiseStepCounter = new int[8];
 
     public Apu(IMotherboard mobo)
     {
