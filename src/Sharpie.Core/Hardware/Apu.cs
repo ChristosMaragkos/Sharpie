@@ -46,16 +46,23 @@ public class Apu
         var delta = freq / 44100f;
         _phases[channel] += delta;
         
-        // For noise channels, use phase to trigger LFSR updates
+        // For noise channels, use a high-frequency timer for LFSR updates
         if (channel >= 6)
         {
-            if (_phases[channel] >= 1f)
+            // Use frequency to set LFSR update period (in samples)
+            // Lower values = faster updates = higher pitched noise
+            // Map frequency to a reasonable update rate (1-16 samples between updates)
+            var updatePeriod = Math.Max(1, Math.Min(16, (int)(2000f / freq)));
+            
+            _noiseTimer[channel]++;
+            if (_noiseTimer[channel] >= updatePeriod)
             {
-                _phases[channel] -= 1f;
-                // Advance LFSR when phase wraps
+                _noiseTimer[channel] = 0;
+                // Advance LFSR
                 var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
                 _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
             }
+            
             // Return current LFSR state
             var noiseOutput = ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
             return noiseOutput * volume;
@@ -149,6 +156,7 @@ public class Apu
     }
 
     private readonly ushort[] _noiseLfsr = new ushort[8];
+    private readonly int[] _noiseTimer = new int[8];
 
     private static float Sawtooth(float phase, float delta)
     {
