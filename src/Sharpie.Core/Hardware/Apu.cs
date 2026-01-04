@@ -6,15 +6,11 @@ public class Apu
     private readonly float[] _phases = new float[8]; // current phase for every oscillator
     private readonly float[] _volumes = new float[8];
     private readonly AdsrStage[] _stages = new AdsrStage[8];
+    private readonly Random _noiseRandom = new();
 
     public Apu(IMotherboard mobo)
     {
         _mobo = mobo;
-
-        for (int i = 6; i < 8; i++)
-        {
-            _noiseLfsr[i] = 0x4000; // 15-bit seed
-        }
 
         if (Instance == null)
             Instance = this;
@@ -46,26 +42,10 @@ public class Apu
         var delta = freq / 44100f;
         _phases[channel] += delta;
         
-        // For noise channels, use a high-frequency timer for LFSR updates
+        // For noise channels, use random-based noise with timer
         if (channel >= 6)
         {
-            // Use frequency to set LFSR update period (in samples)
-            // Lower values = faster updates = higher pitched noise
-            // Map frequency to a reasonable update rate (1-16 samples between updates)
-            var updatePeriod = Math.Max(1, Math.Min(16, (int)(2000f / freq)));
-            
-            _noiseTimer[channel]++;
-            if (_noiseTimer[channel] >= updatePeriod)
-            {
-                _noiseTimer[channel] = 0;
-                // Advance LFSR
-                var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
-                _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
-            }
-            
-            // Return current LFSR state
-            var noiseOutput = ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
-            return noiseOutput * volume;
+            return Noise(channel, freq) * volume;
         }
         
         if (_phases[channel] >= 1f)
@@ -155,8 +135,30 @@ public class Apu
         return _volumes[channel];
     }
 
-    private readonly ushort[] _noiseLfsr = new ushort[8];
     private readonly int[] _noiseTimer = new int[8];
+    private readonly float[] _noiseValue = new float[8];
+
+    private float Noise(int channel, ushort freq)
+    {
+        // Multiply frequency to create better range
+        // Low frequencies = downsampled noise (snares, explosions)
+        // High frequencies = pure static (hi-hats, fire)
+        var effectiveFreq = freq * 3f; // Multiply to push range higher
+        
+        // Calculate update period based on effective frequency
+        // Lower period = faster updates = higher pitched noise
+        var updatePeriod = Math.Max(1, Math.Min(32, (int)(4000f / effectiveFreq)));
+        
+        _noiseTimer[channel]++;
+        if (_noiseTimer[channel] >= updatePeriod)
+        {
+            _noiseTimer[channel] = 0;
+            // Generate new random value between -0.5 and +0.5
+            _noiseValue[channel] = _noiseRandom.NextSingle() - 0.5f;
+        }
+        
+        return _noiseValue[channel];
+    }
 
     private static float Sawtooth(float phase, float delta)
     {
