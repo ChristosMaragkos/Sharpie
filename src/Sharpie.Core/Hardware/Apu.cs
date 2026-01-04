@@ -14,7 +14,6 @@ public class Apu
         for (int i = 6; i < 8; i++)
         {
             _noiseLfsr[i] = 0x4000; // 15-bit seed
-            _noiseTimer[i] = 0;
         }
 
         if (Instance == null)
@@ -44,15 +43,24 @@ public class Apu
         if (volume <= 0f && _stages[channel] == AdsrStage.Idle)
             return 0f;
 
-        if (channel >= 6)
-        {
-            // For noise channels, use timer-based LFSR, not phase
-            _noisePeriod[channel] = Math.Max(1, (int)(44100f / freq));
-            return Noise(channel) * volume;
-        }
-
         var delta = freq / 44100f;
         _phases[channel] += delta;
+        
+        // For noise channels, use phase to trigger LFSR updates
+        if (channel >= 6)
+        {
+            if (_phases[channel] >= 1f)
+            {
+                _phases[channel] -= 1f;
+                // Advance LFSR when phase wraps
+                var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
+                _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
+            }
+            // Return current LFSR state
+            var noiseOutput = ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
+            return noiseOutput * volume;
+        }
+        
         if (_phases[channel] >= 1f)
         {
             _phases[channel] -= 1f;
@@ -141,28 +149,6 @@ public class Apu
     }
 
     private readonly ushort[] _noiseLfsr = new ushort[8];
-    private readonly int[] _noiseTimer = new int[8];
-    private readonly int[] _noisePeriod = new int[8];
-
-    private float Noise(int channel)
-    {
-        // Decrement timer and advance LFSR when it reaches zero
-        _noiseTimer[channel]--;
-        if (_noiseTimer[channel] <= 0)
-        {
-            // Reset timer
-            _noiseTimer[channel] = _noisePeriod[channel];
-            
-            // Advance LFSR using 15-bit feedback
-            // Tap bits 0 and 1 for feedback (NES-style long mode)
-            var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
-            _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
-        }
-
-        // Output LFSR bit 0: returns +0.5 if bit is 1, -0.5 if bit is 0
-        // Amplitude scaled to match other waveforms
-        return ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
-    }
 
     private static float Sawtooth(float phase, float delta)
     {
