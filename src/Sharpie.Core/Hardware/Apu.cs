@@ -162,8 +162,8 @@ public class Apu
             _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
         }
 
-        // Output bit 0: if 0, return -1; if 1, return +1
-        // Scale by 0.5 to match other waveforms' amplitude
+        // Output LFSR bit 0: returns +0.5 if bit is 1, -0.5 if bit is 0
+        // Amplitude scaled to match other waveforms
         return ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
     }
 
