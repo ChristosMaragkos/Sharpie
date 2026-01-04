@@ -138,16 +138,23 @@ public class Apu
     private readonly int[] _noiseTimer = new int[8];
     private readonly float[] _noiseValue = new float[8];
 
+    // Noise generation constants
+    private const float NoiseFrequencyMultiplier = 3f;
+    private const int MinNoiseUpdatePeriod = 1;
+    private const int MaxNoiseUpdatePeriod = 32;
+    private const float NoiseFrequencyDivisor = 4000f;
+
     private float Noise(int channel, ushort freq)
     {
         // Multiply frequency to create better range
         // Low frequencies = downsampled noise (snares, explosions)
         // High frequencies = pure static (hi-hats, fire)
-        var effectiveFreq = freq * 3f; // Multiply to push range higher
+        var effectiveFreq = freq * NoiseFrequencyMultiplier;
         
         // Calculate update period based on effective frequency
         // Lower period = faster updates = higher pitched noise
-        var updatePeriod = Math.Max(1, Math.Min(32, (int)(4000f / effectiveFreq)));
+        var updatePeriod = Math.Max(MinNoiseUpdatePeriod, 
+            Math.Min(MaxNoiseUpdatePeriod, (int)(NoiseFrequencyDivisor / effectiveFreq)));
         
         _noiseTimer[channel]++;
         if (_noiseTimer[channel] >= updatePeriod)
