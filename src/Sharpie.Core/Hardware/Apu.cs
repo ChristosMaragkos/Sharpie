@@ -49,7 +49,9 @@ public class Apu
 
         if (channel >= 6)
         {
-            _noisePeriod[channel] = Math.Max(1, (int)(44100f / Math.Max(1, (int)freq)));
+            // For noise channels, use timer-based LFSR, not phase
+            _noisePeriod[channel] = Math.Max(1, (int)(44100f / freq));
+            return Noise(channel) * volume;
         }
 
         var delta = freq / 44100f;
@@ -64,7 +66,7 @@ public class Apu
             0 or 1 => Square(_phases[channel], delta),
             2 or 3 => Triangle(_phases[channel]),
             4 or 5 => Sawtooth(_phases[channel], delta),
-            _ => Noise(channel),
+            _ => 0f, // Should not reach here for channels 0-5
         };
 
         return wave * volume;
@@ -147,18 +149,22 @@ public class Apu
 
     private float Noise(int channel)
     {
-        if (--_noiseTimer[channel] <= 0)
+        // Decrement timer and advance LFSR when it reaches zero
+        _noiseTimer[channel]--;
+        if (_noiseTimer[channel] <= 0)
         {
-            // Advance LFSR
-            // NES long mode: bit 0 ^ bit 1
+            // Reset timer
+            _noiseTimer[channel] = _noisePeriod[channel];
+            
+            // Advance LFSR using 15-bit feedback
+            // Tap bits 0 and 1 for feedback (NES-style long mode)
             var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
             _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
-
-            _noiseTimer[channel] = _noisePeriod[channel];
         }
 
-        // Output bit 0 as -1, bit 1 as +1
-        return (((_noiseLfsr[channel] & 1) == 0) ? -1f : 1f) * 0.3f;
+        // Output bit 0: if 0, return -1; if 1, return +1
+        // Scale by 0.5 to match other waveforms' amplitude
+        return ((_noiseLfsr[channel] & 1) != 0) ? 0.5f : -0.5f;
     }
 
     private static float Sawtooth(float phase, float delta)
