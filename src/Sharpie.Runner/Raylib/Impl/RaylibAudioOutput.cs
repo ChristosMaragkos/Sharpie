@@ -8,12 +8,11 @@ namespace Sharpie.Runner.RaylibCs.Impl;
 public class RaylibAudioOutput : IAudioOutput
 {
     private AudioStream _stream;
-    private static int SequencerCounter = 0;
 
     public unsafe void Initialize(int sampleRate)
     {
         Raylib.InitAudioDevice();
-        Raylib.SetAudioStreamBufferSizeDefault(4096);
+        Raylib.SetAudioStreamBufferSizeDefault(512);
         _stream = Raylib.LoadAudioStream((uint)sampleRate, 32, 1);
         Raylib.SetAudioStreamCallback(_stream, &AudioCallback);
         Raylib.PlayAudioStream(_stream);
@@ -27,13 +26,6 @@ public class RaylibAudioOutput : IAudioOutput
 
         float* floatBuffer = (float*)buffer;
         Sharpie.Core.Hardware.Apu.Instance.FillBufferRange(floatBuffer, frames);
-
-        SequencerCounter += (int)frames;
-        while (SequencerCounter >= 735)
-        {
-            SequencerCounter -= 735;
-            Sequencer.Instance?.Step();
-        }
     }
 
     public void HandleAudioBuffer(float[] audioBuffer) { }

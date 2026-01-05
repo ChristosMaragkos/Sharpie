@@ -1,24 +1,28 @@
+using Sharpie.Core.Drivers;
+
 namespace Sharpie.Core.Hardware;
 
 public class Apu
 {
     private readonly IMotherboard _mobo;
-    private readonly float[] _phases = new float[8]; // current phase for every oscillator
+
+    private readonly float[] _phases = new float[8];
+
     private readonly float[] _volumes = new float[8];
     private readonly AdsrStage[] _stages = new AdsrStage[8];
+
+    private readonly ushort[] _lastFreq = new ushort[8];
+    private readonly byte[] _lastControl = new byte[8];
+
     private readonly Random _noiseGen = new();
-    private readonly float[] _noiseBuffer = new float[8];
-    private readonly int[] _noiseStepCounter = new int[8];
+    private readonly float[] _noiseValue = new float[8];
+    private readonly int[] _noiseTimer = new int[8];
+
+    private static int SequencerCounter = 0;
 
     public Apu(IMotherboard mobo)
     {
         _mobo = mobo;
-
-        for (int i = 6; i < 8; i++)
-        {
-            _noiseLfsr[i] = 0x4000; // 15-bit seed
-            _noiseTimer[i] = 0;
-        }
 
         if (Instance == null)
             Instance = this;
@@ -35,39 +39,81 @@ public class Apu
         Release, // falling to 0.0
     }
 
+    private readonly bool[] _retriggerQueued = new bool[8];
+
+    public void RetriggerChannel(int channel)
+    {
+        _retriggerQueued[channel] = true;
+    }
+
     private float GenerateSample(int channel)
     {
         var baseAddr = Memory.AudioRamStart + (channel * 4);
-        var freq = _mobo.ReadWord(baseAddr);
-        var control = _mobo.ReadByte(baseAddr + 3);
+        var currentFreq = (float)_mobo.ReadWord(baseAddr);
+        var currentControl = _mobo.ReadByte(baseAddr + 3);
 
-        if (freq == 0)
+        if (_retriggerQueued[channel])
+        {
+            _retriggerQueued[channel] = false;
+            _stages[channel] = AdsrStage.Attack;
+            _volumes[channel] *= 0.5f;
+        }
+
+        var gateWasOff = (_lastControl[channel] & 1) == 0;
+        var gateIsOn = (currentControl & 1) != 0;
+        var dataChanged =
+            (currentFreq != _lastFreq[channel]) || (currentControl != _lastControl[channel]);
+
+        if (gateIsOn && (gateWasOff || dataChanged))
+        {
+            _stages[channel] = AdsrStage.Attack;
+            _volumes[channel] *= 0.5f;
+        }
+
+        _lastFreq[channel] = (ushort)currentFreq;
+        _lastControl[channel] = currentControl;
+
+        if (currentFreq == 0)
             return 0f;
-        var volume = ProcessEnvelope(channel, control);
+        var volume = ProcessEnvelope(channel, currentControl);
         if (volume <= 0f && _stages[channel] == AdsrStage.Idle)
             return 0f;
 
-        if (channel >= 6)
+        if (channel < 6)
         {
-            _noisePeriod[channel] = Math.Max(1, (int)(44100f / Math.Max(1, (int)freq)));
+            var delta = currentFreq / 44100f;
+            _phases[channel] += delta;
+            if (_phases[channel] >= 1f)
+                _phases[channel] -= 1f;
+
+            return channel switch
+                {
+                    0 or 1 => Square(_phases[channel], delta),
+                    2 or 3 => Triangle(_phases[channel]),
+                    _ => Sawtooth(_phases[channel], delta),
+                } * volume;
         }
 
-        var delta = freq / 44100f;
-        _phases[channel] += delta;
-        if (_phases[channel] >= 1f)
+        // --- NOISE CHANNELS (6-7) ---
+        // We use a simple sample-counter.
+        // We update the random value every 'N' samples.
+        // If freq is Note 84 (Hi-Hat), we want N to be very small (Clear).
+        // If freq is Note 20 (Bass Drum), we want N to be large (Crunchy).
+
+        // This formula: Higher note = smaller period = faster noise.
+        // Max note (127) gives period 1 (Pure Static).
+
+        currentFreq *= 128f;
+        var period = Math.Max(1, (127 - (int)currentFreq) / 4);
+
+        _noiseTimer[channel]++;
+        if (_noiseTimer[channel] >= period)
         {
-            _phases[channel] -= 1f;
+            _noiseTimer[channel] = 0;
+            _noiseValue[channel] = (_noiseGen.NextSingle() * 2f - 1f) * 0.3f;
         }
 
-        var wave = channel switch
-        {
-            0 or 1 => Square(_phases[channel], delta),
-            2 or 3 => Triangle(_phases[channel]),
-            4 or 5 => Sawtooth(_phases[channel], delta),
-            _ => Noise(channel),
-        };
-
-        return wave * volume;
+        return _noiseValue[channel] * volume * volume * 2f;
     }
 
     private float ProcessEnvelope(int channel, byte control)
@@ -107,24 +153,15 @@ public class Apu
                     _stages[channel] = AdsrStage.Decay;
                 break;
             case AdsrStage.Decay:
+                _volumes[channel] -= dStep;
                 if (_volumes[channel] <= realSustain)
                 {
-                    _volumes[channel] -= dStep;
-                    if (_volumes[channel] <= realSustain)
-                    {
-                        _volumes[channel] = realSustain;
-                        _stages[channel] = AdsrStage.Sustain;
-                    }
-                }
-                else
-                {
+                    _volumes[channel] = realSustain;
                     _stages[channel] = AdsrStage.Sustain;
                 }
                 break;
             case AdsrStage.Sustain:
                 _volumes[channel] = realSustain;
-                if (realSustain <= 0f && gateOn)
-                    _stages[channel] = AdsrStage.Idle;
                 break;
             case AdsrStage.Release:
                 _volumes[channel] -= rStep;
@@ -139,26 +176,6 @@ public class Apu
         }
 
         return _volumes[channel];
-    }
-
-    private readonly ushort[] _noiseLfsr = new ushort[8];
-    private readonly int[] _noiseTimer = new int[8];
-    private readonly int[] _noisePeriod = new int[8];
-
-    private float Noise(int channel)
-    {
-        if (--_noiseTimer[channel] <= 0)
-        {
-            // Advance LFSR
-            // NES long mode: bit 0 ^ bit 1
-            var bit = (ushort)((_noiseLfsr[channel] ^ (_noiseLfsr[channel] >> 1)) & 1);
-            _noiseLfsr[channel] = (ushort)((_noiseLfsr[channel] >> 1) | (bit << 14));
-
-            _noiseTimer[channel] = _noisePeriod[channel];
-        }
-
-        // Output bit 0 as -1, bit 1 as +1
-        return (((_noiseLfsr[channel] & 1) == 0) ? -1f : 1f) * 0.3f;
     }
 
     private static float Sawtooth(float phase, float delta)
@@ -209,6 +226,12 @@ public class Apu
 
         for (var i = 0; i < sampleCount; i++)
         {
+            if (++SequencerCounter >= 1024)
+            {
+                SequencerCounter -= 1024;
+                Sequencer.Instance?.Step();
+            }
+
             var mixedSample = 0f;
             for (var chan = 0; chan < 8; chan++)
                 mixedSample += GenerateSample(chan);

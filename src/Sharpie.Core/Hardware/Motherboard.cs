@@ -146,6 +146,7 @@ public class Motherboard : IMotherboard
         var romData = fileData.Skip(64).ToArray();
         _ram.LoadData(0, romData);
         // TODO: write first four bytes to MagicString, version to Version, and poll whether to load cartridge from CartridgeBootState
+        // So everything in here should get validated by the BIOS
     }
 
     public void SetupDisplay()
@@ -199,6 +200,10 @@ public class Motherboard : IMotherboard
     {
         var freq = channel < 6 ? (440f * MathF.Pow(2f, (note - 69f) / 12f)) : note;
         var baseAddr = Memory.AudioRamStart + (channel * 4);
+
+        var control = _ram.ReadByte(baseAddr + 3) & 1;
+        if (control == 1) // gate is on, retrigger the envelope
+            _apu.RetriggerChannel(channel);
 
         _ram.WriteWord(baseAddr, (ushort)freq);
         _ram.WriteByte(baseAddr + 2, 0xFF);
