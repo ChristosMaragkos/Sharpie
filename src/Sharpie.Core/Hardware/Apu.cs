@@ -4,19 +4,19 @@ namespace Sharpie.Core.Hardware;
 
 public class Apu
 {
-    private readonly IMotherboard _mobo;
+    private IMotherboard _mobo;
 
-    private readonly float[] _phases = new float[8];
+    private float[] _phases = new float[8];
 
-    private readonly float[] _volumes = new float[8];
-    private readonly AdsrStage[] _stages = new AdsrStage[8];
+    private float[] _volumes = new float[8];
+    private AdsrStage[] _stages = new AdsrStage[8];
 
-    private readonly ushort[] _lastFreq = new ushort[8];
-    private readonly byte[] _lastControl = new byte[8];
+    private ushort[] _lastFreq = new ushort[8];
+    private byte[] _lastControl = new byte[8];
 
-    private readonly Random _noiseGen = new();
-    private readonly float[] _noiseValue = new float[8];
-    private readonly int[] _noiseTimer = new int[8];
+    private Random _noiseGen = new();
+    private float[] _noiseValue = new float[8];
+    private int[] _noiseTimer = new int[8];
 
     private static int SequencerCounter = 0;
 
@@ -26,6 +26,21 @@ public class Apu
 
         if (Instance == null)
             Instance = this;
+    }
+
+    public void Reset()
+    {
+        SequencerCounter = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            _phases[i] = 0f;
+            _volumes[i] = 0f;
+            _stages[i] = AdsrStage.Idle;
+            _lastFreq[i] = 0;
+            _lastControl[i] = 0;
+            _noiseValue[i] = 0f;
+            _noiseTimer[i] = 0;
+        }
     }
 
     public static Apu? Instance { get; private set; }
