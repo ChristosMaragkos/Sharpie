@@ -64,7 +64,11 @@ public class Apu
     private float GenerateSample(int channel)
     {
         var baseAddr = Memory.AudioRamStart + (channel * 4);
+
         var currentFreq = (float)_mobo.ReadWord(baseAddr);
+        if (currentFreq == 0)
+            return 0f;
+
         var currentControl = _mobo.ReadByte(baseAddr + 3);
 
         if (_retriggerQueued[channel])
@@ -88,8 +92,6 @@ public class Apu
         _lastFreq[channel] = (ushort)currentFreq;
         _lastControl[channel] = currentControl;
 
-        if (currentFreq == 0)
-            return 0f;
         var volume = ProcessEnvelope(channel, currentControl);
         if (volume <= 0f && _stages[channel] == AdsrStage.Idle)
             return 0f;
@@ -224,6 +226,10 @@ public class Apu
     {
         const float preGain = 0.15f;
 
+        if (!_isEnabled)
+            for (int i = 0; i < writeBuffer.Length; i++)
+                writeBuffer[i] = 0;
+
         for (var i = 0; i < writeBuffer.Length; i++)
         {
             var mixedSample = 0f;
@@ -308,5 +314,17 @@ public class Apu
         }
 
         return 0f; // no need to smooth non edge values
+    }
+
+    private bool _isEnabled;
+
+    internal void Enable()
+    {
+        _isEnabled = true;
+    }
+
+    internal void Disable()
+    {
+        _isEnabled = false;
     }
 }
