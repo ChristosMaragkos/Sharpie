@@ -47,6 +47,9 @@
     { "hex": "0x78", "name": "RET",    "len": 1, "logic": null , "words": 0 , "pattern": ""  },
     { "hex": "0x79", "name": "PUSH",   "len": 2, "logic": null , "words": 1 , "pattern": "R" },
     { "hex": "0x7A", "name": "POP",    "len": 2, "logic": null , "words": 1 , "pattern": "R" },
+    { "hex": "0x7B", "name": "OUT_R",    "len": 2, "logic": null , "words": 1 , "pattern": "R" },
+    { "hex": "0x7C", "name": "OUT_B",    "len": 2, "logic": null , "words": 1 , "pattern": "B" },
+    { "hex": "0x7D", "name": "OUT_W",    "len": 3, "logic": null , "words": 1 , "pattern": "W" },
     
     { "hex": "0x80", "name": "RND",    "len": 3, "logic": null , "family": true , "words": 2 , "pattern": "RW" },
   
