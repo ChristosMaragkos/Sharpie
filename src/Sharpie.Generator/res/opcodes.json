@@ -2,7 +2,8 @@
     { "hex": "0x00", "name": "NOP",    "len": 1, "logic": "" , "words": 0 , "pattern": "" },
     { "hex": "0x01", "name": "MOV",    "len": 2, "logic": null , "words": 2 , "pattern": "RR" },
   
-    { "hex": "0x10", "name": "LDM",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW" },
+    { "hex": "0x10", "name": "LDM",    "len": 4, "logic": null, "words": 2 , "pattern": "RW" },
+    { "hex": "0x11", "name": "LDP",    "len": 2, "logic": null, "words": 2 , "pattern": "RR" },
     { "hex": "0x20", "name": "LDI",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW" },
     { "hex": "0x30", "name": "STM",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW" },
   
@@ -65,7 +66,7 @@
     { "hex": "0xF4", "name": "STOP",   "len": 2, "logic": null , "words": 1 , "pattern": "R" },
     { "hex": "0xF5", "name": "INPUT",  "len": 2, "logic": null , "words": 2 , "pattern": "RR" },
     { "hex": "0xF7", "name": "TEXT",   "len": 2, "logic": null , "words": 1 , "pattern": "B" },
-    { "hex": "0xF8", "name": "ATTR",   "len": 2, "logic": null , "words": 2 , "pattern": "BB" },
+    { "hex": "0xF8", "name": "ATTR",   "len": 2, "logic": null , "words": 1 , "pattern": "B" },
     { "hex": "0xF9", "name": "SWC",    "len": 2, "logic": null , "words": 2 , "pattern": "RR" },
     { "hex": "0xFC", "name": "MUTE",   "len": 1, "logic": null , "words": 0 , "pattern": "" },
     { "hex": "0xFD", "name": "COL",    "len": 2, "logic": null , "words": 2 , "pattern": "RR" },
