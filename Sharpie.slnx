@@ -1,12 +1,11 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Sharpie.Core/Sharpie.Core.csproj" />
-    <Project Path="src/Sharpie.Generator/Sharpie.Generator.csproj" />
-    <Project Path="src/Sharpie.Sdk/Sharpie.Sdk.csproj" />
-    <Project Path="src/Sharpie.Tests/Sharpie.Tests.csproj" />
+    <Project Path="tools/Sharpie.Generator/Sharpie.Generator.csproj" />
+    <Project Path="tools/Sharpie.Sdk/Sharpie.Sdk.csproj" />
   </Folder>
   <Folder Name="/src/Sharpie.Runner/" />
-  <Folder Name="/src/Sharpie.Runner/Raylib/">
-    <Project Path="src/Sharpie.Runner/Raylib/Sharpie.Runner.Raylib.csproj" />
+  <Folder Name="/src/Sharpie.Runner/RaylibCsCs/">
+    <Project Path="src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj" />
   </Folder>
 </Solution>

@@ -5,18 +5,27 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <StackTraceSupport>false</StackTraceSupport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <PublishDir>$(MSBuildThisFileDirectory)..\..\artifacts\sdk\</PublishDir>
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Raylib-cs" Version="7.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Sharpie.Core\Sharpie.Core.csproj" />
+  </ItemGroup>
 
   <PropertyGroup>
     <DiscardCustomAttributes>true</DiscardCustomAttributes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="assets\bios.bin">
+      <LogicalName>bios.bin</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 
 </Project>

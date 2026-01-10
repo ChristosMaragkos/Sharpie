@@ -16,6 +16,8 @@ public partial class Assembler
 
         bool startsWithDollar = input.StartsWith('$'); // a dollar? oh, that's a big problem
         bool startsWith0x = input.StartsWith("0x", StringComparison.OrdinalIgnoreCase);
+        bool startsWith0b = input.StartsWith("0b", StringComparison.OrdinalIgnoreCase);
+        bool startsWithR = input.StartsWith("r", StringComparison.OrdinalIgnoreCase);
 
         string cleanArg = input;
         int style = 10;
@@ -25,13 +27,24 @@ public partial class Assembler
             cleanArg = input.Substring(2);
             style = 16;
         }
+        else if (startsWith0b)
+        {
+            cleanArg = input.Substring(2);
+            style = 2;
+        }
         else if (startsWithDollar)
         {
             cleanArg = input.Substring(1);
             style = 16;
         }
+        else if (startsWithR)
+        {
+            cleanArg = input.Substring(1);
+            limit = 15;
+            style = 10;
+        }
         // CAREFUL! just C4 is treated as a hex, but #C4 is treated as a note
-        else if (Regex.IsMatch(input, "[A-Fa-f]"))
+        else if (Regex.IsMatch(input, "^[A-Fa-f]+$"))
         {
             style = 16;
         }
@@ -39,7 +52,7 @@ public partial class Assembler
         try
         {
             int result = Convert.ToInt32(cleanArg, style);
-            if (result < 0 || result > limit)
+            if (result > limit)
                 return null;
 
             return result;
@@ -86,11 +99,11 @@ public partial class Assembler
             return (byte)val;
 
         var num = ParseNumberLiteral(arg, true);
-        if (num.HasValue && num.Value >= 0 && num.Value <= byte.MaxValue)
+        if (num.HasValue && num.Value <= byte.MaxValue)
             return (byte)num;
 
         throw new AssemblySyntaxException(
-            $"Invalid unsigned 8-bit value: '{arg}' (Note: the '$' prefix is only for addresses)",
+            $"Invalid 8-bit value: '{arg}' (Note: the '$' prefix is only for addresses)",
             lineNum
         );
     }
