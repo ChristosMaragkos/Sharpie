@@ -587,6 +587,7 @@ internal partial class Cpu
     private partial void Execute_MUTE(byte opcode, ref ushort pcDelta)
     {
         _mobo.ToggleSequencer();
+        _mobo.StopAllSounds();
     }
 
     private partial void Execute_COL(byte opcode, ref ushort pcDelta)
