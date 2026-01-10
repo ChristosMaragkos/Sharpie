@@ -122,6 +122,10 @@ internal partial class Ppu
         vramSpan.Fill((byte)((colorIndex << 4) | colorIndex));
     }
 
+    [Obsolete(
+        "Dumping VRAM into the console like this evidently is a performance nuke. Shocker, I know.",
+        true
+    )]
     public void DumpVram(ushort start, int width, int height)
     {
         Console.WriteLine($"--- VRAM DUMP AT {start:X4} ---");
