@@ -157,6 +157,7 @@ internal partial class Cpu
         OamRegister = 0;
         LoadDefaultPalette();
         IsHalted = false;
+        _resetRequested = false;
     }
 
     public void LoadDefaultPalette()
@@ -178,6 +179,10 @@ internal partial class Cpu
         }
     }
 
+    private bool _resetRequested;
+
+    public void RequestReset() => _resetRequested = true;
+
     public void Cycle()
     {
         if (IsHalted)
@@ -186,6 +191,13 @@ internal partial class Cpu
         byte opcode = _mobo.ReadByte(_pc);
 
         ExecuteOpcode(opcode, out ushort pcDelta);
+
+        if (_resetRequested)
+        {
+            Reset();
+            return;
+        }
+
         if (IsHalted) // did we just halt?
             return;
         Advance(pcDelta);
@@ -193,7 +205,7 @@ internal partial class Cpu
 
     private void Advance(int pcDelta)
     {
-        if (IsHalted)
+        if (IsHalted) // one more for good measure
             return;
         _pc += (ushort)pcDelta;
     }
