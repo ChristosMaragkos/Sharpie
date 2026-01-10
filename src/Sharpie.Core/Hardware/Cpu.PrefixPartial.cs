@@ -226,6 +226,26 @@ internal partial class Cpu
                 break;
             }
 
+            case 0xF7: // TEXT
+            {
+                pcDelta = 2;
+                var x = _mobo.ReadByte(_pc + 1) & 0x0F; // truncate to register index since we tokenize it as a byte
+                Console.WriteLine($"X: {x}");
+                var digits = _registers[x].ToString();
+                Console.WriteLine($"Value: {digits}");
+                const int FontZeroIndex = 26 - '0'; // this is the first number's index in the Sharpie font
+                foreach (var c in digits)
+                {
+                    var fontIndex = (byte)(c + FontZeroIndex);
+                    Console.WriteLine($"Char: {c}");
+                    Console.WriteLine($"Char index: {fontIndex}");
+                    _mobo.DrawChar(CursorPosX, CursorPosY, fontIndex);
+                    CursorPosX++;
+                }
+
+                break;
+            }
+
             case 0xFC: // MUTE
             {
                 _mobo.StopAllSounds();
@@ -233,7 +253,7 @@ internal partial class Cpu
             }
 
             default:
-                Console.WriteLine($"Unknown ALT Opcode: 0x{opcode:X2}");
+                _mobo.PushDebug($"Unknown ALT opcode: {prefixed}");
                 IsHalted = true;
                 pcDelta = 1;
                 break;
