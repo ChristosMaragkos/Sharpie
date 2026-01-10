@@ -563,8 +563,6 @@ internal partial class Cpu
         _mobo.DrawChar(x, y, charCode);
 
         CursorPosX++;
-        if (CursorPosX == 0) // if the cursor wrapped
-            CursorPosY++; // change row
     }
 
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta)
