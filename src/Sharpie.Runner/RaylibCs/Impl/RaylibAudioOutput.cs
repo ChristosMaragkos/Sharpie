@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Raylib_cs;
 using Sharpie.Core.Drivers;
-using Sharpie.Core.Hardware;
 
 namespace Sharpie.Runner.RaylibCs.Impl;
 
@@ -23,7 +22,7 @@ public class RaylibAudioOutput : IAudioOutput
     private static unsafe void AudioCallback(void* buffer, uint frames)
     {
         float* floatBuffer = (float*)buffer;
-        Motherboard.FillAudioBufferRange(floatBuffer, frames);
+        SharpieConsole.FillAudioBufferRange(floatBuffer, frames);
     }
 
     public void HandleAudioBuffer(float[] audioBuffer) { }

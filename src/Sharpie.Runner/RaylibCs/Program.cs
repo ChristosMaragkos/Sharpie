@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using Raylib_cs;
-using Sharpie.Core.Hardware;
 using Sharpie.Runner.RaylibCs.Impl;
 
 var video = new RaylibVideoOutput();
@@ -25,7 +24,7 @@ if (args.Length != 0)
     }
 }
 
-var emulator = new Motherboard(video, audio, input, logger);
+var emulator = new SharpieConsole(video, audio, input, logger);
 emulator.LoadBios(biosBytes);
 
 TryLoadCart();
