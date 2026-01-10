@@ -163,16 +163,37 @@ public partial class Assembler
             CurrentAddress += delta;
         }
 
-        line = line.Remove(0, lastQuote + 1);
-    }
+        var remainder = line.Substring(lastQuote + 1).TrimStart(CommonDelimiters).Trim();
+        var extraArgs = remainder.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-    /// Mostly used for unit tests
-    public void ReadRawAssembly(string assemblyCode)
-    {
-        FileContents = assemblyCode.Split('\n');
-        ReadFile();
-        // foreach (var tl in Tokens)
-        //     Console.WriteLine(tl.ToString());
+        foreach (var arg in extraArgs)
+        {
+            var cleanArg = arg.Trim(CommonDelimiters).Trim();
+            var value = ParseRegister(cleanArg, lineNumber);
+            Tokens.Add(
+                new()
+                {
+                    Opcode = "ALT",
+                    Args = Array.Empty<string>(),
+                    SourceLine = lineNumber,
+                    Address = CurrentAddress,
+                }
+            );
+            CurrentAddress += InstructionSet.GetOpcodeLength("ALT");
+
+            Tokens.Add(
+                new()
+                {
+                    Opcode = "TEXT",
+                    Args = new[] { cleanArg },
+                    SourceLine = lineNumber,
+                    Address = CurrentAddress,
+                }
+            );
+            CurrentAddress += InstructionSet.GetOpcodeLength("TEXT");
+        }
+
+        line = string.Empty;
     }
 
     public void LoadFile(string filePath)
