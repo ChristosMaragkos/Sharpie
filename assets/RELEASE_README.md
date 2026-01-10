@@ -26,6 +26,10 @@ To load a ROM, you can either start the Sharpie by dragging the `.shr` file on i
 
 Since this is a 0.1 release, there are not many ROMs, but a few example ones showcasing the Sharpie's capability exist in the `samples` directory in GitHub, and there will be more over time that you will be able to download, either in assembly form to study for yourself or (soon) in binary form to run.
 
+## Developing ROMs
+The SDK is still in its very early stage. A GUI is underway, but, for now, you can download the appropriate SDK binary and drag-and-drop a `.asm` file on it to assemble it into a Sharpie ROM.
+Sprite and music editors will also be created in due time.
+
 ## Support
 If you encounter any issues with the Runner or the SDK or have any suggestions, please open an issue over at [the GitHub repository](https://github.com/ChristosMaragkos/Sharpie).
 

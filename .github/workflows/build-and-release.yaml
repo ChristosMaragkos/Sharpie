@@ -32,11 +32,12 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Debug Paths
+      - name: Convert ICO (Windows Only)
+        if: startsWith(matrix.rid, 'win')
+        shell: bash
         run: |
-          ls -R .
-          echo "Matrix RID=${{ matrix.rid }}"
-          echo "Matrix SDK_BIN=${{ matrix.sdk_bin }}"
+          magick assets/icons/icon.png -define icon:auto-resize=256,128,64,48,32,16 ./assets/icons/icon.ico
+          ls -lh assets/icons/icon.ico
 
       - name: Publish Runner & SDK
         run: |
