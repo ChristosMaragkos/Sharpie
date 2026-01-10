@@ -2,7 +2,7 @@ using Sharpie.Core.Drivers;
 
 namespace Sharpie.Core.Hardware;
 
-public class Motherboard : IMotherboard
+internal class Motherboard : IMotherboard
 {
     private readonly Cpu _cpu;
     private readonly Ppu _ppu;
@@ -46,7 +46,7 @@ public class Motherboard : IMotherboard
 
         _cpu = new Cpu(this);
         _cpu.LoadDefaultPalette();
-        _cpu.Reset();
+        _cpu.RequestReset();
 
         _ppu = new Ppu(this);
 
@@ -103,8 +103,10 @@ public class Motherboard : IMotherboard
         if (address != (ushort)BiosFlagAddresses.CartVerificationState || !IsInBootMode)
             return;
 
-        if (value == 0x01) // cart is ok, shove it to RAM
+        if (value == 0x01)
+        {
             BootIntoCartridge();
+        }
     }
 
     public void WriteByte(int address, byte value) => WriteByte((ushort)address, value);
@@ -117,7 +119,9 @@ public class Motherboard : IMotherboard
             return;
 
         if (value == 0x01) // cart is ok, swap RAM banks
+        {
             BootIntoCartridge();
+        }
     }
 
     public void WriteWord(int address, ushort value) => WriteWord((ushort)address, value);
@@ -157,6 +161,7 @@ public class Motherboard : IMotherboard
     private void BootIntoCartridge()
     {
         _cpu.Halt();
+        FontColorIndex = 1;
         IsInBootMode = false;
         ResetOam();
         StopAllSounds();
@@ -165,8 +170,7 @@ public class Motherboard : IMotherboard
         Apu?.LoadDefaultInstruments();
         Apu?.Enable();
         _sequencer.Reset();
-        _cpu.Reset();
-        _ram.Dump(Memory.InstrumentTableStart, 512);
+        _cpu.RequestReset();
     }
 
     public void SetupDisplay()
@@ -288,8 +292,8 @@ public class Motherboard : IMotherboard
         _dbg?.PushDebug(message);
     }
 
-    public static unsafe void FillAudioBufferRange(float* writeBuffer, uint sampleCount) =>
-        Apu?.FillBufferRange(writeBuffer, sampleCount);
+    public static unsafe void FillAudioBufferRange(float* audioBuffer, uint sampleAmount) =>
+        Apu?.FillBufferRange(audioBuffer, sampleAmount);
 
     public void ToggleSequencer() => _sequencer.Enabled = !_sequencer.Enabled;
 

@@ -1,8 +1,8 @@
 namespace Sharpie.Core.Hardware;
 
-public interface IMotherboard
+internal interface IMotherboard
 {
-    public static readonly Version BiosVersion = new(0, 0, 1);
+    public static readonly Version BiosVersion = new(0, 1);
     public static readonly string VersionString =
         $"{BiosVersion.Major}.{BiosVersion.Minor}.{BiosVersion.Build}";
     public static ushort VersionBinFormat =>
@@ -519,37 +519,37 @@ public interface IMotherboard
     internal static ReadOnlySpan<(byte R, byte G, byte B)> MasterPalette =>
         new (byte R, byte G, byte B)[]
         {
-            (0, 0, 0), // 00: #000000 (Transparent Key)
-            (255, 255, 255), // 01: #FFFFFF
-            (89, 86, 82), // 02: #595652
-            (95, 205, 228), // 03: #5FCDE4
-            (91, 110, 225), // 04: #5B6EE1
-            (153, 229, 80), // 05: #99E550
-            (75, 105, 47), // 06: #4B692F
-            (251, 242, 54), // 07: #FBF236
-            (223, 113, 38), // 08: #DF7126
-            (215, 123, 186), // 09: #D77BBA
-            (172, 50, 50), // 10: #AC3232
-            (238, 195, 154), // 11: #EEC39A
-            (102, 57, 49), // 12: #663931
-            (69, 40, 60), // 13: #45283C
-            (34, 32, 52), // 14: #222034
-            (13, 12, 23), // 15: #0D0C17
-            (166, 169, 173), // 16: #A6A9AD
-            (221, 223, 203), // 17: #DDDFCB
-            (186, 215, 195), // 18: #BAD7C3
-            (153, 198, 206), // 19: #99C6CE
-            (17, 60, 101), // 20: #113C65
-            (83, 205, 205), // 21: #53CDCD
-            (40, 132, 69), // 22: #288445
-            (32, 142, 217), // 23: #208ED9
-            (4, 13, 201), // 24: #040DC9
-            (180, 150, 208), // 25: #B496D0
-            (102, 26, 175), // 26: #661AAF
-            (164, 145, 30), // 27: #A4911E
-            (82, 75, 36), // 28: #524B24
-            (178, 64, 41), // 29: #B24029
-            (77, 26, 12), // 30: #4D1A0C
-            (0, 0, 0), // 31: #000000 (Solid Black)
+            (0, 0, 0), // 0: Transparent/Background
+            (255, 255, 255), // 1: White (Default Text)
+            (245, 25, 25), // 2: Red
+            (50, 31, 246), // 3: Blue
+            (16, 239, 39), // 4: Green
+            (247, 255, 15), // 5: Yellow
+            (230, 28, 215), // 6: Pink/Magenta
+            (102, 41, 166), // 7: Purple
+            (14, 146, 26), // 8: Dark Green
+            (243, 109, 0), // 9: Orange
+            (77, 40, 0), // 10: Brown
+            (186, 153, 14), // 11: Gold
+            (162, 47, 47), // 12: Maroon
+            (56, 90, 250), // 13: Light Blue
+            (79, 79, 79), // 14: Dark Grey
+            (0, 0, 0), // 15: True Black
+            (255, 144, 144), // 16: Salmon/Peach
+            (233, 148, 101), // 17: Tan
+            (253, 73, 73), // 18: Bright Red
+            (7, 217, 168), // 19: Teal
+            (160, 242, 73), // 20: Lime
+            (255, 213, 36), // 21: Amber
+            (255, 123, 211), // 22: Hot Pink
+            (179, 107, 207), // 23: Lavender
+            (131, 239, 16), // 24: Electric Green
+            (255, 152, 59), // 25: Light Orange
+            (114, 65, 12), // 26: Deep Brown
+            (203, 255, 92), // 27: Neon Yellow
+            (94, 255, 164), // 28: Mint
+            (244, 86, 190), // 29: Rose
+            (56, 237, 255), // 30: Sky Blue
+            (27, 27, 27), // 31: Rich Black
         };
 }
