@@ -43,9 +43,10 @@ public class RaylibVideoOutput : IDisplayOutput
     public void Initialize(int internalRes, string title)
     {
         _resolution = internalRes;
+        var startingSize = _resolution * 3;
 
-        Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
-        Raylib.InitWindow(internalRes, internalRes, title);
+        Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.AlwaysRunWindow);
+        Raylib.InitWindow(startingSize, startingSize, title);
         Raylib.SetTargetFPS(60);
 
         var blank = Raylib.GenImageColor(_resolution, _resolution, Color.Blank);
