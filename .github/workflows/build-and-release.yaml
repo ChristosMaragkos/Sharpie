@@ -14,13 +14,16 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-            bin_name: Sharpie.Runner.RaylibCs
+            runner_bin: Sharpie.Runner.RaylibCs
+            sdk_bin: Sharpie.Sdk
           - os: windows-latest
             rid: win-x64
-            bin_name: Sharpie.Runner.RaylibCs.exe
+            runner_bin: Sharpie.Runner.RaylibCs.exe
+            sdk_bin: Sharpie.Sdk.exe
           - os: windows-latest
             rid: win-arm64
-            bin_name: Sharpie.Runner.RaylibCs.exe
+            runner_bin: Sharpie.Runner.RaylibCs.exe
+            sdk_bin: Sharpie.Sdk.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -30,41 +33,44 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Publish Native AOT
+      - name: Publish Runner & SDK
         run: |
-          dotnet publish src/Sharpie.Runner/RaylibCs \
-          -c Release \
-          -r ${{ matrix.rid }} \
-          -o ./publish
+          dotnet publish src/Sharpie.Runner/RaylibCs -c Release -r ${{ matrix.rid }} -o ./pub-runner
+          dotnet publish distr/sdk/Sharpie.Sdk -c Release -r ${{ matrix.rid }} -o ./pub-sdk
 
-      - name: Assemble Distribution Package
+      - name: Assemble Packages
         shell: bash
         run: |
-          # Binary Renaming
           EXT=""
           if [[ "${{ matrix.rid }}" == win* ]]; then EXT=".exe"; fi
-          mv ./publish/Sharpie.Runner.RaylibCs$EXT ./publish/Sharpie$EXT
 
-          # Rename and Copy README
-          cp assets/RELEASE_README.md ./publish/README.md
+          mv ./pub-runner/${{ matrix.runner_bin }} ./pub-runner/Sharpie$EXT
+          cp assets/RELEASE_README.md ./pub-runner/README.md
+          cp LICENSE.md ./pub-runner/LICENSE.txt
 
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            cp assets/icons/icon.png ./publish/
-            cp assets/linux/sharpie-raylib.desktop ./publish/
+            cp assets/icons/icon.png ./pub-runner/
+            cp assets/linux/sharpie-raylib.desktop ./pub-runner/
           fi
 
-          # Zip it up
-          cd publish
+          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/Sharpie-ASM$EXT
+          cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
+          echo "Sharpie SDK v0.1 - Drag a .asm file onto Sharpie-ASM$EXT to create a .shr cartridge." > ./pub-sdk/README.txt
+
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a ../sharpie-${{ matrix.rid }}.zip .
+            7z a ../sharpie-runner-${{ matrix.rid }}.zip ./pub-runner/*
+            7z a ../sharpie-sdk-${{ matrix.rid }}.zip ./pub-sdk/*
           else
-            zip -r ../sharpie-${{ matrix.rid }}.zip .
+            cd pub-runner && zip -r ../sharpie-runner-${{ matrix.rid }}.zip . && cd ..
+            cd pub-sdk && zip -r ../sharpie-sdk-${{ matrix.rid }}.zip . && cd ..
           fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: sharpie-${{ matrix.rid }}.zip
+          files: |
+            sharpie-runner-${{ matrix.rid }}.zip
+            sharpie-sdk-${{ matrix.rid }}.zip
           body_path: assets/RELEASE_README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

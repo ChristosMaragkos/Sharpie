@@ -5,9 +5,9 @@ namespace Sharpie.Sdk;
 internal class Cartridge
 {
     // Change these to whatever you'd like!
-    public const string GameTitle = "Test ROM";
-    public const string AuthorName = "ChrisMaragkos";
-    public const string GameRomName = "test"; // No file extension needed.
+    public const string GameTitle = "Game";
+    public const string AuthorName = "Author";
+    public const string GameRomName = "sharpie_rom"; // No file extension needed.
     public static readonly byte[] InitialPalette = new byte[] // Change any of these to any number from 0-31 to override a color.
     { // Note that color 0 is always transparent.
         0xFF,
@@ -34,28 +34,35 @@ internal class Cartridge
         var outputFile = "";
         var isFirmware = false;
 
-        for (int i = 0; i < args.Length; i++)
+        if (args.Length == 1 && File.Exists(args[0]) && args[0].EndsWith(".asm"))
         {
-            switch (args[i])
+            inputFile = args[0];
+        }
+        else
+        {
+            for (int i = 0; i < args.Length; i++)
             {
-                case "-i":
-                case "--input":
-                    if (i + 1 < args.Length)
-                        inputFile = args[++i];
-                    break;
-                case "-o":
-                case "--output":
-                    if (i + 1 < args.Length)
-                        outputFile = args[++i];
-                    break;
-                case "-f":
-                case "--firmware":
-                    isFirmware = true;
-                    break;
-                case "-h":
-                case "--help":
-                    PrintHelp();
-                    return;
+                switch (args[i])
+                {
+                    case "-i":
+                    case "--input":
+                        if (i + 1 < args.Length)
+                            inputFile = args[++i];
+                        break;
+                    case "-o":
+                    case "--output":
+                        if (i + 1 < args.Length)
+                            outputFile = args[++i];
+                        break;
+                    case "-f":
+                    case "--firmware":
+                        isFirmware = true;
+                        break;
+                    case "-h":
+                    case "--help":
+                        PrintHelp();
+                        return;
+                }
             }
         }
 
