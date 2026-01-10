@@ -27,6 +27,26 @@ if (args.Length != 0)
 var emulator = new SharpieConsole(video, audio, input, logger);
 emulator.LoadBios(biosBytes);
 
+#if Linux
+var icon = Raylib.LoadImage(Path.Combine(Directory.GetCurrentDirectory(), "icon.png"));
+Raylib.SetWindowIcon(icon);
+Raylib.UnloadImage(icon);
+#elif Windows
+unsafe
+{
+    var iconBytes = BiosLoader.GetEmbeddedIcon();
+    fixed (byte* pData = iconBytes)
+    {
+        var icon = Raylib.LoadImageFromMemory(".png", pData, iconBytes.Length);
+        if (Raylib.IsImageValid(icon))
+        {
+            Raylib.SetWindowIcon(icon);
+            Raylib.UnloadImage(icon);
+        }
+    }
+}
+#endif
+
 TryLoadCart();
 
 while (!video.ShouldCloseWindow())

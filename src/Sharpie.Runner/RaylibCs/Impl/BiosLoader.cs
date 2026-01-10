@@ -14,4 +14,19 @@ public static class BiosLoader
         stream.ReadExactly(ba, 0, ba.Length);
         return ba;
     }
+
+#if Windows
+    public unsafe static byte[] GetEmbeddedIcon()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream("icon.png");
+
+        if (stream == null)
+            Console.WriteLine("Could not find an embedded .png file.");
+
+        byte[] ba = new byte[stream.Length];
+        stream.ReadExactly(ba, 0, ba.Length);
+        return ba;
+    }
+#endif
 }

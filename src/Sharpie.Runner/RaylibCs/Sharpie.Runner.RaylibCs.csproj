@@ -23,9 +23,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="assets\bios.bin">
+    <EmbeddedResource Include="../../../assets/bios/bios.bin">
       <LogicalName>bios.bin</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
-</Project>
+  <PropertyGroup>
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
+    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux> 
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWindows)'=='true'">
+    <DefineConstants>Windows</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsLinux)'=='true'">
+    <DefineConstants>Linux</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWindows)'=='true'">
+    <ApplicationIcon>../../../assets/icons/icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsWindows)'=='true'">
+    <EmbeddedResource Include="../../../assets/icons/icon.png">
+      <LogicalName>icon.png</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  </Project>

@@ -8,6 +8,7 @@
 *.bin
 *.shr
 *.sh
+!bios.bin
 /distr
 
 *.png
