@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            bin_name: Sharpie.Runner.RaylibCs
+          - os: windows-latest
+            rid: win-x64
+            bin_name: Sharpie.Runner.RaylibCs.exe
+          - os: windows-latest
+            rid: win-arm64
+            bin_name: Sharpie.Runner.RaylibCs.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish Native AOT
+        run: |
+          dotnet publish src/Sharpie.Runner/RaylibCs \
+          -c Release \
+          -r ${{ matrix.rid }} \
+          -o ./publish
+
+      - name: Assemble Distribution Package
+        shell: bash
+        run: |
+          # Binary Renaming
+          EXT=""
+          if [[ "${{ matrix.rid }}" == win* ]]; then EXT=".exe"; fi
+          mv ./publish/Sharpie.Runner.RaylibCs$EXT ./publish/Sharpie$EXT
+
+          # Rename and Copy README
+          cp assets/RELEASE_README.md ./publish/README.md
+
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            cp assets/icons/icon.png ./publish/
+            cp assets/linux/sharpie-raylib.desktop ./publish/
+          fi
+
+          # Zip it up
+          cd publish
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a ../sharpie-${{ matrix.rid }}.zip .
+          else
+            zip -r ../sharpie-${{ matrix.rid }}.zip .
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sharpie-${{ matrix.rid }}.zip
+          body_path: assets/RELEASE_README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

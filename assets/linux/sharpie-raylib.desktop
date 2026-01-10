@@ -1,0 +1,8 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Sharpie
+Comment=Launch Sharpie
+Exec=@EXEC@
+Icon=@ICON@
+Path=@PATH@
+Type=Application
