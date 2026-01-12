@@ -32,6 +32,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Install ImageMagick (ARM Only)
+        if: matrix.rid == 'win-arm64'
+        run: |
+          choco install imagemagick
+
       - name: Convert ICO (Windows Only)
         if: startsWith(matrix.rid, 'win')
         shell: bash
