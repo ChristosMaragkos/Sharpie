@@ -57,7 +57,7 @@ jobs:
           cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
           echo "Sharpie SDK v0.1 - Drag a .asm file onto Sharpie-ASM$EXT to create a .shr cartridge." > ./pub-sdk/README.txt
 
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ "${{ matrix.os }}" == windows* ]; then
             7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
             7z a "sharpie-sdk-${{ matrix.rid }}.zip" ./pub-sdk/*
           else
