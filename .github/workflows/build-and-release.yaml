@@ -47,18 +47,18 @@ jobs:
         run: |
           git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git
           cd raylib
-          
+
           mkdir build
           cd build
-          
+
           cmake .. -A ARM64 -DBUILD_SHARED_LIBS=ON -DBUILD_EXAMPLES=OFF
-          
+
           cmake --build . --config Release
-          
+
           New-Item -ItemType Directory -Force -Path "${{ github.workspace }}/src/Sharpie.Runner/RaylibCs/libs/win-arm64/native"
-          
+
           Copy-Item "raylib/Release/raylib.dll" "${{ github.workspace }}/src/Sharpie.Runner/RaylibCs/libs/win-arm64/native/raylib.dll"
-          
+
           Get-ChildItem "${{ github.workspace }}/src/Sharpie.Runner/RaylibCs/libs/win-arm64/native/"
 
       - name: Publish Runner & SDK
@@ -82,9 +82,10 @@ jobs:
             cp assets/linux/sharpie-raylib.desktop ./pub-runner/
           fi
 
-          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/Sharpie-ASM$EXT
+          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/Sharpie-SDK$EXT
           cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
-          echo "Sharpie SDK v0.1 - Drag a .asm file onto Sharpie-ASM$EXT to create a .shr cartridge." > ./pub-sdk/README.txt
+          echo "Sharpie SDK v0.1 - Drag a .asm file onto Sharpie-SDK$EXT to create a .shr cartridge." > ./pub-sdk/README.txt
+          cp ./tools/Sharpie.Sdk/docs/ISA_REFERENCE.md ./pub-sdk/docs/ISA_REFERENCE.md
 
           if [[ "${{ matrix.rid }}" == win* ]]; then
             7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
