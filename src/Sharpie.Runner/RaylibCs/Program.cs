@@ -56,6 +56,24 @@ TryLoadCart();
 
 while (!video.ShouldCloseWindow())
 {
+    // Check for mouse click when in boot mode (Please Insert Cartridge screen)
+    if (emulator.IsInBootMode && Raylib.IsMouseButtonPressed(MouseButton.Left))
+    {
+        try
+        {
+            var filePath = FileDialog.OpenFileDialog();
+            if (filePath != null && filePath.EndsWith(".shr"))
+            {
+                romBytes = File.ReadAllBytes(filePath);
+                TryLoadCart();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error loading ROM: {e.Message}");
+        }
+    }
+
     if (Raylib.IsFileDropped() && emulator.IsInBootMode)
     {
         try

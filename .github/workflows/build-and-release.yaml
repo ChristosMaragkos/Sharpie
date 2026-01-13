@@ -102,13 +102,62 @@ jobs:
             sharpie-runner-${{ matrix.rid }}.zip
             sharpie-sdk-${{ matrix.rid }}.zip
 
+  build-web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install WASM tools
+        run: dotnet workload install wasm-tools
+
+      - name: Publish Web Runner
+        run: |
+          dotnet publish ./src/Sharpie.Runner/Web/Sharpie.Runner.Web.csproj -c Release
+
+      - name: Assemble Web Package
+        run: |
+          cd src/Sharpie.Runner/Web/bin/Release/net10.0/browser-wasm/AppBundle
+          zip -r ${{ github.workspace }}/sharpie-runner-web.zip .
+          cd ${{ github.workspace }}
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sharpie-packages-web
+          path: sharpie-runner-web.zip
+
+      - name: Deploy Web Build to GitHub Pages
+        if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: src/Sharpie.Runner/Web/bin/Release/net10.0/browser-wasm/AppBundle
+
+  release:
+    needs: [build, build-web]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: github.event_name == 'push'
         with:
-          files: |
-            sharpie-runner-${{ matrix.rid }}.zip
-            sharpie-sdk-${{ matrix.rid }}.zip
+          files: artifacts/**/*.zip
           body_path: assets/RELEASE_README.md
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

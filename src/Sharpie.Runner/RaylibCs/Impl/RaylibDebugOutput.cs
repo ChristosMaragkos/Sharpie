@@ -1,3 +1,5 @@
+using System;
+
 public class RaylibDebugOutpug : DebugOutput
 {
     public RaylibDebugOutpug(int size)
