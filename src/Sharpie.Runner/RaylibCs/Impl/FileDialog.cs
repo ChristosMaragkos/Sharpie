@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Sharpie.Runner.RaylibCs.Impl;
@@ -45,9 +46,9 @@ internal static class FileDialog
         try
         {
             // Try using zenity if available
-            var process = new System.Diagnostics.Process
+            var process = new Process
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
+                StartInfo = new ProcessStartInfo
                 {
                     FileName = "zenity",
                     Arguments = "--file-selection --title=\"Select Sharpie Cartridge\" --file-filter=\"Sharpie ROM (*.shr) | *.shr\" --file-filter=\"All files | *\"",

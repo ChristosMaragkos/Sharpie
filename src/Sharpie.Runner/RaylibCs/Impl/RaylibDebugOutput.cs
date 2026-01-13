@@ -1,3 +1,5 @@
+using System;
+
 public class RaylibDebugOutpug : DebugOutput
 {
     public RaylibDebugOutpug(int size)
@@ -5,6 +7,6 @@ public class RaylibDebugOutpug : DebugOutput
 
     public override void Log(string message)
     {
-        System.Console.WriteLine(message);
+        Console.WriteLine(message);
     }
 }

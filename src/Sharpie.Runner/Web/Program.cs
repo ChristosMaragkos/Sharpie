@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices.JavaScript;
 using Raylib_cs;
 using Sharpie.Runner.RaylibCs.Impl;
@@ -51,9 +52,9 @@ public partial class Program
                 emulator.LoadCartridge(romBytes);
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            System.Console.WriteLine($"Error loading cartridge: {e.Message}");
+            Console.WriteLine($"Error loading cartridge: {e.Message}");
         }
     }
 }

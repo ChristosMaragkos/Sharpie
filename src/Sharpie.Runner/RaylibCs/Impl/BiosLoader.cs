@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 
 public static class BiosLoader
@@ -8,7 +9,7 @@ public static class BiosLoader
         using var stream = assembly.GetManifestResourceStream("bios.bin");
 
         if (stream == null)
-            throw new System.ApplicationException("Hardware Failure: Sharpie BIOS binary not found.");
+            throw new ApplicationException("Hardware Failure: Sharpie BIOS binary not found.");
 
         byte[] ba = new byte[stream.Length];
         stream.ReadExactly(ba, 0, ba.Length);
@@ -22,7 +23,7 @@ public static class BiosLoader
         using var stream = assembly.GetManifestResourceStream("icon.png");
 
         if (stream == null)
-            System.Console.WriteLine("Could not find an embedded .png file.");
+            Console.WriteLine("Could not find an embedded .png file.");
 
         byte[] ba = new byte[stream.Length];
         stream.ReadExactly(ba, 0, ba.Length);

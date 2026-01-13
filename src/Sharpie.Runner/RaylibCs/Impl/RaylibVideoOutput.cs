@@ -1,3 +1,5 @@
+using System;
+using System.Numerics;
 using Raylib_cs;
 using Sharpie.Core.Drivers;
 
@@ -17,7 +19,7 @@ public class RaylibVideoOutput : IDisplayOutput
 
         var screenW = GetWindowWidth();
         var screenH = GetWindowHeight();
-        float minDim = System.Math.Min(screenW, screenH);
+        float minDim = Math.Min(screenW, screenH);
         var xOffset = (screenW - minDim) / 2;
         var yOffset = (screenH - minDim) / 2;
 
@@ -28,7 +30,7 @@ public class RaylibVideoOutput : IDisplayOutput
             _screenTexture,
             new Rectangle(0, 0, _resolution, _resolution),
             new Rectangle(xOffset, yOffset, minDim, minDim),
-            System.Numerics.Vector2.Zero,
+            Vector2.Zero,
             0f,
             Color.White
         );
