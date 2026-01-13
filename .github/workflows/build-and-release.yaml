@@ -85,7 +85,6 @@ jobs:
           mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/Sharpie-SDK$EXT
           cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
           echo "Sharpie SDK v0.1 - Drag a .asm file onto Sharpie-SDK$EXT to create a .shr cartridge." > ./pub-sdk/README.txt
-          cp ./tools/Sharpie.Sdk/docs/ISA_REFERENCE.md ./pub-sdk/docs/ISA_REFERENCE.md
 
           if [[ "${{ matrix.rid }}" == win* ]]; then
             7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
