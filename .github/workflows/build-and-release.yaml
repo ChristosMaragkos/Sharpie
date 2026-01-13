@@ -66,6 +66,14 @@ jobs:
             (cd pub-sdk && zip -r ../sharpie-sdk-${{ matrix.rid }}.zip .)
           fi
 
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sharpie-packages-${{ matrix.rid }}
+          path: |
+            sharpie-runner-${{ matrix.rid }}.zip
+            sharpie-sdk-${{ matrix.rid }}.zip
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.event_name == 'push'
