@@ -17,7 +17,7 @@ public class RaylibVideoOutput : IDisplayOutput
 
         var screenW = GetWindowWidth();
         var screenH = GetWindowHeight();
-        float minDim = Math.Min(screenW, screenH);
+        float minDim = System.Math.Min(screenW, screenH);
         var xOffset = (screenW - minDim) / 2;
         var yOffset = (screenH - minDim) / 2;
 

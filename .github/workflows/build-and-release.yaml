@@ -112,3 +112,54 @@ jobs:
           body_path: assets/RELEASE_README.md
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+  build-web:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install WASM tools
+        run: dotnet workload install wasm-tools
+
+      - name: Publish Web Runner
+        run: |
+          dotnet publish ./src/Sharpie.Runner/Web/Sharpie.Runner.Web.csproj -c Release
+
+      - name: Assemble Web Package
+        run: |
+          cd src/Sharpie.Runner/Web/bin/Release/net10.0/browser-wasm/AppBundle
+          zip -r ${{ github.workspace }}/sharpie-runner-web.zip .
+          cd ${{ github.workspace }}
+          
+          # Create a README for web version
+          echo "Sharpie Console - Web Edition" > web-README.txt
+          echo "" >> web-README.txt
+          echo "To run:" >> web-README.txt
+          echo "1. Extract all files to a directory" >> web-README.txt
+          echo "2. Serve the directory with a web server" >> web-README.txt
+          echo "3. Open index.html in your browser" >> web-README.txt
+          echo "" >> web-README.txt
+          echo "Example using Python:" >> web-README.txt
+          echo "  python -m http.server 8080" >> web-README.txt
+          echo "  Then open: http://localhost:8080" >> web-README.txt
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sharpie-packages-web
+          path: sharpie-runner-web.zip
+
+      - name: Create GitHub Release (Web)
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push'
+        with:
+          files: sharpie-runner-web.zip
+          body_path: assets/RELEASE_README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

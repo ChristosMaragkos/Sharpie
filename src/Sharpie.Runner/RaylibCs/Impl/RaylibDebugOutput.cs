@@ -5,6 +5,6 @@ public class RaylibDebugOutpug : DebugOutput
 
     public override void Log(string message)
     {
-        Console.WriteLine(message);
+        System.Console.WriteLine(message);
     }
 }
