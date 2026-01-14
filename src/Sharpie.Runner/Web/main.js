@@ -21,11 +21,16 @@ fileInput.addEventListener('change', async (e) => {
     }
 });
 
-// Handle canvas clicks to open file dialog when in boot mode
-canvas.addEventListener('click', () => {
+const handleInteraction = () => {
     if (exports && exports.Sharpie.Runner.Web.Program.IsInBootMode()) {
         fileInput.click();
     }
+};
+
+canvas.addEventListener('click', handleInteraction);
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Prevent duplicate click event
+    handleInteraction();
 });
 
 // Handle drag and drop
