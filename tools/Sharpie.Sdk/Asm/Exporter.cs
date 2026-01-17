@@ -9,9 +9,9 @@ public class Exporter
     private readonly ushort _biosVersion = Meta.Constants.VersionBinFormat;
     private readonly string _fileName;
 
-    private readonly byte[] _palette = new byte[16];
+    private readonly int[] _palette = new int[16];
 
-    public Exporter(string title, string author, string fileName, byte[] palette)
+    public Exporter(string title, string author, string fileName, int[] palette)
     {
         _title = title;
         _author = author;
@@ -40,7 +40,10 @@ public class Exporter
             writer.Write(_biosVersion);
             writer.Write(CalculateChecksum(romData));
 
-            writer.Write(_palette);
+            var bytePalette = new byte[16];
+            for (int i = 0; i < 16; i++)
+                bytePalette[i] = (byte)_palette[i];
+            writer.Write(bytePalette);
         }
         writer.Write(romData);
     }
