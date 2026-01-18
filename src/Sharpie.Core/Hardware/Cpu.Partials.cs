@@ -633,7 +633,9 @@ internal partial class Cpu
     private partial void Execute_OUT_R(byte opcode, ref ushort pcDelta)
     {
         var x = _mobo.ReadByte(_pc + 1);
-        _mobo.PushDebug($"Register {x} @ address ${_pc:X4}: {GetRegister(x)}");
+        _mobo.PushDebug(
+            $"Register {x + _registerBankOffset} @ address ${_pc:X4}: {GetRegister(x)}"
+        );
     }
 
     private partial void Execute_OUT_B(byte opcode, ref ushort pcDelta)
