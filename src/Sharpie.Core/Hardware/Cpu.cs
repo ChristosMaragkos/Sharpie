@@ -22,7 +22,16 @@ internal partial class Cpu
     }
 
     private ushort _pc;
-    private ushort[] _registers = new ushort[16];
+    private ushort[] _registers = new ushort[32];
+    private int _registerBankOffset => ((FlagRegister & 0x8000) >> 15) == 1 ? 16 : 0;
+
+    private ref ushort GetRegister(int index) => ref _registers[index + _registerBankOffset];
+
+    private void FlipRegisterBanks()
+    {
+        FlagRegister ^= 0x8000;
+    }
+
     private readonly Random _rng = new();
     private ushort _oamReg = 0;
     private ushort OamRegister
@@ -80,6 +89,7 @@ internal partial class Cpu
     // 1-Zero (result exactly zero), 0x02
     // 2-Overflow (signed), positive + positive = negative, 0x04
     // 3-Negative (highest bit is 1), 0x08
+    // 15 (MSB) - Register Bank (are we using registers 0-15 or 16-31?)
     private ushort FlagRegister;
 
     private void UpdateFlags(int result, ushort op1, ushort op2, bool subtraction = false)
@@ -232,6 +242,22 @@ Registers:
     r13 -> {_registers[13]}
     r14 -> {_registers[14]}
     r15 -> {_registers[15]}
+    r16 -> {_registers[16]}
+    r17 -> {_registers[17]}
+    r18 -> {_registers[18]}
+    r19 -> {_registers[19]}
+    r20 -> {_registers[20]}
+    r21 -> {_registers[21]}
+    r22 -> {_registers[22]}
+    r23 -> {_registers[23]}
+    r24 -> {_registers[24]}
+    r25 -> {_registers[25]}
+    r26 -> {_registers[26]}
+    r27 -> {_registers[27]}
+    r28 -> {_registers[28]}
+    r29 -> {_registers[29]}
+    r30 -> {_registers[30]}
+    r31 -> {_registers[31]}
 ";
     }
 

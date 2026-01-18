@@ -53,6 +53,7 @@
     { "hex": "0x7D", "name": "OUT_W",  "len": 3, "logic": null , "words": 1 , "pattern": "W", "desc": "Log immediate word W to debug console.", "alt": "" },
     
     { "hex": "0x80", "name": "RND",    "len": 3, "logic": null , "family": true , "words": 2 , "pattern": "RW", "desc": "Family. Random (0 to W-1) into Rn.", "alt": "" },
+    { "hex": "0x90", "name": "FLIPR",  "len": 1, "logic": null , "words": 1 , "pattern": "", "desc": "Flips between using registers 0-15 and 16-31.", "alt": "" },
   
     { "hex": "0xA0", "name": "SONG",   "len": 1, "logic": null , "family": true, "words": 1 , "pattern": "R", "desc": "Family. Start music from address in Rn.", "alt": "" },
     { "hex": "0xC0", "name": "SETCRS", "len": 3, "logic": null , "words": 2 , "pattern": "BB", "desc": "Set text cursor to (X, Y).", "alt": "Relative Move cursor by (X, Y)." },
