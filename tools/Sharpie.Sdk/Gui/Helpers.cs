@@ -111,7 +111,7 @@ public static class Helpers
                         var idx2 = MapColorToPalette(pixel2, manifest); // is it obvious I'm running out of variable names?
 
                         var packed = (byte)((idx1 << 4) | (idx2 & 0x0F));
-                        rowBytes.Add($"{packed:X2}");
+                        rowBytes.Add($"0x{packed:X2}");
                     }
 
                     writer.WriteLine("\t.DB " + string.Join(", ", rowBytes));
