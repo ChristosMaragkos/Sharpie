@@ -10,12 +10,20 @@ namespace Sharpie.Sdk.Gui;
 
 public class MainScreen
 {
-    private static ProjectManifest manifest = new("", "", "", "", false, [], Constants.BiosVersion);
-    private static string errorMsg = "";
-    private static bool successfulBuild = true;
+    private static ProjectManifest _manifest = new(
+        "",
+        "",
+        "",
+        "",
+        false,
+        [],
+        Constants.BiosVersion
+    );
+    private static string _errorMsg = "";
+    private static bool _successfulBuild = true;
 
-    private static bool showPaletteEditor = false;
-    private static List<int> selectedColors = new() { 0 };
+    private static bool _showPaletteEditor = false;
+    private static List<int> _selectedColors = new() { 0 };
 
     public static void RunMainGui()
     {
@@ -58,13 +66,13 @@ public class MainScreen
         ImGui.Text("ROM Metadata");
         ImGui.Separator();
 
-        var title = manifest.Title;
+        var title = _manifest.Title;
         if (ImGui.InputText("Title", ref title, 64))
-            manifest.Title = title;
+            _manifest.Title = title;
 
-        var romAuthor = manifest.Author;
+        var romAuthor = _manifest.Author;
         if (ImGui.InputText("Author", ref romAuthor, 64))
-            manifest.Author = romAuthor;
+            _manifest.Author = romAuthor;
 
         if (ImGui.Button("Import Project..."))
         {
@@ -78,23 +86,23 @@ public class MainScreen
             {
                 try
                 {
-                    manifest = JsonSerializer.Deserialize<ProjectManifest>(
+                    _manifest = JsonSerializer.Deserialize<ProjectManifest>(
                         File.ReadAllText(selected.Paths.First()),
                         SharpieJsonContext.Default.ProjectManifest
                     )!; // better hope it catches null
-                    errorMsg = "Project imported successfully!";
-                    successfulBuild = true;
+                    _errorMsg = "Project imported successfully!";
+                    _successfulBuild = true;
                 }
                 catch (Exception e)
                 {
-                    errorMsg = $"Error importing project:\n{e.Message}";
-                    successfulBuild = false;
+                    _errorMsg = $"Error importing project:\n{e.Message}";
+                    _successfulBuild = false;
                 }
             }
         }
 
         if (ImGui.Button("Edit Palette"))
-            showPaletteEditor = true;
+            _showPaletteEditor = true;
 
         DrawPaletteEditor();
 
@@ -116,9 +124,9 @@ public class MainScreen
             );
             if (!selected.Canceled && selected.Paths.Any())
             {
-                manifest.InputPath = selected.Paths.First();
-                manifest.OutputPath = "";
-                manifest.OutputPath = manifest.ResolveOutputPath();
+                _manifest.InputPath = selected.Paths.First();
+                _manifest.OutputPath = "";
+                _manifest.OutputPath = _manifest.ResolveOutputPath();
             }
         }
 
@@ -126,9 +134,9 @@ public class MainScreen
         var remaining = ImGui.GetContentRegionAvail().X;
         ImGui.SetNextItemWidth(remaining);
 
-        var inputPath = manifest.InputPath;
+        var inputPath = _manifest.InputPath;
         if (ImGui.InputText("##InputPath", ref inputPath, 255))
-            manifest.InputPath = inputPath;
+            _manifest.InputPath = inputPath;
 
         ImGui.Dummy(new Vector2(0, spacing));
 
@@ -136,15 +144,15 @@ public class MainScreen
         {
             var selected = TinyDialogs.SaveFileDialog(
                 "Select Output Path",
-                manifest.ResolveOutputPath(),
+                _manifest.ResolveOutputPath(),
                 new FileFilter(
-                    manifest.IsFirmware ? "BIN files" : "SHR files",
-                    manifest.IsFirmware ? [".bin"] : [".shr"]
+                    _manifest.IsFirmware ? "BIN files" : "SHR files",
+                    _manifest.IsFirmware ? [".bin"] : [".shr"]
                 )
             );
             if (!selected.Canceled && !string.IsNullOrWhiteSpace(selected.Path))
             {
-                manifest.OutputPath = selected.Path;
+                _manifest.OutputPath = selected.Path;
             }
         }
 
@@ -152,9 +160,9 @@ public class MainScreen
         remaining = ImGui.GetContentRegionAvail().X;
         ImGui.SetNextItemWidth(remaining);
 
-        var outputPath = manifest.OutputPath;
+        var outputPath = _manifest.OutputPath;
         if (ImGui.InputText("##OutputPath", ref outputPath, 255))
-            manifest.OutputPath = outputPath;
+            _manifest.OutputPath = outputPath;
 
         ImGui.Dummy(new Vector2(0, spacing));
 
@@ -164,18 +172,18 @@ public class MainScreen
         }
 
         ImGui.SameLine();
-        var fw = manifest.IsFirmware;
+        var fw = _manifest.IsFirmware;
         if (ImGui.Checkbox("Export as Firmware?", ref fw))
         {
-            manifest.IsFirmware = fw;
-            manifest.OutputPath = Path.ChangeExtension(manifest.OutputPath, fw ? ".bin" : ".shr");
+            _manifest.IsFirmware = fw;
+            _manifest.OutputPath = Path.ChangeExtension(_manifest.OutputPath, fw ? ".bin" : ".shr");
         }
 
         if (ImGui.Button("Export Manifest..."))
         {
             var selected = TinyDialogs.SaveFileDialog(
                 "Save Project Manifest",
-                manifest.InputPath,
+                _manifest.InputPath,
                 new FileFilter("JSON files", ["*.json"])
             );
             if (!selected.Canceled && !string.IsNullOrWhiteSpace(selected.Path))
@@ -183,17 +191,17 @@ public class MainScreen
                 try
                 {
                     var json = JsonSerializer.Serialize(
-                        manifest,
+                        _manifest,
                         SharpieJsonContext.Default.ProjectManifest
                     );
                     File.WriteAllText(selected.Path, json);
-                    errorMsg = "Manifest exported successfully!";
-                    successfulBuild = true;
+                    _errorMsg = "Manifest exported successfully!";
+                    _successfulBuild = true;
                 }
                 catch (Exception e)
                 {
-                    errorMsg = e.Message;
-                    successfulBuild = false;
+                    _errorMsg = e.Message;
+                    _successfulBuild = false;
                 }
             }
         }
@@ -205,13 +213,18 @@ public class MainScreen
         // --- Editors Section ---
         ImGui.BeginChild("EditorsSection", new Vector2(0, 80), ImGuiChildFlags.None);
 
-        ImGui.Text("More Editors");
+        ImGui.Text("Graphics & Audio");
         ImGui.Separator();
-        if (ImGui.Button("Sprite Editor"))
-            Console.WriteLine("Opening Sprite Editor");
+        if (ImGui.Button("PNG Converter"))
+        {
+            TryConvertPNGs();
+        }
         ImGui.SameLine();
         if (ImGui.Button("Music Editor"))
-            Console.WriteLine("Opening Music Editor");
+        {
+            _errorMsg = "Music editor coming soon, or never.";
+            _successfulBuild = true;
+        }
 
         ImGui.EndChild();
 
@@ -219,46 +232,78 @@ public class MainScreen
         ImGui.Text("Build Output");
         ImGui.Separator();
         ImGui.TextColored(
-            successfulBuild ? new Vector4(0, 255, 0, 255) : new Vector4(255, 0, 0, 255),
-            errorMsg
+            _successfulBuild ? new Vector4(0, 50, 0, 255) : new Vector4(50, 0, 0, 255),
+            _errorMsg
         );
         ImGui.EndChild();
 
         ImGui.End();
     }
 
+    private static void TryConvertPNGs()
+    {
+        var selected = TinyDialogs.OpenFileDialog(
+            "Select PNG files",
+            Directory.GetCurrentDirectory(),
+            true,
+            new FileFilter("PNG files", ["*.png"])
+        );
+        if (selected.Canceled)
+            return;
+
+        var output = TinyDialogs.SaveFileDialog(
+            "Select output path",
+            Directory.GetCurrentDirectory(),
+            new FileFilter(".ASM file", ["*.asm"])
+        );
+        if (output.Canceled)
+            return;
+
+        try
+        {
+            Helpers.BatchPngToAssembly(selected.Paths, _manifest, output.Path);
+            _errorMsg = "Successfully converted PNGs!";
+            _successfulBuild = true;
+        }
+        catch (Exception e)
+        {
+            _errorMsg = e.Message;
+            _successfulBuild = false;
+        }
+    }
+
     private static void TryAssemble()
     {
-        var valid = manifest.Validate(Constants.BiosVersion);
+        var valid = _manifest.Validate(Constants.BiosVersion);
         if (!valid.IsValid)
         {
-            errorMsg = valid.Errors.First();
-            successfulBuild = false;
+            _errorMsg = valid.Errors.First();
+            _successfulBuild = false;
             return;
         }
         try
         {
             Program.AssembleRom(
-                manifest.InputPath,
-                manifest.Title,
-                manifest.Author,
-                manifest.OutputPath,
-                manifest.Palette,
-                manifest.IsFirmware
+                _manifest.InputPath,
+                _manifest.Title,
+                _manifest.Author,
+                _manifest.OutputPath,
+                _manifest.Palette,
+                _manifest.IsFirmware
             );
-            errorMsg = "Build Successful!";
-            successfulBuild = true;
+            _errorMsg = "Build Successful!";
+            _successfulBuild = true;
         }
         catch (Exception e)
         {
-            errorMsg = e.Message;
-            successfulBuild = false;
+            _errorMsg = e.Message;
+            _successfulBuild = false;
         }
     }
 
     private static void DrawPaletteEditor()
     {
-        if (!showPaletteEditor)
+        if (!_showPaletteEditor)
             return;
 
         int cols = 16;
@@ -267,7 +312,7 @@ public class MainScreen
 
         Vector2 windowSize = new Vector2(cols * squareSize + 30, rows * squareSize + 80); // +padding for title & borders
         ImGui.SetNextWindowSize(windowSize, ImGuiCond.Always);
-        ImGui.Begin("Palette Editor", ref showPaletteEditor, ImGuiWindowFlags.NoMove);
+        ImGui.Begin("Palette Editor", ref _showPaletteEditor, ImGuiWindowFlags.NoMove);
         var drawList = ImGui.GetWindowDrawList();
         var winPos = ImGui.GetCursorScreenPos();
 
@@ -286,7 +331,7 @@ public class MainScreen
                 drawList.AddRectFilled(rectMin, rectMax, ImGui.ColorConvertFloat4ToU32(colVec), 0f);
 
                 // draw outline if selected
-                if (selectedColors.Contains(idx))
+                if (_selectedColors.Contains(idx))
                 {
                     drawList.AddRect(
                         rectMin,
@@ -297,7 +342,7 @@ public class MainScreen
                         3f
                     );
 
-                    var label = selectedColors.IndexOf(idx).ToString();
+                    var label = _selectedColors.IndexOf(idx).ToString();
                     var textSize = ImGui.CalcTextSize(label);
                     var textPos = rectMin + (new Vector2(squareSize, squareSize) - textSize) * 0.5f;
 
@@ -316,10 +361,10 @@ public class MainScreen
                     && mouse.Y <= rectMax.Y;
                 if (hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && idx != 0)
                 {
-                    if (selectedColors.Contains(idx))
-                        selectedColors.Remove(idx);
-                    else if (selectedColors.Count < 16)
-                        selectedColors.Add(idx);
+                    if (_selectedColors.Contains(idx))
+                        _selectedColors.Remove(idx);
+                    else if (_selectedColors.Count < 16)
+                        _selectedColors.Add(idx);
                 }
             }
         }
@@ -331,10 +376,10 @@ public class MainScreen
         {
             var paletteBytes = new int[16];
             for (int j = 0; j < 16; j++)
-                paletteBytes[j] = j < selectedColors.Count ? selectedColors[j] : 0xFF;
+                paletteBytes[j] = j < _selectedColors.Count ? _selectedColors[j] : 0xFF;
 
-            manifest.Palette = paletteBytes;
-            showPaletteEditor = false;
+            _manifest.Palette = paletteBytes;
+            _showPaletteEditor = false;
         }
 
         ImGui.End();

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Sharpie.Sdk.Asm;
+using Sharpie.Sdk.Gui;
 using Sharpie.Sdk.Meta;
 using Sharpie.Sdk.Serialization;
 
@@ -15,12 +16,7 @@ internal class Program
             Environment.Exit(0);
         }
 
-        var guiMode =
-            args.Length == 0
-            || (
-                args.ContainsAny("--sprite-editor", "-se")
-                || args.ContainsAny("--music-editor", "-me")
-            );
+        var guiMode = args.Length == 0;
 
         if (guiMode)
         {
@@ -29,18 +25,6 @@ internal class Program
                 MainGui();
                 return;
             }
-
-            if (args.All(str => str == "--sprite-editor" || str == "-se"))
-            {
-                SpriteEditorGui();
-                return;
-            }
-            else if (args.All(str => str == "--music-editor" || str == "-me"))
-            {
-                MusicEditorGui();
-                return;
-            }
-            PrintHelp();
             return;
         }
 
@@ -52,133 +36,201 @@ internal class Program
         Gui.MainScreen.RunMainGui();
     }
 
-    private static void SpriteEditorGui()
-    {
-        throw new NotImplementedException();
-    }
-
-    private static void MusicEditorGui()
-    {
-        Console.WriteLine("Music Editor coming soon™!");
-    }
-
     private static void CliMode(string[] args)
     {
-        var manifestPath = args.FirstOrDefault(a => a.EndsWith(".json"));
-        ProjectManifest manifest;
-        var manifestDumpPath = "";
+        string? manifestPath = null;
+        var pngFiles = new List<string>();
+        string manifestDumpPath = "";
 
-        if (!string.IsNullOrWhiteSpace(manifestPath) && File.Exists(manifestPath))
+        string input = "";
+        string output = "";
+        bool firmware = false;
+        string author = "";
+        string title = "";
+
+        // --- Parse args ---
+        for (int i = 0; i < args.Length; i++)
         {
-            manifest = JsonSerializer.Deserialize<ProjectManifest>(
+            switch (args[i])
+            {
+                case "-m":
+                case "--manifest":
+                    if (i + 1 < args.Length)
+                        manifestPath = args[++i];
+                    break;
+
+                case "-i":
+                case "--input":
+                    if (i + 1 < args.Length)
+                        input = args[++i];
+                    break;
+
+                case "-o":
+                case "--output":
+                    if (i + 1 < args.Length)
+                        output = args[++i];
+                    break;
+
+                case "-f":
+                case "--firmware":
+                    firmware = true;
+                    break;
+
+                case "-a":
+                case "--author":
+                    if (i + 1 < args.Length)
+                        author = args[++i];
+                    break;
+
+                case "-t":
+                case "--title":
+                    if (i + 1 < args.Length)
+                        title = args[++i];
+                    break;
+
+                case "-c":
+                case "--create-manifest":
+                    if (i + 1 < args.Length)
+                        manifestDumpPath = args[++i];
+                    break;
+
+                case "-p":
+                case "--parse-png":
+                    if (i + 1 < args.Length)
+                        pngFiles.Add(args[++i]);
+                    break;
+            }
+        }
+
+        if (pngFiles.Count > 0)
+        {
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                Console.WriteLine("PNG parsing requires -o / --output (ASM output path).");
+                return;
+            }
+
+            ProjectManifest manifest;
+
+            if (!string.IsNullOrWhiteSpace(manifestPath))
+            {
+                if (!File.Exists(manifestPath))
+                {
+                    Console.WriteLine("Manifest file not found.");
+                    return;
+                }
+
+                manifest = JsonSerializer.Deserialize<ProjectManifest>(
+                    File.ReadAllText(manifestPath),
+                    SharpieJsonContext.Default.ProjectManifest
+                )!;
+            }
+            else
+            {
+                manifest = new ProjectManifest(
+                    "",
+                    "",
+                    "",
+                    output,
+                    false,
+                    ProjectManifest.DefaultPalette(),
+                    Constants.BiosVersion
+                );
+            }
+
+            try
+            {
+                Helpers.BatchPngToAssembly(pngFiles, manifest, output);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("PNG sprites successfully converted to assembly.");
+                Console.ResetColor();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
+            }
+
+            return;
+        }
+
+        ProjectManifest romManifest;
+
+        if (!string.IsNullOrWhiteSpace(manifestPath))
+        {
+            if (!File.Exists(manifestPath))
+            {
+                Console.WriteLine("Manifest file not found.");
+                return;
+            }
+
+            romManifest = JsonSerializer.Deserialize<ProjectManifest>(
                 File.ReadAllText(manifestPath),
                 SharpieJsonContext.Default.ProjectManifest
             )!;
         }
         else
         {
-            var input = "";
-            var output = "";
-            var firmware = false;
-            var author = "";
-            var title = "";
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                switch (args[i])
-                {
-                    case "-i":
-                    case "--input":
-                        if (i + 1 < args.Length)
-                            input = args[++i];
-                        break;
-
-                    case "-o":
-                    case "--output":
-                        if (i + 1 < args.Length)
-                            output = args[++i];
-                        break;
-
-                    case "-f":
-                    case "--firmware":
-                        firmware = true;
-                        break;
-
-                    case "-a":
-                    case "--author":
-                        if (i + 1 < args.Length)
-                            author = args[++i];
-                        break;
-
-                    case "-t":
-                    case "--title":
-                        if (i + 1 < args.Length)
-                            title = args[++i];
-                        break;
-
-                    case "-c":
-                    case "--create-manifest":
-                        if (i + 1 < args.Length)
-                            manifestDumpPath = args[++i];
-                        break;
-                }
-            }
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(input))
-                missing.Add("input (-i / --input)");
+                missing.Add("-i / --input");
             if (string.IsNullOrWhiteSpace(title) && !firmware)
-                missing.Add("title (-t / --title)");
+                missing.Add("-t / --title");
             if (string.IsNullOrWhiteSpace(author) && !firmware)
-                missing.Add("author (-a / --author)");
+                missing.Add("-a / --author");
 
             if (missing.Count > 0)
             {
-                Console.WriteLine(
-                    "[ERROR] Missing required arguments: " + string.Join(", ", missing)
-                );
+                Console.WriteLine("Missing required arguments: " + string.Join(", ", missing));
                 return;
             }
 
-            manifest = new ProjectManifest(
+            romManifest = new ProjectManifest(
                 title,
                 author,
                 input,
-                output ?? Path.ChangeExtension(input, firmware ? ".bin" : ".shr"),
+                string.IsNullOrWhiteSpace(output)
+                    ? Path.ChangeExtension(input, firmware ? ".bin" : ".shr")
+                    : output,
                 firmware,
                 ProjectManifest.DefaultPalette(),
                 Constants.BiosVersion
             );
         }
 
-        var validation = manifest.Validate(Constants.BiosVersion);
+        var validation = romManifest.Validate(Constants.BiosVersion);
         if (!validation.IsValid)
         {
-            Console.WriteLine("B");
+            Console.WriteLine("Manifest validation failed:");
             foreach (var e in validation.Errors)
-                Console.WriteLine($"[ERROR] {e}");
+                Console.WriteLine(e);
             return;
         }
 
         try
         {
             AssembleRom(
-                manifest.InputPath,
-                manifest.Title,
-                manifest.Author,
-                manifest.ResolveOutputPath(),
-                manifest.Palette,
-                manifest.IsFirmware
+                romManifest.InputPath,
+                romManifest.Title,
+                romManifest.Author,
+                romManifest.ResolveOutputPath(),
+                romManifest.Palette,
+                romManifest.IsFirmware
             );
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(
-                manifest.IsFirmware ? "Firmware build successful!" : "Cartridge export successful!"
+                romManifest.IsFirmware
+                    ? "Firmware build successful!"
+                    : "Cartridge export successful!"
             );
             Console.ResetColor();
         }
         catch (Exception e)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"[ASSEMBLER ERROR] {e.Message}");
+            Console.WriteLine(e.Message);
             Console.ResetColor();
         }
 
@@ -186,20 +238,17 @@ internal class Program
         {
             try
             {
-                Console.WriteLine("Creating manifest file...");
-                var json = JsonSerializer.Serialize(
-                    manifest,
-                    SharpieJsonContext.Default.ProjectManifest
-                );
-                if (string.IsNullOrWhiteSpace(json))
-                    throw new JsonException("Could not serialize project manifest.");
-
                 if (!manifestDumpPath.EndsWith(".json"))
                     throw new FormatException("Output path is not a JSON file.");
 
+                var json = JsonSerializer.Serialize(
+                    romManifest,
+                    SharpieJsonContext.Default.ProjectManifest
+                );
+
                 File.WriteAllText(manifestDumpPath, json);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Project manifest saved sucessfully!");
+                Console.WriteLine("Project manifest saved successfully!");
                 Console.ResetColor();
             }
             catch (Exception e)
