@@ -54,6 +54,7 @@ public static class InstructionSet
         { "OUT_B", (2, 124, 1, false, "B") },
         { "OUT_W", (3, 125, 1, false, "W") },
         { "RND", (3, 128, 2, true, "RW") },
+        { "FLIPR", (1, 144, 1, false, "") },
         { "SONG", (1, 160, 1, true, "R") },
         { "SETCRS", (3, 192, 2, false, "BB") },
         { "DRAW", (3, 208, 5, true, "RRRRR") },

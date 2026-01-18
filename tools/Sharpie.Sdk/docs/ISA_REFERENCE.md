@@ -48,6 +48,7 @@
 | `0x7C` | **OUT_B** | `B` | 2 | Log immediate byte B to debug console. |  |
 | `0x7D` | **OUT_W** | `W` | 3 | Log immediate word W to debug console. |  |
 | `0x80n` | **RND** | `R, W` | 3 | Family. Random (0 to W-1) into Rn. |  |
+| `0x90` | **FLIPR** | `-` | 1 | Flips between using registers 0-15 and 16-31. |  |
 | `0xA0n` | **SONG** | `R` | 1 | Family. Start music from address in Rn. |  |
 | `0xC0` | **SETCRS** | `B, B` | 3 | Set text cursor to (X, Y). | Relative Move cursor by (X, Y). |
 | `0xD0n` | **DRAW** | `R, R, R, R, R` | 3 | Family. Draw sprite: X, Y, ID, Attr, SlotOut. | Manual Slot: Use Rn as OAM slot index. |
