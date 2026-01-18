@@ -247,9 +247,7 @@ Registers:
         return (rX, rY);
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    private int IndexFromOpcode(byte opcode)
-#pragma warning restore CA1822 // Mark members as static
+    private static int IndexFromOpcode(byte opcode)
     {
         return opcode & 0x0F;
     }
