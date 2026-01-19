@@ -13,6 +13,7 @@ internal class Motherboard : IMotherboard
 
     public bool IsInBootMode { get; private set; }
     private const ushort ReservedSpaceStart = Memory.ReservedSpaceStart;
+    private byte[] _cartPalette = new byte[16];
 
     public byte FontColorIndex { get; private set; } = 1;
     private byte _fontSizeReg = 0;
@@ -148,6 +149,8 @@ internal class Motherboard : IMotherboard
             _ram.WriteByte((ushort)BiosFlagAddresses.Version, header[42]); // header memory addresses 42 and 43 is where the
             _ram.WriteByte((ushort)BiosFlagAddresses.Version + 1, header[43]); // minimum BIOS version required to run the cartridge lives
 
+            _cartPalette = header.Skip(48).ToArray();
+
             var cartData = fileData.Skip(64).ToArray();
             _ram.LoadData(0, cartData);
             _ram.WriteByte((ushort)BiosFlagAddresses.IsCartLoaded, 0x01); // yes cart loaded
@@ -171,6 +174,7 @@ internal class Motherboard : IMotherboard
         Apu?.Enable();
         _sequencer.Reset();
         _cpu.RequestReset();
+        _cpu.LoadPalette(_cartPalette);
     }
 
     public void SetupDisplay()
