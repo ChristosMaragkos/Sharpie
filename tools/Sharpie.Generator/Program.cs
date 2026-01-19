@@ -139,7 +139,7 @@ foreach (var op in ops)
 File.WriteAllText("./tools/Sharpie.Sdk/docs/ISA_REFERENCE.md", sb.ToString());
 Console.WriteLine("Assembly reference document generated. Long live the Empire.");
 
-var nvimOps = string.Join(" ", ops.Select(o => o.Name));
+var nvimOps = string.Join(" ", ops.Select(o => o.Name.ToUpper() + " " + o.Name.ToLower()));
 sb.Clear();
 
 sb.AppendLine("\" Auto-generated Sharpie Syntax");
@@ -155,7 +155,7 @@ sb.AppendLine(@"syn match sharpieLabel /\<[A-Za-z_][A-Za-z0-9_]*:/");
 sb.AppendLine(@"syn match sharpieNumber /\(\$\|0x\)[0-9A-Fa-f]\+/");
 sb.AppendLine(@"syn match sharpieNumber /0b[01]\+/");
 sb.AppendLine(@"syn match sharpieNumber /\<\d\+\>/");
-sb.AppendLine(@"syn match sharpieDirective /\.[A-Z]\+/");
+sb.AppendLine(@"syn match sharpieDirective /\.[A-Za-z_]\+/");
 
 sb.AppendLine(@"syn region sharpieString start=/\""/ end=/\""/ ");
 
@@ -180,12 +180,13 @@ string vscodeSyntax =
   ""$schema"": ""https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json"",
   ""name"": ""Sharpie Assembly"",
   ""patterns"": [
+    {{ ""name"": ""variable.other.enum.sharpie"", ""match"": ""\\b[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*\\b""
     {{ ""name"": ""comment.line.semicolon.sharpie"", ""match"": "";.*"" }},
     {{ ""name"": ""keyword.control.sharpie"", ""match"": ""\\b({vsOps})\\b"" }},
     {{ ""name"": ""variable.parameter.register.sharpie"", ""match"": ""\\b[rR]([0-9]|1[0-5])\\b"" }},
     {{ ""name"": ""constant.numeric.hex.sharpie"", ""match"": ""(\\$|0x)[0-9A-Fa-f]+\\b"" }},
     {{ ""name"": ""entity.name.function.label.sharpie"", ""match"": ""^[A-Za-z_][A-Za-z0-9_]*:"" }},
-    {{ ""name"": ""keyword.other.directive.sharpie"", ""match"": ""\\.[A-Z]+\\b"" }}
+    {{ ""name"": ""keyword.other.directive.sharpie"", ""match"": ""\\.[A-Za-z_]+\\b"" }}
     {{ ""name"": ""string.quoted.double.sharpie"", ""begin"": ""\\\"""", ""end"": ""\\\"""" }},
     {{ ""name"": ""constant.character.sharpie"", ""match"": ""'[^']'"" }},
   ],

@@ -1,6 +1,6 @@
 " Auto-generated Sharpie Syntax
 if exists("b:current_syntax") | finish | endif
-syn keyword sharpieOpcode NOP MOV LDM LDP LDI STM ADD SUB MUL DIV MOD AND OR XOR SHL SHR CMP ADC INC DEC NOT NEG IADD ISUB IMUL IDIV IMOD IAND IOR IXOR ICMP DINC DDEC JMP JEQ JNE JGT JLT JGE JLE CALL RET PUSH POP OUT_R OUT_B OUT_W RND FLIPR CAM GETOAM SETOAM SONG SETCRS DRAW INSTR TAG CLS VBLNK PLAY STOP INPUT TEXT ATTR SWC MUTE COL ALT HALT
+syn keyword sharpieOpcode NOP nop MOV mov LDM ldm LDP ldp LDI ldi STM stm ADD add SUB sub MUL mul DIV div MOD mod AND and OR or XOR xor SHL shl SHR shr CMP cmp ADC adc INC inc DEC dec NOT not NEG neg IADD iadd ISUB isub IMUL imul IDIV idiv IMOD imod IAND iand IOR ior IXOR ixor ICMP icmp DINC dinc DDEC ddec JMP jmp JEQ jeq JNE jne JGT jgt JLT jlt JGE jge JLE jle CALL call RET ret PUSH push POP pop OUT_R out_r OUT_B out_b OUT_W out_w RND rnd FLIPR flipr CAM cam GETOAM getoam SETOAM setoam SONG song SETCRS setcrs DRAW draw INSTR instr TAG tag CLS cls VBLNK vblnk PLAY play STOP stop INPUT input TEXT text ATTR attr SWC swc MUTE mute COL col ALT alt HALT halt
 syn match sharpieRegister /\<[rR]\([0-9]\|1[0-5]\)\>/
 syn match sharpieHex /\$[0-9A-Fa-f]\+/
 syn match sharpieNote /#[A-Ga-g][#Bb]\?\d\+/
@@ -9,7 +9,7 @@ syn match sharpieLabel /\<[A-Za-z_][A-Za-z0-9_]*:/
 syn match sharpieNumber /\(\$\|0x\)[0-9A-Fa-f]\+/
 syn match sharpieNumber /0b[01]\+/
 syn match sharpieNumber /\<\d\+\>/
-syn match sharpieDirective /\.[A-Z]\+/
+syn match sharpieDirective /\.[A-Za-z_]\+/
 syn region sharpieString start=/\"/ end=/\"/ 
 let b:current_syntax = "sharpie"
 hi def link sharpieOpcode Statement
