@@ -4,7 +4,12 @@ namespace Sharpie.Sdk.Asm;
 
 public partial class Assembler
 {
-    private int? ParseNumberLiteral(string input, bool allowAddrPref, int limit = ushort.MaxValue)
+    private int? ParseNumberLiteral(
+        string input,
+        bool allowAddrPref,
+        int lineNumber,
+        int limit = ushort.MaxValue
+    )
     {
         if (string.IsNullOrWhiteSpace(input))
             return null;
@@ -17,6 +22,24 @@ public partial class Assembler
         bool negative = input.StartsWith('-');
         if (negative)
             input = new string(input.Skip(1).ToArray());
+
+        if (input.Contains("::"))
+        {
+            var split = input.Split("::");
+            if (split.Length != 2)
+                throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNumber);
+
+            if (!Enums.TryGetValue(split[0], out var members))
+                throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNumber);
+
+            if (!members.TryGetValue(split[1], out var value))
+                throw new AssemblySyntaxException(
+                    $"Unknown value {split[1]} for enum {split[0]}",
+                    lineNumber
+                );
+
+            return !negative ? value : -value;
+        }
 
         bool startsWithDollar = input.StartsWith('$'); // a dollar? oh, that's a big problem
         bool startsWith0x = input.StartsWith("0x", StringComparison.OrdinalIgnoreCase);
@@ -81,7 +104,7 @@ public partial class Assembler
         if (LabelToMemAddr.TryGetValue(arg, out var addr))
             return addr;
 
-        var num = ParseNumberLiteral(arg, true);
+        var num = ParseNumberLiteral(arg, true, lineNum);
         if (num.HasValue && num.Value <= ushort.MaxValue)
             return (ushort)num;
 
@@ -102,7 +125,7 @@ public partial class Assembler
         if (Constants.TryGetValue(arg, out var val))
             return (byte)val;
 
-        var num = ParseNumberLiteral(arg, true);
+        var num = ParseNumberLiteral(arg, true, lineNumber: lineNum);
         if (num.HasValue && num.Value <= byte.MaxValue)
             return (byte)num;
 
@@ -114,6 +137,30 @@ public partial class Assembler
 
     private byte ParseRegister(string arg, int lineNum)
     {
+        var isEnum = arg.Contains("::");
+        if (isEnum)
+        {
+            var split = arg.Split("::");
+            if (split.Length != 2)
+                throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNum);
+
+            if (!Enums.TryGetValue(split[0], out var members))
+                throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNum);
+
+            if (!members.TryGetValue(split[1], out var value))
+                throw new AssemblySyntaxException(
+                    $"Unknown value {split[1]} for enum {split[0]}",
+                    lineNum
+                );
+
+            if (value > 0x0F)
+                throw new AssemblySyntaxException(
+                    $"Enum value {split[0]}::{split[1]} is not a valid register index - must be 0-15",
+                    lineNum
+                );
+            return (byte)value;
+        }
+
         var isChar = arg.StartsWith('\'') && arg.EndsWith('\'');
         if (isChar)
         {

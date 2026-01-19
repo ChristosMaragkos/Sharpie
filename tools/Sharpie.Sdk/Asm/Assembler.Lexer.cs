@@ -14,6 +14,14 @@ public partial class Assembler
     private bool _isInAssetMode;
     private int _realCursor;
 
+    private readonly Dictionary<string, Dictionary<string, ushort>> Enums = new();
+    private readonly Dictionary<string, string> EnumMemberLookup = new();
+
+    private static readonly char[] DisallowedEnumChars = [':', ',', '#', '=', ' ', '\'', '"'];
+
+    private string? _currentEnum = null;
+    private ushort _currentEnumVal;
+
     // TODO: Stop tokenizing OUT instructions by distinguishing between Debug and Release ROMs
     private void ReadFile()
     {
@@ -54,6 +62,10 @@ public partial class Assembler
                 _isInAssetMode = false;
             }
 
+            ParseEnumDefinition(ref cleanLine, lineNum);
+            if (IsLineEmpty(cleanLine))
+                continue;
+
             ParseConstantDefinition(ref cleanLine, lineNum);
             if (IsLineEmpty(cleanLine)) // should be empty but oh well
                 continue;
@@ -80,6 +92,98 @@ public partial class Assembler
         bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
 
+    private void ParseEnumDefinition(ref string cleanLine, int lineNum)
+    {
+        if (cleanLine.StartsWith(".ENUM"))
+        {
+            var parts = cleanLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (_currentEnum != null)
+                throw new AssemblySyntaxException(
+                    $"Cannot declare enum {parts[1]} within another enum",
+                    lineNum
+                );
+
+            if (parts.Length != 2)
+                throw new AssemblySyntaxException(
+                    $"Unexpected second argument to .ENUM directive: {parts.Last()}",
+                    lineNum
+                );
+
+            if (
+                LabelToMemAddr.ContainsKey(parts[1])
+                || Constants.ContainsKey(parts[1])
+                || Enums.ContainsKey(parts[1])
+            )
+                throw new AssemblySyntaxException(
+                    $"Enum named {parts[1]} is already declared.",
+                    lineNum
+                );
+
+            _currentEnum = parts[1];
+            _currentEnumVal = 0;
+            Enums[_currentEnum] = new Dictionary<string, ushort>();
+            cleanLine = string.Empty; // we already know we have the correct amount of args if we haven't thrown
+        }
+        else if (cleanLine.StartsWith(".ENDENUM"))
+        {
+            if (_currentEnum == null)
+                throw new AssemblySyntaxException("No matching .ENUM found for .ENDENUM", lineNum);
+            _currentEnum = null;
+            cleanLine = cleanLine.Substring(".ENDENUM".Length);
+        }
+        else if (_currentEnum != null)
+        {
+            var parts = cleanLine
+                .Split('=', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .ToArray();
+
+            if (parts.Length > 2)
+                throw new AssemblySyntaxException($"Unexpected token: {parts.Last()}", lineNum);
+
+            var enumMember = parts[0];
+
+            if (parts.Length == 1)
+            {
+                var whitespaceSplit = parts[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (whitespaceSplit.Length != 1)
+                    throw new AssemblySyntaxException(
+                        $"Unexpected token: {whitespaceSplit.Last()}",
+                        lineNum
+                    );
+
+                if (Enums[_currentEnum].TryGetValue(enumMember, out var _))
+                    throw new AssemblySyntaxException(
+                        $"Member {enumMember} already defined for enum {_currentEnum}",
+                        lineNum
+                    );
+
+                Enums[_currentEnum][enumMember] = _currentEnumVal++;
+            }
+            else // always two since we throw otherwise
+            {
+                var whitespaceSplit = parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (whitespaceSplit.Length != 1)
+                    throw new AssemblySyntaxException(
+                        $"Unexpected token: {whitespaceSplit.Last()}",
+                        lineNum
+                    );
+
+                if (Enums[_currentEnum].TryGetValue(enumMember, out var _))
+                    throw new AssemblySyntaxException(
+                        $"Member {enumMember} already defined for enum {_currentEnum}",
+                        lineNum
+                    );
+
+                var value = ParseWord(parts[1], lineNum);
+                Enums[_currentEnum][enumMember] = value;
+                _currentEnumVal = (ushort)(value + 1);
+            }
+            cleanLine = string.Empty;
+        }
+    }
+
     private void ParseConstantDefinition(ref string line, int lineNumber)
     {
         if (!line.StartsWith(".DEF"))
@@ -101,7 +205,7 @@ public partial class Assembler
         if (LabelToMemAddr.ContainsKey(name) || Constants.ContainsKey(name))
             throw new AssemblySyntaxException($"Constant {name} is already declared", lineNumber);
 
-        var value = ParseNumberLiteral(valueStr, true);
+        var value = ParseNumberLiteral(valueStr, true, lineNumber);
         if (value == null)
             throw new AssemblySyntaxException(
                 $"Unexpected token: {valueStr} - expected a number",
@@ -228,6 +332,9 @@ public partial class Assembler
 
     private void RemoveLabel(ref string line, int lineNumber)
     {
+        if (line.Contains("::"))
+            return;
+
         if (line.Split(':', StringSplitOptions.RemoveEmptyEntries).Length > 2)
             throw new AssemblySyntaxException("Unexpected token: \":\"", lineNumber);
 
