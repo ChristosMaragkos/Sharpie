@@ -357,7 +357,7 @@ public partial class Assembler
         if (!InstructionSet.IsValidOpcode(tokenLine.Opcode))
             throw new AssemblySyntaxException($"Invalid Opcode: {tokenLine.Opcode}", lineNumber);
 
-        if (args.Length - 1 != InstructionSet.GetOpcodeWords(tokenLine.Opcode))
+        if (args.Length - 1 != InstructionSet.GetOpcodePattern(tokenLine.Opcode).Length)
             throw new AssemblySyntaxException(
                 $"Invalid argument count for opcode {tokenLine.Opcode}: expected {InstructionSet.GetOpcodeWords(tokenLine.Opcode)} but found {args.Length - 1}",
                 lineNumber
