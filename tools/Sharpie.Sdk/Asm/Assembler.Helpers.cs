@@ -4,6 +4,59 @@ namespace Sharpie.Sdk.Asm;
 
 public partial class Assembler
 {
+    private bool TryDefineLabel(string name, ushort address) =>
+        CurrentScope.TryDefineLabel(name, address);
+
+    private bool TryResolveLabel(string name, out ushort address)
+    {
+        foreach (var scope in _scopes)
+            if (scope.LabelAddresses.TryGetValue(name, out address))
+                return true;
+
+        address = 0;
+        return false;
+    }
+
+    private bool TryDefineConstant(string name, ushort value) =>
+        CurrentScope.TryDefineConstant(name, value);
+
+    private bool TryResolveConstant(string name, out ushort value)
+    {
+        foreach (var scope in _scopes)
+            if (scope.Constants.TryGetValue(name, out value))
+                return true;
+
+        value = 0;
+        return false;
+    }
+
+    private bool TryDefineEnum(string name) => CurrentScope.TryDefineEnum(name);
+
+    private bool TryResolveEnum(string name)
+    {
+        foreach (var scope in _scopes)
+            if (scope.Enums.TryGetValue(name, out _))
+                return true;
+
+        return false;
+    }
+
+    private bool TryDefineEnumMember(string enumName, string memberName, ushort value) =>
+        CurrentScope.TryDefineEnumMember(enumName, memberName, value);
+
+    private bool TryResolveEnumMember(string enumName, string memberName, out ushort value)
+    {
+        foreach (var scope in _scopes)
+            if (
+                scope.Enums.TryGetValue(enumName, out var members)
+                && members.TryGetValue(memberName, out value)
+            )
+                return true;
+
+        value = 0;
+        return false;
+    }
+
     private int? ParseNumberLiteral(
         string input,
         bool allowAddrPref,
@@ -25,19 +78,9 @@ public partial class Assembler
 
         if (input.Contains("::"))
         {
-            var split = input.Split("::");
-            if (split.Length != 2)
-                throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNumber);
-
-            if (!Enums.TryGetValue(split[0], out var members))
-                throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNumber);
-
-            if (!members.TryGetValue(split[1], out var value))
-                throw new AssemblySyntaxException(
-                    $"Unknown value {split[1]} for enum {split[0]}",
-                    lineNumber
-                );
-
+            ushort value;
+            string[] split;
+            ResolveEnumValue(input, lineNumber, out split, out value);
             return !negative ? value : -value;
         }
 
@@ -98,10 +141,10 @@ public partial class Assembler
                 ? TextHelper.GetFontIndex(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
-        if (Constants.TryGetValue(arg, out var val))
+        if (TryResolveConstant(arg, out var val))
             return (ushort)val;
 
-        if (LabelToMemAddr.TryGetValue(arg, out var addr))
+        if (TryResolveLabel(arg, out var addr))
             return addr;
 
         var num = ParseNumberLiteral(arg, true, lineNum);
@@ -122,7 +165,7 @@ public partial class Assembler
                 ? TextHelper.GetFontIndex(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
-        if (Constants.TryGetValue(arg, out var val))
+        if (TryResolveConstant(arg, out var val))
             return (byte)val;
 
         var num = ParseNumberLiteral(arg, true, lineNumber: lineNum);
@@ -140,18 +183,9 @@ public partial class Assembler
         var isEnum = arg.Contains("::");
         if (isEnum)
         {
-            var split = arg.Split("::");
-            if (split.Length != 2)
-                throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNum);
-
-            if (!Enums.TryGetValue(split[0], out var members))
-                throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNum);
-
-            if (!members.TryGetValue(split[1], out var value))
-                throw new AssemblySyntaxException(
-                    $"Unknown value {split[1]} for enum {split[0]}",
-                    lineNum
-                );
+            string[] split;
+            ushort value;
+            ResolveEnumValue(arg, lineNum, out split, out value);
 
             if (value > 0x0F)
                 throw new AssemblySyntaxException(
@@ -179,7 +213,7 @@ public partial class Assembler
         if (arg.StartsWith('r') || arg.StartsWith('R'))
             cleanArg = arg.Substring(1);
 
-        if (Constants.TryGetValue(arg, out var constant))
+        if (TryResolveConstant(arg, out var constant))
         {
             if (constant < 0 || constant >= 16)
                 throw new AssemblySyntaxException(
@@ -205,6 +239,22 @@ public partial class Assembler
         return parsed;
     }
 
+    private void ResolveEnumValue(string arg, int lineNum, out string[] split, out ushort value)
+    {
+        split = arg.Split("::");
+        if (split.Length != 2)
+            throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNum);
+
+        if (!TryResolveEnum(split[0]))
+            throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNum);
+
+        if (!TryResolveEnumMember(split[0], split[1], out value))
+            throw new AssemblySyntaxException(
+                $"Unknown value {split[1]} for enum {split[0]}",
+                lineNum
+            );
+    }
+
     private int CalculateSpriteAddress(byte spriteIndex)
     {
         const int spriteSize = 32;
@@ -223,7 +273,7 @@ public partial class Assembler
             return null;
 
         var noteChar = match.Groups[1].Value;
-        var acdntl = match.Groups[2].Value;
+        var acdntl = match.Groups[2].Value.ToUpperInvariant();
         var octave = int.Parse(match.Groups[3].Value);
 
         var baseNote = noteChar switch

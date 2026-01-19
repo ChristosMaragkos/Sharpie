@@ -8,23 +8,35 @@ public partial class Assembler
     private static readonly char[] CommonDelimiters = [',', ' '];
 
     private IEnumerable<string>? FileContents { get; set; }
-    public Dictionary<string, ushort> LabelToMemAddr { get; } = new();
-    private Dictionary<string, ushort> Constants { get; } = new();
     public List<TokenLine> Tokens { get; } = new();
+
     private bool _isInAssetMode;
     private int _realCursor;
-
-    private readonly Dictionary<string, Dictionary<string, ushort>> Enums = new();
-    private readonly Dictionary<string, string> EnumMemberLookup = new();
 
     private static readonly char[] DisallowedEnumChars = [':', ',', '#', '=', ' ', '\'', '"'];
 
     private string? _currentEnum = null;
     private ushort _currentEnumVal;
 
-    // TODO: Stop tokenizing OUT instructions by distinguishing between Debug and Release ROMs
+    private readonly Stack<ScopeLevel> _scopes = new();
+
+    private void NewScope() => _scopes.Push(new ScopeLevel());
+
+    private void RemoveScope()
+    {
+        if (!IsInLocalScope)
+            throw new InvalidOperationException("Cannot remove global scope.");
+
+        _scopes.Pop();
+    }
+
+    private ScopeLevel CurrentScope => _scopes.Peek();
+    private bool IsInLocalScope => _scopes.Count > 1;
+
     private void ReadFile()
     {
+        _scopes.Push(new ScopeLevel()); // global scope
+
         if (FileContents == null)
             throw new NullReferenceException("File contents are null. Check your file path.");
 
@@ -62,6 +74,10 @@ public partial class Assembler
                 _isInAssetMode = false;
             }
 
+            ParseScope(ref cleanLine, lineNum);
+            if (IsLineEmpty(cleanLine))
+                continue;
+
             ParseEnumDefinition(ref cleanLine, lineNum);
             if (IsLineEmpty(cleanLine))
                 continue;
@@ -92,6 +108,26 @@ public partial class Assembler
         bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
 
+    private void ParseScope(ref string cleanLine, int lineNum)
+    {
+        if (cleanLine.StartsWith(".SCOPE"))
+        {
+            NewScope();
+            cleanLine = cleanLine.Substring(".SCOPE".Length).Trim(); // allow labels and such after scope start
+        }
+        else if (cleanLine.StartsWith(".ENDSCOPE"))
+        {
+            if (!IsInLocalScope)
+                throw new AssemblySyntaxException(
+                    "No matching .SCOPE found for .ENDSCOPE",
+                    lineNum
+                );
+
+            RemoveScope();
+            cleanLine = cleanLine.Substring(".ENDSCOPE".Length).Trim();
+        }
+    }
+
     private void ParseEnumDefinition(ref string cleanLine, int lineNum)
     {
         if (cleanLine.StartsWith(".ENUM"))
@@ -110,10 +146,12 @@ public partial class Assembler
                     lineNum
                 );
 
+            var name = parts[1];
+
             if (
-                LabelToMemAddr.ContainsKey(parts[1])
-                || Constants.ContainsKey(parts[1])
-                || Enums.ContainsKey(parts[1])
+                TryResolveLabel(name, out _)
+                || TryResolveConstant(name, out _)
+                || !TryDefineEnum(name)
             )
                 throw new AssemblySyntaxException(
                     $"Enum named {parts[1]} is already declared.",
@@ -122,7 +160,6 @@ public partial class Assembler
 
             _currentEnum = parts[1];
             _currentEnumVal = 0;
-            Enums[_currentEnum] = new Dictionary<string, ushort>();
             cleanLine = string.Empty; // we already know we have the correct amount of args if we haven't thrown
         }
         else if (cleanLine.StartsWith(".ENDENUM"))
@@ -130,7 +167,7 @@ public partial class Assembler
             if (_currentEnum == null)
                 throw new AssemblySyntaxException("No matching .ENUM found for .ENDENUM", lineNum);
             _currentEnum = null;
-            cleanLine = cleanLine.Substring(".ENDENUM".Length);
+            cleanLine = cleanLine.Substring(".ENDENUM".Length).Trim();
         }
         else if (_currentEnum != null)
         {
@@ -153,13 +190,20 @@ public partial class Assembler
                         lineNum
                     );
 
-                if (Enums[_currentEnum].TryGetValue(enumMember, out var _))
+                if (enumMember.ContainsAny(DisallowedEnumChars))
+                {
+                    var invalidChar = enumMember.First(c => DisallowedEnumChars.Contains(c));
+                    throw new AssemblySyntaxException(
+                        $"Unexpected character in enum value {enumMember} : {invalidChar}",
+                        lineNum
+                    );
+                }
+
+                if (!TryDefineEnumMember(_currentEnum, enumMember, _currentEnumVal++))
                     throw new AssemblySyntaxException(
                         $"Member {enumMember} already defined for enum {_currentEnum}",
                         lineNum
                     );
-
-                Enums[_currentEnum][enumMember] = _currentEnumVal++;
             }
             else // always two since we throw otherwise
             {
@@ -170,14 +214,14 @@ public partial class Assembler
                         lineNum
                     );
 
-                if (Enums[_currentEnum].TryGetValue(enumMember, out var _))
+                var value = ParseWord(parts[1], lineNum);
+
+                if (!TryDefineEnumMember(_currentEnum, enumMember, value))
                     throw new AssemblySyntaxException(
                         $"Member {enumMember} already defined for enum {_currentEnum}",
                         lineNum
                     );
 
-                var value = ParseWord(parts[1], lineNum);
-                Enums[_currentEnum][enumMember] = value;
                 _currentEnumVal = (ushort)(value + 1);
             }
             cleanLine = string.Empty;
@@ -202,8 +246,6 @@ public partial class Assembler
             args[i] = args[i].Trim(CommonDelimiters).Trim();
 
         var (name, valueStr) = (args[1], args[2]);
-        if (LabelToMemAddr.ContainsKey(name) || Constants.ContainsKey(name))
-            throw new AssemblySyntaxException($"Constant {name} is already declared", lineNumber);
 
         var value = ParseNumberLiteral(valueStr, true, lineNumber);
         if (value == null)
@@ -211,6 +253,14 @@ public partial class Assembler
                 $"Unexpected token: {valueStr} - expected a number",
                 lineNumber
             );
+
+        if (
+            TryResolveLabel(name, out _)
+            || !TryDefineConstant(name, (ushort)value)
+            || TryResolveEnum(name)
+        )
+            throw new AssemblySyntaxException($"Constant {name} is already declared", lineNumber);
+
         if (value > ushort.MaxValue)
             throw new AssemblySyntaxException(
                 $"Number {value} cannot be larger than {ushort.MaxValue}.",
@@ -218,8 +268,6 @@ public partial class Assembler
             );
 
         line = line.Substring(line.LastIndexOf(valueStr.Last()) + 1);
-
-        Constants[name] = (ushort)value;
     }
 
     private void ParseStringDirective(ref string line, int lineNumber)
@@ -325,31 +373,26 @@ public partial class Assembler
         var comment = Regex.Match(line, ";");
         if (comment.Success)
         {
-            line = line.Remove(comment.Index);
-            line = line.Trim();
+            line = line.Remove(comment.Index).Trim();
         }
     }
 
     private void RemoveLabel(ref string line, int lineNumber)
     {
-        if (line.Contains("::"))
+        var labelRegex = Regex.Match(line, @"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:(?!:)");
+        if (!labelRegex.Success)
             return;
 
-        if (line.Split(':', StringSplitOptions.RemoveEmptyEntries).Length > 2)
-            throw new AssemblySyntaxException("Unexpected token: \":\"", lineNumber);
+        var label = labelRegex.Groups[1].Value;
 
-        var labelRegex = Regex.Match(line, ":");
-        if (labelRegex.Success)
-        {
-            var colonIndex = labelRegex.Index;
-            var label = line.Substring(0, colonIndex).Trim();
+        if (
+            !TryDefineLabel(label, (ushort)CurrentAddress)
+            || TryResolveConstant(label, out _)
+            || TryResolveEnum(label)
+        )
+            throw new AssemblySyntaxException($"Label {label} is already declared", lineNumber);
 
-            if (Constants.ContainsKey(label) || LabelToMemAddr.ContainsKey(label))
-                throw new AssemblySyntaxException($"Label {label} is already declared", lineNumber);
-
-            LabelToMemAddr[label] = (ushort)CurrentAddress;
-            line = line.Substring(colonIndex + 1).Trim();
-        }
+        line = line.Substring(labelRegex.Index + labelRegex.Length).Trim();
     }
 
     private void Tokenize(string line, ref TokenLine tokenLine, int lineNumber)
