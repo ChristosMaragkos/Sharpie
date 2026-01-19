@@ -33,13 +33,8 @@ internal partial class Cpu
     }
 
     private readonly Random _rng = new();
-    private ushort _oamReg = 0;
-    private ushort OamRegister
-    {
-        get => _oamReg;
-        set => _oamReg = value < MaxOamSlots ? value : (ushort)0;
-    }
-    private byte[] _tagMap = new byte[512];
+
+    private byte[] _tagMap = new byte[OamBank.MaxEntries];
     private Stack<ushort> _callStack = new();
 
     private int _cursorPosX;
@@ -164,7 +159,6 @@ internal partial class Cpu
         FlagRegister = 0;
         _tagMap = new byte[512];
         _callStack = new();
-        OamRegister = 0;
         LoadDefaultPalette();
         IsHalted = false;
         _resetRequested = false;

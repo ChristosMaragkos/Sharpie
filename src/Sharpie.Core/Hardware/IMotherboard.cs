@@ -26,7 +26,7 @@ internal interface IMotherboard
 
     void SwapColor(byte oldIndex, byte newIndex);
     void StopSystem();
-    ushort CheckCollision(int sprIdSrc);
+    ushort CheckCollision(int srcIndex);
 
     byte ReadByte(ushort address);
     byte ReadByte(int address);
@@ -44,6 +44,13 @@ internal interface IMotherboard
 
     void PushDebug(string message);
     void ToggleSequencer();
+
+    int GetOamCursor();
+    void SetOamCursor(int value);
+    void WriteSpriteEntry(ushort x, ushort y, byte tileId, byte attr, byte type);
+
+    void MoveCamera(int dx, int dy);
+    void SetCamera(ushort x, ushort y);
 
     public static ReadOnlySpan<byte> SmallFont =>
         new byte[]

@@ -41,9 +41,8 @@ internal partial class Cpu
             case 0xF1: // CLS
             {
                 pcDelta = 2;
+                _mobo.SetOamCursor(0); // just set to 0 so we clear from the start
                 Execute_CLS(prefixed, ref pcDelta);
-                _mobo.FillRange(Memory.OamStart, Memory.WorkRamStart - Memory.OamStart, 0xFF);
-                OamRegister = 0;
                 break;
             }
 
@@ -54,28 +53,6 @@ internal partial class Cpu
                 var yDelta = (sbyte)_mobo.ReadByte(_pc + 2);
                 CursorPosX += xDelta;
                 CursorPosY += yDelta;
-                break;
-            }
-
-            case >= 0xD0
-            and <= 0xDF: // DRAW
-            {
-                pcDelta = 3;
-                var rOamSlot = IndexFromOpcode(prefixed);
-                var (xReg, yReg) = ReadRegisterArgs();
-                var (sprIdReg, attrReg) = ReadRegisterArgs(2);
-
-                var oamSlot = GetRegister(rOamSlot) % (2048 / 4);
-                var (x, y) = (GetRegister(xReg), GetRegister(yReg));
-                var (sprId, attr) = (GetRegister(sprIdReg), GetRegister(attrReg));
-
-                if ((oamSlot * 4) == OamRegister)
-                    OamRegister += 4;
-                var addr = Memory.OamStart + (oamSlot * 4);
-                _mobo.WriteByte(addr, (byte)x);
-                _mobo.WriteByte(addr + 1, (byte)y);
-                _mobo.WriteByte(addr + 2, (byte)sprId);
-                _mobo.WriteByte(addr + 3, (byte)attr);
                 break;
             }
 
@@ -230,15 +207,11 @@ internal partial class Cpu
             {
                 pcDelta = 2;
                 var x = _mobo.ReadByte(_pc + 1) & 0x0F; // truncate to register index since we tokenize it as a byte
-                Console.WriteLine($"X: {x}");
                 var digits = GetRegister(x).ToString();
-                Console.WriteLine($"Value: {digits}");
                 const int FontZeroIndex = 26 - '0'; // this is the first number's index in the Sharpie font
                 foreach (var c in digits)
                 {
                     var fontIndex = (byte)(c + FontZeroIndex);
-                    Console.WriteLine($"Char: {c}");
-                    Console.WriteLine($"Char index: {fontIndex}");
                     _mobo.DrawChar(CursorPosX, CursorPosY, fontIndex);
                     CursorPosX++;
                 }
@@ -249,6 +222,13 @@ internal partial class Cpu
             case 0xFC: // MUTE
             {
                 _mobo.StopAllSounds();
+                break;
+            }
+
+            case 0x91: // CAM
+            {
+                var (x, y) = ReadRegisterArgs();
+                _mobo.SetCamera(GetRegister(x), GetRegister(y));
                 break;
             }
 

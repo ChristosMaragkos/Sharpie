@@ -248,6 +248,21 @@ internal partial class Cpu {
                 Execute_FLIPR(opcode, ref pcDelta);
                 break;
 
+            case 0x91: //CAM
+                pcDelta = 2;
+                Execute_CAM(opcode, ref pcDelta);
+                break;
+
+            case 0x92: //GETOAM
+                pcDelta = 2;
+                Execute_GETOAM(opcode, ref pcDelta);
+                break;
+
+            case 0x93: //SETOAM
+                pcDelta = 2;
+                Execute_SETOAM(opcode, ref pcDelta);
+                break;
+
             case >= 0xA0 and <= 0xAF:
                 pcDelta = 1;
                 Execute_SONG(opcode, ref pcDelta);
@@ -389,6 +404,9 @@ internal partial class Cpu {
     private partial void Execute_OUT_W(byte opcode, ref ushort pcDelta);
     private partial void Execute_RND(byte opcode, ref ushort pcDelta);
     private partial void Execute_FLIPR(byte opcode, ref ushort pcDelta);
+    private partial void Execute_CAM(byte opcode, ref ushort pcDelta);
+    private partial void Execute_GETOAM(byte opcode, ref ushort pcDelta);
+    private partial void Execute_SETOAM(byte opcode, ref ushort pcDelta);
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta);
     private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta);
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta);

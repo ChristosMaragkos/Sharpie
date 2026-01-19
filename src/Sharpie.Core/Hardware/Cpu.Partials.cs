@@ -494,18 +494,16 @@ internal partial class Cpu
     {
         var x = IndexFromOpcode(opcode);
         var (y, sprIdReg) = ReadRegisterArgs();
-        var (attrReg, oamSlotReg) = ReadRegisterArgs(2);
+        var attrReg = _mobo.ReadByte(_pc + 2);
         var spriteId = (byte)GetRegister(sprIdReg);
-        var attributes = (byte)GetRegister(attrReg);
-        var slotIndex = OamRegister / 4;
-        GetRegister(oamSlotReg) = (ushort)slotIndex;
-        _tagMap[slotIndex] = attributes;
-        var addr = Memory.OamStart + OamRegister;
-        OamRegister += 4;
-        _mobo.WriteByte(addr, (byte)GetRegister(x));
-        _mobo.WriteByte(addr + 1, (byte)GetRegister(y));
-        _mobo.WriteByte(addr + 2, spriteId);
-        _mobo.WriteByte(addr + 3, attributes);
+        var attrType = GetRegister(attrReg);
+
+        var attr = (byte)attrType; // get the low byte
+        var type = (byte)(attrType >> 8);
+
+        var slotIndex = _mobo.GetOamCursor();
+        _tagMap[slotIndex] = attr;
+        _mobo.WriteSpriteEntry(GetRegister(x), GetRegister(y), spriteId, attr, type);
     }
 
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta)
@@ -595,6 +593,24 @@ internal partial class Cpu
         FlipRegisterBanks();
     }
 
+    private partial void Execute_CAM(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+        _mobo.MoveCamera((short)GetRegister(x), (short)GetRegister(y));
+    }
+
+    private partial void Execute_GETOAM(byte opcode, ref ushort pcDelta)
+    {
+        var x = _mobo.ReadByte(_pc + 1);
+        GetRegister(x) = (ushort)_mobo.GetOamCursor();
+    }
+
+    private partial void Execute_SETOAM(byte opcode, ref ushort pcDelta)
+    {
+        var x = _mobo.ReadByte(_pc + 1);
+        _mobo.SetOamCursor(GetRegister(x)); // TODO: Make sure to throw a beautiful little segfault when we set to an index above the max
+    }
+
     private partial void Execute_COL(byte opcode, ref ushort pcDelta)
     {
         var (rSource, rDest) = ReadRegisterArgs();
@@ -604,7 +620,7 @@ internal partial class Cpu
     private partial void Execute_TAG(byte opcode, ref ushort pcDelta)
     {
         var (rSource, rDest) = ReadRegisterArgs();
-        GetRegister(rDest) = _tagMap[rSource > 512 ? 0 : rSource];
+        GetRegister(rDest) = _tagMap[rSource];
     }
 
     private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta)
