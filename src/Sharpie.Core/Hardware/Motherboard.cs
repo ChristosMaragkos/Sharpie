@@ -1,4 +1,5 @@
 using Sharpie.Core.Drivers;
+using SpriteFlags = Sharpie.Core.Hardware.OamBank.SpriteFlags;
 
 namespace Sharpie.Core.Hardware;
 
@@ -9,6 +10,7 @@ internal class Motherboard : IMotherboard
     private static Apu? Apu { get; set; }
     private readonly Memory _ram;
     private readonly Memory _biosRom;
+    private readonly OamBank _oam;
     private readonly Sequencer _sequencer;
 
     public bool IsInBootMode { get; private set; }
@@ -43,6 +45,7 @@ internal class Motherboard : IMotherboard
     {
         _ram = new Memory();
         _biosRom = new Memory();
+        _oam = new OamBank();
         ResetOam();
 
         _cpu = new Cpu(this);
@@ -71,8 +74,7 @@ internal class Motherboard : IMotherboard
 
     private void ResetOam()
     {
-        _ram.FillRange(Memory.OamStart, 2048, 0xFF);
-        _biosRom.FillRange(Memory.OamStart, 2048, 0xFF);
+        _oam.InvalidateAll();
     }
 
     public byte ReadByte(ushort address)
@@ -97,6 +99,7 @@ internal class Motherboard : IMotherboard
 
     public ushort ReadWord(int address) => ReadWord((ushort)address);
 
+    // TODO: Trigger a segfault when we write to the reserved space outside of boot mode
     public void WriteByte(ushort address, byte value)
     {
         _ram.WriteByte(address, value);
@@ -204,6 +207,7 @@ internal class Motherboard : IMotherboard
         for (int j = 0; j < 32; j++)
             TextGrid[i, j] = 0xFF;
         _ppu.BackgroundColorIndex = colorIndex;
+        _oam.Invalidate(_oam.Cursor * 6, 8191);
     }
 
     public void DrawChar(int x, int y, byte charCode)
