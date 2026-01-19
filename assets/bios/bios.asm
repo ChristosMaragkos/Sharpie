@@ -3,17 +3,20 @@
 .DEF X 100
 .DEF Y 100
 
-.DEF YLW_DEF 5
-.DEF YLW_DARK 21
-.DEF YLW_DARKER 11
+.ENUM YELLOWS
+    YLW_DEF = 5
+    YLW_DARK = 21
+    YLW_DARKER = 11
+.ENDENUM
 
-.DEF IS_CART_LOADED_ADDR $FA28
+.ENUM MAGICADDR
+    MAGIC_START = $FA20 ; This and the next four bytes should be the ASCII values "SHRP"
+    VERSION_ADDR = $FA24
+    CART_OK_ADDR = $FA26
+    IS_CART_LOADED_ADDR = $FA28
+.ENDENUM
 
-.DEF CART_OK_ADDR $FA26
 .DEF CART_OK 1
-
-.DEF MAGIC_START $FA20 ; This and the next four bytes should be the ASCII values "SHRP"
-.DEF VERSION_ADDR $FA24
 
 .DEF BIOS_VERSION 0x0001 ; Current BIOS Version: 0.1
 
@@ -21,7 +24,7 @@
 .DEF CopyrightSymbol 7
 
 Reset:
-    LDI r0, YLW_DEF
+    LDI r0, YELLOWS::YLW_DEF
     SWC r0, r0
     LDI r0, 0
     ALT CLS r0
@@ -87,7 +90,7 @@ LowerCover:
 
 
 FlashBeep:
-    ATTR YLW_DEF
+    ATTR YELLOWS::YLW_DEF
     LDI r0, 14
     IMUL r0, 8
     LDI r1, 31
@@ -98,7 +101,7 @@ FlashBeep:
     .STR 15, 31 "CHRISTOS MARAGKOS"
     VBLNK
 
-    LDI r0, YLW_DEF
+    LDI r0, YELLOWS::YLW_DEF
     LDI r1, 1 ; White
     SWC r0, r1
 
@@ -118,20 +121,20 @@ FlashBeep:
         LDI r15, 4
         CALL WaitR15Frames
 
-        LDI r0, YLW_DEF
+        LDI r0, YELLOWS::YLW_DEF
         SWC r0, r0
 
     LDI r15, 60
     CALL WaitR15Frames
 
-    LDI r0, YLW_DEF
-    LDI r1, YLW_DARK
+    LDI r0, YELLOWS::YLW_DEF
+    LDI r1, YELLOWS::YLW_DARK
     SWC r0, r1
 
     LDI r15, 30
     CALL WaitR15Frames
 
-    LDI r1, YLW_DARKER
+    LDI r1, YELLOWS::YLW_DARKER
     SWC r0, r1
 
     LDI r15, 30
@@ -146,7 +149,7 @@ FlashBeep:
     JMP IsRomLoaded
 
 ValidateRom:
-    LDI r1, MAGIC_START ; Copying so we can iterate
+    LDI r1, MAGICADDR::MAGIC_START ; Copying so we can iterate
     LDI r2, MagicString ; same here
     LDI r4, 4 ; Using it as a counter should work fine
 
@@ -165,7 +168,7 @@ ValidateRom:
         JNE MagicCheckLoop ; DEC sets the zero flag anyway, no need to ICMP r4, 0
 
     VersionCheck:
-        LDM r0, VERSION_ADDR
+        LDM r0, MAGICADDR::VERSION_ADDR
         LDI r2, BIOS_VERSION
 
         CMP r0, r2
@@ -174,18 +177,24 @@ ValidateRom:
 
 JMP BootIntoRom
 
+.ENUM CartStatus
+    NotLoaded = 0x00
+    Loaded = 0x01
+    Invalid = 0xFF
+.ENDENUM
+
 IsRomLoaded:
     LDI r0, 0
     CLS r0
-    ALT LDM r0, IS_CART_LOADED_ADDR; Is there a cart loaded?
+    ALT LDM r0, MAGICADDR::IS_CART_LOADED_ADDR; Is there a cart loaded?
 
-    ICMP r0, 0x00 ; no
+    ICMP r0, CartStatus::NotLoaded
     JEQ PleaseInsertCart
 
-    ICMP r0, 0xFF ; yes but the C# side declared it invalid (ROM was too small to be a cart)
+    ICMP r0, CartStatus::Invalid
     JEQ InvalidCart
 
-    ICMP r0, 0x01 ; yes and its metadata was loaded into the reserved space
+    ICMP r0, CartStatus::Loaded
     JEQ ValidateRom
 
     JMP InvalidCart ; fallback in case the bitrot gremlins visit us
@@ -198,7 +207,7 @@ InvalidCart:
     .STR 8, 12 "Invalid Cartridge"
 
     LDI r0, 0
-    STM r0, IS_CART_LOADED_ADDR ; Disregard the currently loaded cartridge
+    STM r0, MAGICADDR::IS_CART_LOADED_ADDR ; Disregard the currently loaded cartridge
 
     LDI r15, 120
     CALL WaitR15Frames
@@ -208,27 +217,27 @@ PleaseInsertCart:
     LDI r0, 0
     CLS r0
 
-    LDI r0, YLW_DEF
+    LDI r0, YELLOWS::YLW_DEF
     SWC r0, r0 ; reset color 5 to bright yellow
-    ATTR YLW_DEF ; set text color to it as well
+    ATTR YELLOWS::YLW_DEF ; set text color to it as well
 
     LDI r0, 0
 
     BlinkInsertText:
         .STR 5, 12 "Please Insert Cartridge"
-        LDI r0, YLW_DEF
+        LDI r0, YELLOWS::YLW_DEF
 
-        LDI r1, YLW_DARKER
+        LDI r1, YELLOWS::YLW_DARKER
         SWC r0, r1
         LDI r15, 10
         CALL WaitR15Frames
 
-        LDI r1, YLW_DARK
+        LDI r1, YELLOWS::YLW_DARK
         SWC r0, r1
         LDI r15, 10
         CALL WaitR15Frames
 
-        LDI r0, YLW_DEF ; gotta reset to 5 since IsRomLoaded overwrites it
+        LDI r0, YELLOWS::YLW_DEF ; gotta reset to 5 since IsRomLoaded overwrites it
         SWC r0, r0
         LDI r15, 10
         CALL WaitR15Frames
@@ -237,7 +246,7 @@ PleaseInsertCart:
         LDI r15, 10
         CALL WaitR15Frames
 
-        LDI r1, YLW_DARKER
+        LDI r1, YELLOWS::YLW_DARKER
         SWC r0, r1
         LDI r15, 10
         CALL WaitR15Frames
@@ -253,7 +262,7 @@ BootIntoRom:
     LDI r0, 0
     ALT CLS r0
     LDI r0, 1
-    STM r0, CART_OK_ADDR
+    STM r0, MAGICADDR::CART_OK_ADDR
     JMP $0
 
 DisplayError:
