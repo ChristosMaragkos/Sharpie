@@ -1,3 +1,5 @@
+namespace Sharpie.Core.Drivers;
+
 public abstract class InputHandler
 {
     public abstract (byte, byte) GetInputState();
