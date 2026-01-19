@@ -57,7 +57,7 @@
 | `0xD0n` | **DRAW** | `R, R, R, R` | 3 | Family. Draw sprite: X, Y, ID, Attr. & Type (Low byte -> attr, high byte -> type) |  |
 | `0xE0n` | **INSTR** | `R, B, B` | 3 | Family. Define ADSR for instrument Rn. |  |
 | `0xF0` | **TAG** | `R, R` | 2 | Read Attribute of OAM[R1] into R2. |  |
-| `0xF1` | **CLS** | `R` | 2 | Clear screen with color in R. | Hard Clear: Wipe screen and reset OAM. |
+| `0xF1` | **CLS** | `R` | 2 | Clear screen with color in R and invalidate OAM entries from the current OAM cursor position. | Hard Clear: Wipe screen and reset OAM. |
 | `0xF2` | **VBLNK** | `-` | 1 | Yield CPU until next V-Blank. |  |
 | `0xF3` | **PLAY** | `R, R, R` | 3 | Play note: Channel, Note, Instrument. |  |
 | `0xF4` | **STOP** | `R` | 2 | Stop sound on channel in R. |  |

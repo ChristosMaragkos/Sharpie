@@ -60,7 +60,7 @@ public static class InstructionSet
         { "SETOAM", (2, 147, 2, false, "R") },
         { "SONG", (1, 160, 1, true, "R") },
         { "SETCRS", (3, 192, 2, false, "BB") },
-        { "DRAW", (3, 208, 5, true, "RRRR") },
+        { "DRAW", (3, 208, 4, true, "RRRR") },
         { "INSTR", (3, 224, 3, true, "RBB") },
         { "TAG", (2, 240, 2, false, "RR") },
         { "CLS", (2, 241, 1, false, "R") },
