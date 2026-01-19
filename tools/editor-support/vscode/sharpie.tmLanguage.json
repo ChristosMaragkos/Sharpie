@@ -2,12 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Sharpie Assembly",
   "patterns": [
+    { "name": "variable.other.enum.sharpie", "match": "\\b[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*\\b"
     { "name": "comment.line.semicolon.sharpie", "match": ";.*" },
     { "name": "keyword.control.sharpie", "match": "\\b(NOP|MOV|LDM|LDP|LDI|STM|ADD|SUB|MUL|DIV|MOD|AND|OR|XOR|SHL|SHR|CMP|ADC|INC|DEC|NOT|NEG|IADD|ISUB|IMUL|IDIV|IMOD|IAND|IOR|IXOR|ICMP|DINC|DDEC|JMP|JEQ|JNE|JGT|JLT|JGE|JLE|CALL|RET|PUSH|POP|OUT_R|OUT_B|OUT_W|RND|FLIPR|CAM|GETOAM|SETOAM|SONG|SETCRS|DRAW|INSTR|TAG|CLS|VBLNK|PLAY|STOP|INPUT|TEXT|ATTR|SWC|MUTE|COL|ALT|HALT)\\b" },
     { "name": "variable.parameter.register.sharpie", "match": "\\b[rR]([0-9]|1[0-5])\\b" },
     { "name": "constant.numeric.hex.sharpie", "match": "(\\$|0x)[0-9A-Fa-f]+\\b" },
     { "name": "entity.name.function.label.sharpie", "match": "^[A-Za-z_][A-Za-z0-9_]*:" },
-    { "name": "keyword.other.directive.sharpie", "match": "\\.[A-Z]+\\b" }
+    { "name": "keyword.other.directive.sharpie", "match": "\\.[A-Za-z_]+\\b" }
     { "name": "string.quoted.double.sharpie", "begin": "\\\"", "end": "\\\"" },
     { "name": "constant.character.sharpie", "match": "'[^']'" },
   ],

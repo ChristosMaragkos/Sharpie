@@ -156,6 +156,7 @@ sb.AppendLine(@"syn match sharpieNumber /\(\$\|0x\)[0-9A-Fa-f]\+/");
 sb.AppendLine(@"syn match sharpieNumber /0b[01]\+/");
 sb.AppendLine(@"syn match sharpieNumber /\<\d\+\>/");
 sb.AppendLine(@"syn match sharpieDirective /\.[A-Za-z_]\+/");
+sb.AppendLine(@"syn match sharpieEnumRef /\<[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*\>/");
 
 sb.AppendLine(@"syn region sharpieString start=/\""/ end=/\""/ ");
 
@@ -167,6 +168,7 @@ sb.AppendLine("hi def link sharpieHex Constant");
 sb.AppendLine("hi def link sharpieNote Special");
 sb.AppendLine("hi def link sharpieComment Comment");
 sb.AppendLine("hi def link sharpieLabel Function");
+sb.AppendLine("hi def link sharpieEnumRef Special");
 sb.AppendLine("hi def link sharpieNumber Number");
 sb.AppendLine("hi def link sharpieDirective PreProc");
 sb.AppendLine(@"hi def link sharpieString String");

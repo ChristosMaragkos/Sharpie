@@ -10,6 +10,7 @@ syn match sharpieNumber /\(\$\|0x\)[0-9A-Fa-f]\+/
 syn match sharpieNumber /0b[01]\+/
 syn match sharpieNumber /\<\d\+\>/
 syn match sharpieDirective /\.[A-Za-z_]\+/
+syn match sharpieEnumRef /\<[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*\>/
 syn region sharpieString start=/\"/ end=/\"/ 
 let b:current_syntax = "sharpie"
 hi def link sharpieOpcode Statement
@@ -18,6 +19,7 @@ hi def link sharpieHex Constant
 hi def link sharpieNote Special
 hi def link sharpieComment Comment
 hi def link sharpieLabel Function
+hi def link sharpieEnumRef Special
 hi def link sharpieNumber Number
 hi def link sharpieDirective PreProc
 hi def link sharpieString String
