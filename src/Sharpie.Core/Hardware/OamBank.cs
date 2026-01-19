@@ -7,7 +7,10 @@ internal class OamBank
     public const int OamEntrySize = 7;
     public const int Size = 8192;
     public const int MaxEntries = Size / OamEntrySize;
+    public const int MaxHudEntries = 512;
+
     private readonly byte[] _contents = new byte[Size];
+
     public int Cursor
     {
         get;
@@ -41,9 +44,16 @@ internal class OamBank
     [Flags]
     public enum SpriteFlags : byte
     {
+        /// Horizontal Flip, bit 0
         FlipH = 1,
+
+        /// Vertical Flip, bit 1
         FlipV = 2,
+
+        /// HUD toggle - ignore collision, ignore camera, draw with screen coordinates, bit 2
         Hud = 4,
+
+        /// Background toggle - ignore collision, bit 3
         Background = 8,
     }
 

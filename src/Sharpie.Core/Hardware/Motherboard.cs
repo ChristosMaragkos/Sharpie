@@ -198,7 +198,7 @@ internal class Motherboard : IMotherboard
     public void VBlank()
     {
         GetInputState();
-        _ppu.VBlank(this);
+        _ppu.VBlank(_oam);
     }
 
     public void ClearScreen(byte colorIndex)
