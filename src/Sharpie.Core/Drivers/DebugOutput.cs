@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 
+namespace Sharpie.Core.Drivers;
+
 public abstract class DebugOutput
 {
     protected ConcurrentQueue<string> MessageQueue = new();
