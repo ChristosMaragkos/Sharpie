@@ -502,7 +502,6 @@ internal partial class Cpu
         var type = (byte)(attrType >> 8);
 
         var slotIndex = _mobo.GetOamCursor();
-        _tagMap[slotIndex] = attr;
         _mobo.WriteSpriteEntry(GetRegister(x), GetRegister(y), spriteId, attr, type);
     }
 

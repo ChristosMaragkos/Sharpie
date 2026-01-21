@@ -34,7 +34,6 @@ internal partial class Cpu
 
     private readonly Random _rng = new();
 
-    private byte[] _tagMap = new byte[OamBank.MaxEntries];
     private Stack<ushort> _callStack = new();
 
     private int _cursorPosX;
@@ -157,7 +156,6 @@ internal partial class Cpu
         _cursorPosY = 0;
         _pc = 0;
         FlagRegister = 0;
-        _tagMap = new byte[512];
         _callStack = new();
         LoadDefaultPalette();
         IsHalted = false;
