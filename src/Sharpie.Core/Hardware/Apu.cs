@@ -236,11 +236,7 @@ internal class Apu
 
         for (var i = 0; i < sampleCount; i++)
         {
-            if (++SequencerCounter >= 1024)
-            {
-                SequencerCounter -= 1024;
-                Sequencer.Instance?.Step();
-            }
+            AdvanceSequencer();
 
             var mixedSample = 0f;
             for (var chan = 0; chan < 8; chan++)
@@ -257,11 +253,7 @@ internal class Apu
 
         for (var i = 0; i < sampleCount; i++)
         {
-            if (++SequencerCounter >= 1024)
-            {
-                SequencerCounter -= 1024;
-                Sequencer.Instance?.Step();
-            }
+            AdvanceSequencer();
 
             var mixedSample = 0f;
             for (var chan = 0; chan < 8; chan++)
