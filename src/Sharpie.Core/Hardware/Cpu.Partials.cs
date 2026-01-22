@@ -37,6 +37,13 @@ internal partial class Cpu
         _mobo.WriteWord(address, GetRegister(x));
     }
 
+    private partial void Execute_STP(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+        var value = _mobo.ReadWord(GetRegister(x));
+        _mobo.WriteWord(GetRegister(y), value);
+    }
+
     private partial void Execute_ADD(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();

@@ -1,13 +1,9 @@
 // auto-generated
 namespace Sharpie.Core.Hardware;
-
-internal partial class Cpu
-{
-    private void ExecuteOpcode(byte opcode, out ushort pcDelta)
-    {
+internal partial class Cpu {
+    private void ExecuteOpcode(byte opcode, out ushort pcDelta) {
         pcDelta = 0;
-        switch (opcode)
-        {
+        switch (opcode) {
             case 0x00: //NOP
                 pcDelta = 1;
                 break;
@@ -27,16 +23,19 @@ internal partial class Cpu
                 Execute_LDP(opcode, ref pcDelta);
                 break;
 
-            case >= 0x20
-            and <= 0x2F:
+            case >= 0x20 and <= 0x2F:
                 pcDelta = 3;
                 Execute_LDI(opcode, ref pcDelta);
                 break;
 
-            case >= 0x30
-            and <= 0x3F:
+            case >= 0x30 and <= 0x3F:
                 pcDelta = 3;
                 Execute_STM(opcode, ref pcDelta);
+                break;
+
+            case 0x12: //STP
+                pcDelta = 2;
+                Execute_STP(opcode, ref pcDelta);
                 break;
 
             case 0x40: //ADD
@@ -244,8 +243,7 @@ internal partial class Cpu
                 Execute_OUT_W(opcode, ref pcDelta);
                 break;
 
-            case >= 0x80
-            and <= 0x8F:
+            case >= 0x80 and <= 0x8F:
                 pcDelta = 3;
                 Execute_RND(opcode, ref pcDelta);
                 break;
@@ -280,8 +278,7 @@ internal partial class Cpu
                 Execute_SETSEQ(opcode, ref pcDelta);
                 break;
 
-            case >= 0xA0
-            and <= 0xAF:
+            case >= 0xA0 and <= 0xAF:
                 pcDelta = 1;
                 Execute_SONG(opcode, ref pcDelta);
                 break;
@@ -291,14 +288,12 @@ internal partial class Cpu
                 Execute_SETCRS(opcode, ref pcDelta);
                 break;
 
-            case >= 0xD0
-            and <= 0xDF:
+            case >= 0xD0 and <= 0xDF:
                 pcDelta = 3;
                 Execute_DRAW(opcode, ref pcDelta);
                 break;
 
-            case >= 0xE0
-            and <= 0xEF:
+            case >= 0xE0 and <= 0xEF:
                 pcDelta = 3;
                 Execute_INSTR(opcode, ref pcDelta);
                 break;
@@ -382,142 +377,74 @@ internal partial class Cpu
     }
 
     private partial void Execute_MOV(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_LDM(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_LDP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_STM(byte opcode, ref ushort pcDelta);
-
+    private partial void Execute_STP(byte opcode, ref ushort pcDelta);
     private partial void Execute_ADD(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SUB(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_MUL(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_DIV(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_MOD(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_AND(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_XOR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SHL(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SHR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_CMP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_ADC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_INC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_DEC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_NOT(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_NEG(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IADD(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_ISUB(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IMUL(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IDIV(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IMOD(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IAND(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IOR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_IXOR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_ICMP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_DINC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_DDEC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JMP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JEQ(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JNE(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JGT(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JLT(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JGE(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_JLE(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_RET(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_PUSH(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_POP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OUT_R(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OUT_B(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OUT_W(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_RND(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_FLIPR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_CAM(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_GETOAM(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SETOAM(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_GETSEQ(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SETSEQ(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_INSTR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OAMPOS(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_OAMTAG(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_PLAY(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_STOP(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_INPUT(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_TEXT(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_SWC(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_MUTE(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_COL(byte opcode, ref ushort pcDelta);
-
     private partial void Execute_ALT(byte opcode, ref ushort pcDelta);
 }

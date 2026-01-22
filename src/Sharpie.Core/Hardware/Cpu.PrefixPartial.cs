@@ -38,6 +38,14 @@ internal partial class Cpu
                 break;
             }
 
+            case 0x12: // STP
+            {
+                var (x, y) = ReadRegisterArgs();
+                var value = _mobo.ReadByte(GetRegister(x));
+                _mobo.WriteByte(GetRegister(y), value);
+                break;
+            }
+
             case 0xF1: // CLS
             {
                 pcDelta = 2;

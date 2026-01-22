@@ -6,6 +6,7 @@
 | `0x11` | **LDP** | `R, R` | 2 | Load word from [R2] into R1. | Load single byte from [R2]. |
 | `0x20n` | **LDI** | `R, W` | 3 | Load immediate word W into Rn. |  |
 | `0x30n` | **STM** | `R, W` | 3 | Store word from R to address W. | Store the low byte of R to W. |
+| `0x12` | **STP** | `R, R` | 2 | Save word from [R1] into R2. | Store the low byte of [R1] into R2. |
 | `0x40` | **ADD** | `R, R` | 2 | R1 = R1 + R2. Updates Z, N, C, V. |  |
 | `0x41` | **SUB** | `R, R` | 2 | R1 = R1 - R2. Updates Z, N, C, V. |  |
 | `0x42` | **MUL** | `R, R` | 2 | R1 = R1 * R2. Sets C/V if result > 65535. |  |

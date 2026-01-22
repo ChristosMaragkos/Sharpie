@@ -6,6 +6,7 @@
     { "hex": "0x11", "name": "LDP",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Load word from [R2] into R1.", "alt": "Load single byte from [R2]." },
     { "hex": "0x20", "name": "LDI",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW", "desc": "Load immediate word W into Rn.", "alt": "" },
     { "hex": "0x30", "name": "STM",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW", "desc": "Store word from R to address W.", "alt": "Store the low byte of R to W." },
+    { "hex": "0x12", "name": "STP",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Save word from [R1] into R2.", "alt": "Store the low byte of [R1] into R2." },
   
     { "hex": "0x40", "name": "ADD",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 + R2. Updates Z, N, C, V.", "alt": "" },
     { "hex": "0x41", "name": "SUB",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 - R2. Updates Z, N, C, V.", "alt": "" },
