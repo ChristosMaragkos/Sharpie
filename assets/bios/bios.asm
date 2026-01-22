@@ -357,3 +357,42 @@ ManualTriggerErrorCode:
 Crash:
     .STR 1, 12 "Please restart"
     HALT
+
+
+; SYS_LUT
+; Loads an 8- or 16-bit value from an index within a lookup table (LUT) and
+; saves it to memory.
+; 
+LutAccess:
+    .SCOPE
+        .DEF FirstLutElementParameter $E800
+        .DEF IdxParameter $E802
+        .DEF StrideParameter $E804
+        .DEF OutputAddr $E805
+
+        LDM r0, FirstLutElementParameter ; The first address of the LUT
+        LDM r1, IdxParameter ; The index we're trying to access
+        LDM r2, StrideParameter ; The size of each LUT entry in bytes
+
+        MUL r1, r2
+        ADD r0, r1
+
+        ICMP r2, 1
+        JEQ Load8Bit
+
+        ICMP r2, 2
+        JEQ Load16Bit
+
+        JMP Load16Bit ; Default to 16-bit width
+
+        Load8Bit:
+            ALT LDP r1, r2 ; Load byte from [r2]
+            ALT STM r1, OutputAddr
+            RET
+
+        Load16Bit:
+            LDP r1, r2 ; Load word from [r2]
+            STM r1, OutputAddr
+            RET
+
+    .ENDSCOPE
