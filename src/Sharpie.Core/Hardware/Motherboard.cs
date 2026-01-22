@@ -106,7 +106,7 @@ internal class Motherboard : IMotherboard
     {
         if (
             address >= Memory.ReservedSpaceStart
-            && address <= Memory.ColorPaletteStart
+            && address < Memory.ColorPaletteStart
             && !IsInBootMode
         )
         {
@@ -129,7 +129,11 @@ internal class Motherboard : IMotherboard
 
     public void WriteWord(ushort address, ushort value)
     {
-        if (address >= Memory.ReservedSpaceStart)
+        if (
+            address >= Memory.ReservedSpaceStart
+            && address <= Memory.ColorPaletteStart
+            && !IsInBootMode
+        )
         {
             TriggerSegfault(SegfaultType.ReservedRegionWrite);
             return;

@@ -14,6 +14,7 @@
     VERSION_ADDR = $FA24
     CART_OK_ADDR = $FA26
     IS_CART_LOADED_ADDR = $FA28
+    SYSTEM_STATUS = $FA29
 .ENDENUM
 
 .DEF CART_OK 1
@@ -22,6 +23,11 @@
 
 .DEF CoverLogo 8
 .DEF CopyrightSymbol 7
+
+CheckStatus:
+    ALT LDM r0, MAGICADDR::SYSTEM_STATUS
+    ICMP r0, 0
+    JNE BlueScreen
 
 Reset:
     LDI r0, YELLOWS::YLW_DEF
@@ -262,7 +268,7 @@ BootIntoRom:
     LDI r0, 0
     ALT CLS r0
     LDI r0, 1
-    STM r0, MAGICADDR::CART_OK_ADDR
+    ALT STM r0, MAGICADDR::CART_OK_ADDR
     JMP $0
 
 DisplayError:
@@ -305,3 +311,49 @@ ErrorSound:
     .DB 0, #C2, 8, 0
     .DB 0, #C2, 8, 0
     .DW 0xFF, 0
+
+.ENUM Errors
+    OamOOB = 0x01
+    IllegalWrite = 0x02
+    Manual = 0xFF
+.ENDENUM
+
+BlueScreen:
+    LDI r0, ErrorSound
+    SONG r0
+
+    LDI r0, 3
+    ALT CLS r0 ; Fill the screen with blue (duh)
+    .STR 4, 4 ":("
+
+    ALT LDM r0, MAGICADDR::SYSTEM_STATUS
+
+    .STR 8, 4 "RUNTIME ERROR"
+    .STR 1, 8 "ERROR CODE: ", r0
+
+    ICMP r0, Errors::OamOOB
+    JEQ OamOOBErrorCode
+
+    ICMP r0, Errors::IllegalWrite
+    JEQ IllegalWriteErrorCode
+
+    ICMP r0, Errors::Manual
+    JEQ ManualTriggerErrorCode
+
+    .STR 1, 10 "Unknown Error"
+    HALT
+
+OamOOBErrorCode:
+    .STR 1, 10 "ERR-OAM-CRSR-OOB"
+    JMP Crash
+
+IllegalWriteErrorCode:
+    .STR 1, 10 "ERR-ILLEGAL-WRITE"
+    JMP Crash
+
+ManualTriggerErrorCode:
+    .STR 1, 10 "ERR-MANUAL-TRIGGER"
+
+Crash:
+    .STR 1, 12 "Please restart"
+    HALT

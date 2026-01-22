@@ -2,8 +2,8 @@ namespace Sharpie.Core.Hardware;
 
 internal enum SegfaultType : byte
 {
-    OamCursorOutOfBounds,
-    ReservedRegionWrite,
+    OamCursorOutOfBounds = 0x01,
+    ReservedRegionWrite = 0x02,
     ManualTrigger = 0xFF,
 }
 
