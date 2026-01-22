@@ -478,7 +478,11 @@ internal partial class Cpu
 
     private partial void Execute_RET(byte opcode, ref ushort pcDelta)
     {
-        var returnAddress = _callStack.Pop();
+        if (!_callStack.TryPop(out var returnAddress))
+        {
+            _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
+            return;
+        }
         _pc = returnAddress;
         pcDelta = 0;
     }
@@ -492,6 +496,11 @@ internal partial class Cpu
 
     private partial void Execute_POP(byte opcode, ref ushort pcDelta)
     {
+        if (!_callStack.TryPop(out var returnAddress))
+        {
+            _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
+            return;
+        }
         var x = _mobo.ReadByte(_pc + 1);
         var value = _callStack.Pop();
         GetRegister(x) = value;

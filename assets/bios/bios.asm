@@ -315,6 +315,7 @@ ErrorSound:
 .ENUM Errors
     OamOOB = 0x01
     IllegalWrite = 0x02
+    StackUnderflow = 0x03
     Manual = 0xFF
 .ENDENUM
 
@@ -337,6 +338,9 @@ BlueScreen:
     ICMP r0, Errors::IllegalWrite
     JEQ IllegalWriteErrorCode
 
+    ICMP r0, Errors::StackUnderflow
+    JEQ StackUnderflowErrorCode
+
     ICMP r0, Errors::Manual
     JEQ ManualTriggerErrorCode
 
@@ -351,13 +355,16 @@ IllegalWriteErrorCode:
     .STR 1, 10 "ERR-ILLEGAL-WRITE"
     JMP Crash
 
+StackUnderflowErrorCode:
+    .STR 1, 10 "ERR-STACK-UNDERFLOW"
+    JMP Crash
+
 ManualTriggerErrorCode:
     .STR 1, 10 "ERR-MANUAL-TRIGGER"
 
 Crash:
     .STR 1, 12 "Please restart"
     HALT
-
 
 ; SYS_LUT
 ; Loads an 8- or 16-bit value from an index within a lookup table (LUT) and
