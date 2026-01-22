@@ -55,6 +55,7 @@ internal class Sequencer
             {
                 Enabled = false;
                 _mobo.StopAllSounds();
+                TempoMultiplier = 1;
                 break;
             }
             else if (channel == 0xFE) // GOTO
