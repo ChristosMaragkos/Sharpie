@@ -6,8 +6,9 @@ public partial class Assembler
 {
     private static readonly Dictionary<string, ushort> BiosCallAddresses = new()
     {
-        { "SYS_MEM_IDX_READ", 0xFA2A },
+        { "SYS_IDX_READ_VAL", 0xFA2A },
         { "SYS_STACKALLOC", 0xFA4E },
+        { "SYS_FRAME_DELAY", 0xFA6F },
     };
 
     private readonly Dictionary<int, ScopeLevel> _scopeTree = new();

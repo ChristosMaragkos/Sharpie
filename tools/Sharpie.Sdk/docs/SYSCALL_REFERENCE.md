@@ -3,7 +3,7 @@
 At startup, the Sharpie BIOS loads a few pre-defined subroutines into the reserved ROM space. These aim
 to help you with more menial tasks so you can focus on actual game logic.
 
-## SYS_MEM_IDX_READ(start, index, stride)
+## SYS_IDX_READ_VAL(start, index, stride)
 
 **Address: $FA2A** 
 

@@ -83,7 +83,8 @@ LowerCover:
         JNE RedrawCover
 
         LDI r15, 4
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         ICMP r14, 1 ; did we press the UP key at all?
         JEQ SkipInput
@@ -127,32 +128,37 @@ FlashBeep:
         SONG r2
 
         LDI r15, 4
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         LDI r0, YELLOWS::YLW_DEF
         SWC r0, r0
 
     LDI r15, 60
-    CALL WaitR15Frames
+    STM r15, $E800
+    CALL FrameDelay
 
     LDI r0, YELLOWS::YLW_DEF
     LDI r1, YELLOWS::YLW_DARK
     SWC r0, r1
 
     LDI r15, 30
-    CALL WaitR15Frames
+    STM r15, $E800
+    CALL FrameDelay
 
     LDI r1, YELLOWS::YLW_DARKER
     SWC r0, r1
 
     LDI r15, 30
-    CALL WaitR15Frames
+    STM r15, $E800
+    CALL FrameDelay
 
     LDI r0, 0
     ALT CLS 0
 
     LDI r15, 60
-    CALL WaitR15Frames
+    STM r15, $E800
+    CALL FrameDelay
 
     JMP IsRomLoaded
 
@@ -218,7 +224,8 @@ InvalidCart:
     ALT STM r0, MAGICADDR::IS_CART_LOADED_ADDR ; Disregard the currently loaded cartridge
 
     LDI r15, 120
-    CALL WaitR15Frames
+    STM r15, $E800
+    CALL FrameDelay
 
 
 PleaseInsertCart:
@@ -238,31 +245,37 @@ PleaseInsertCart:
         LDI r1, YELLOWS::YLW_DARKER
         SWC r0, r1
         LDI r15, 10
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         LDI r1, YELLOWS::YLW_DARK
         SWC r0, r1
         LDI r15, 10
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         LDI r0, YELLOWS::YLW_DEF ; gotta reset to 5 since IsRomLoaded overwrites it
         SWC r0, r0
         LDI r15, 10
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         SWC r0, r1
         LDI r15, 10
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         LDI r1, YELLOWS::YLW_DARKER
         SWC r0, r1
         LDI r15, 10
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
         LDI r1, 0
         SWC r0, r1
         LDI r15, 20
-        CALL WaitR15Frames
+        STM r15, $E800
+        CALL FrameDelay
 
     JMP IsRomLoaded
 
@@ -277,13 +290,6 @@ DisplayError:
     ATTR 2
     LDI r0, ErrorSound
     SONG r0
-    RET
-
-WaitR15Frames: ; KEEP IN MIND that this has the side effect of moving r15 back down to zero. So you must LDI r15, X every time you call it
-    VBLNK
-    DEC r15
-    ICMP r15, 0
-    JNE WaitR15Frames
     RET
 
 MagicString:
@@ -370,7 +376,7 @@ Crash:
 
 BIOSCalls:
 
-; SYS_MEM_IDX_READ(start, index, stride)
+; SYS_IDX_READ_VAL(start, index, stride)
 ;
 ; Origin: $FA2A
 ;
@@ -457,7 +463,7 @@ Stackalloc:
     ADD r0, r1
     DEC r0 ; We read and write backwards
 
-    POP r3
+    POP r3 ; Avoid burying the return address
 
     Loop:
         ALT LDP r1, r0 ; Load value from [r0]
@@ -468,5 +474,31 @@ Stackalloc:
         JGE Loop
 
     PUSH r3
+    RET
+.ENDSCOPE
+
+; SYS_FRAME_DELAY(frameAmount)
+;
+; Address: $FA6F
+;
+; Waits (frameAmount) frames by forcing V-Blank, then returns.
+;
+; Parameters:
+; - FrameAmount: $E800 - The amount of frames to wait for
+;
+; This subroutine overwrites these registers:
+; - R15
+FrameDelay:
+.SCOPE
+    .DEF FrameAmountParam $E800
+
+    LDM r15, FrameAmountParam
+
+    Loop:
+        VBLNK
+        DEC r15
+        ICMP r15, 0
+        JNE Loop ; No need to ICMP since DEC updates flags with right operand 1
+
     RET
 .ENDSCOPE
