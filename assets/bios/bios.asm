@@ -43,7 +43,6 @@ Reset:
 
 DrawLogo:
     DRAW r0, r1, r2, r3
-    OUT_R r0
 
     IADD r0, 8
     INC r2 ; move on to the next sprite
