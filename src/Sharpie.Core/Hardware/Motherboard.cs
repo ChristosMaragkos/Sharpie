@@ -139,6 +139,12 @@ internal class Motherboard : IMotherboard
             return;
         }
 
+        if (address == 0xFFFF)
+        {
+            TriggerSegfault(SegfaultType.ReservedRegionWrite);
+            return;
+        }
+
         _ram.WriteWord(address, value);
 
         if (address != (ushort)BiosFlagAddresses.CartVerificationState || !IsInBootMode)
