@@ -22,6 +22,7 @@ internal partial class Cpu
     }
 
     private ushort _pc;
+    private ushort _sp;
     private ushort[] _registers = new ushort[32];
     private int _registerBankOffset => ((FlagRegister & 0x8000) >> 15) == 1 ? 16 : 0;
 
@@ -33,8 +34,6 @@ internal partial class Cpu
     }
 
     private readonly Random _rng = new();
-
-    private Stack<ushort> _callStack = new();
 
     private int _cursorPosX;
     private int CursorPosX
@@ -155,8 +154,8 @@ internal partial class Cpu
         _cursorPosX = 0;
         _cursorPosY = 0;
         _pc = 0;
+        _sp = Memory.AudioRamStart; // aligned to move and then write
         FlagRegister = 0;
-        _callStack = new();
         LoadDefaultPalette();
         IsHalted = false;
         _resetRequested = false;

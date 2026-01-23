@@ -477,40 +477,58 @@ internal partial class Cpu
 
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta)
     {
+        if (_sp <= Memory.SpriteAtlasStart + 1) // Also overflow if we try to write a word with 1 byte left
+        {
+            _mobo.TriggerSegfault(SegfaultType.StackOverflow);
+            return;
+        }
+
         var target = _mobo.ReadWord(_pc + 1);
         var returnAddress = (ushort)(_pc + 3);
-        _callStack.Push(returnAddress);
+        _sp -= 2;
+        _mobo.WriteWord(_sp, returnAddress);
         _pc = target;
         pcDelta = 0;
     }
 
     private partial void Execute_RET(byte opcode, ref ushort pcDelta)
     {
-        if (!_callStack.TryPop(out var returnAddress))
+        if (_sp >= Memory.AudioRamStart - 1) // Underflow if we pop a word with 1 byte left
         {
             _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
             return;
         }
+
+        var returnAddress = _mobo.ReadWord(_sp);
+        _sp += 2;
         _pc = returnAddress;
         pcDelta = 0;
     }
 
     private partial void Execute_PUSH(byte opcode, ref ushort pcDelta)
     {
+        if (_sp <= Memory.SpriteAtlasStart + 1) // If there's one byte or less left
+        {
+            _mobo.TriggerSegfault(SegfaultType.StackOverflow);
+            return;
+        }
+
         var x = _mobo.ReadByte(_pc + 1);
-        var addr = GetRegister(x);
-        _callStack.Push(addr);
+        _sp -= 2;
+        _mobo.WriteWord(_sp, GetRegister(x));
     }
 
     private partial void Execute_POP(byte opcode, ref ushort pcDelta)
     {
-        if (!_callStack.TryPop(out var returnAddress))
+        if (_sp >= Memory.AudioRamStart - 1) // if we're empty
         {
             _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
             return;
         }
+
         var x = _mobo.ReadByte(_pc + 1);
-        var value = _callStack.Pop();
+        var value = _mobo.ReadWord(_sp);
+        _sp += 2;
         GetRegister(x) = value;
     }
 

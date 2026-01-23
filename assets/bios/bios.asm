@@ -43,6 +43,7 @@ Reset:
 
 DrawLogo:
     DRAW r0, r1, r2, r3
+    OUT_R r0
 
     IADD r0, 8
     INC r2 ; move on to the next sprite
@@ -393,6 +394,7 @@ BIOSCalls:
 ; - R0
 ; - R1
 ; - R2
+; - R3
 ; All other registers are preserved.
 .ORG $FA2A
 LutRead:
@@ -409,18 +411,40 @@ LutRead:
     MUL r1, r2
     ADD r0, r1
 
-    ICMP r2, 1
-    JEQ Load8Bit
+; We don't DEC r2 so we can compare it to 0 (unsigned values only, remember?)
 
-    JMP Load16Bit ; Default to 16-bit width
+    LDI r3, OutputAddr
 
-    Load8Bit:
-        ALT LDP r1, r0 ; Load byte from [r2]
-        ALT STM r1, OutputAddr
+    Loop:
+        ALT LDP r1, r0 ; Load byte from [r0]
+        ALT STR r1, r3
+
+        INC r3
+        DEC r2
+
+        ICMP r2, 0
+        JGT Loop
+
+        RET
+.ENDSCOPE
+
+Stackalloc:
+.SCOPE
+    .DEF StartAddressParam $E800
+    .DEF ByteAmountParam $E802
+
+    LDM r0, StartAddressParam
+    LDM r1, ByteAmountParam
+
+    MOV r2, r0
+    ADD r0, r1
+    DEC r0 ; We read and write backwards
+
+    Loop:
+        ALT LDP r1, r0 ; Load value from [r0]
+        
         RET
 
-    Load16Bit:
-        LDP r1, r0 ; Load word from [r2]
-        STM r1, OutputAddr
-        RET
+
+
 .ENDSCOPE
