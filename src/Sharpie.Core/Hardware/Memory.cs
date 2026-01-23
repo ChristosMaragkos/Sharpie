@@ -13,7 +13,7 @@ internal class Memory
     public const ushort AudioRamStart = 0xF800;
     public const ushort InstrumentTableStart = AudioRamStart + 32;
     public const ushort ReservedSpaceStart = 0xF800 + 544; // 0xFA20 - 0xFFFF is reserved. Not sure for what, but I reserved it. Might use it for BIOS.
-    public const ushort ColorPaletteStart = 0xFFF0; // 16 memory slots, one per color. Indexed as pointers to internal colors.
+    public const ushort ColorPaletteStart = 0xFFE0; // 16 memory slots, one per color. Indexed as pointers to internal colors.
 
     private readonly byte[] _contents = new byte[65536];
 
