@@ -13,6 +13,7 @@ public static class InstructionSet
         { "LDI", (3, 32, 2, true, "RW") },
         { "STM", (3, 48, 2, true, "RW") },
         { "STP", (2, 18, 2, false, "RR") },
+        { "STR", (2, 19, 2, false, "RR") },
         { "ADD", (2, 64, 2, false, "RR") },
         { "SUB", (2, 65, 2, false, "RR") },
         { "MUL", (2, 66, 2, false, "RR") },
