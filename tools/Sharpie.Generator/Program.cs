@@ -282,5 +282,10 @@ class Opcode
         Pattern = pattern;
         Desc = desc;
         Alt = alt;
+
+        Desc = Desc.Replace("[", "`[");
+        Desc = Desc.Replace("]", "]`");
+        Alt = Alt.Replace("[", "`[");
+        Alt = Alt.Replace("]", "]`");
     }
 }
