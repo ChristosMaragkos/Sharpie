@@ -9,6 +9,8 @@ public partial class Assembler
         { "SYS_IDX_READ_VAL", 0xFA2A },
         { "SYS_STACKALLOC", 0xFA4E },
         { "SYS_FRAME_DELAY", 0xFA6F },
+        { "SYS_IDX_WRITE_VAL", 0xFA7D },
+        { "SYS_IDX_READ_REF", 0xFAA6 },
     };
 
     private readonly Dictionary<int, ScopeLevel> _scopeTree = new();

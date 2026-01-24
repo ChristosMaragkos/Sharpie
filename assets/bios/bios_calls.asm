@@ -1,7 +1,7 @@
 .ORG $FA2A
 ; SYS_IDX_READ_VAL(start, index, stride)
 ;
-; Origin: $FA2A
+; Address: $FA2A
 ;
 ; Loads a value from an index within a lookup table (LUT) and
 ; saves it to memory. Also useful for structs.
@@ -41,7 +41,7 @@ LutRead:
 
     Loop:
         ALT LDP r1, r0 ; Load byte from [r0]
-        ALT STR r1, r3
+        ALT STA r1, r3
 
         INC r3
         DEC r2
@@ -122,5 +122,97 @@ FrameDelay:
         ICMP r15, 0
         JNE Loop ; No need to ICMP since DEC updates flags with right operand 1
 
+    RET
+.ENDSCOPE
+
+; SYS_IDX_WRITE_VAL(start, index, stride)
+;
+; Address: $FA7D
+;
+; Writes a value from $E805 onwards to a specific index of a LUT. Also useful for structs.
+;
+; The CPU calculates (stride × index), adds it to the starting address,
+; and reads (stride) consecutive bytes starting from $E805.
+; Then, the results are saved to the LUT starting at the calculated address.
+;
+; Parameters:
+; $E800 - Start: The memory address of the first element of the LUT. 2 bytes.
+; $E802 - Index: The zero-based index of the element we want to retrieve. 2 bytes.
+; $E804 - Size: The size of each element in the LUT in bytes. 1 byte.
+; $E805 - $E805 + (Size - 1): The element to write to the LUT. (Size) bytes.
+;
+; This subroutine overwrites these registers:
+; - R0
+; - R1
+; - R2
+; - R3
+; All other registers are preserved.
+LutWrite:
+.SCOPE
+    .DEF FirstAddrParam $E800
+    .DEF IndexParam $E802
+    .DEF SizeParam $E804
+    .DEF FirstBytePtr $E805
+
+    LDM r2, SizeParam
+    ICMP r2, 0
+    JEQ Return ; No cycles wasted
+
+    LDM r0, FirstAddrParam
+    LDM r1, IndexParam
+
+    MUL r1, r2
+    ADD r0, r1 ; R0 now holds the first index we're writing to
+
+    LDI r3, FirstBytePtr
+
+    Loop:
+        ALT LDP r1, r3
+        ALT STP r1, r0
+        INC r3
+        INC r0
+
+        DEC r2
+        JNE Loop
+
+    Return:
+        RET
+.ENDSCOPE
+
+; SYS_IDX_READ_REF
+;
+; Address: $FAA6
+;
+; Calculates a pointer (the address) to a value within a lookup table (LUT) and
+; saves it to memory. Similar to SYS_IDX_READ_VAL but with reference type semantics.
+;
+; The CPU calculates (stride × index) and adds it to the starting address of the LUT.
+; Then, the memory addressSCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) saved to work RAM, overwriting $E805-$E806
+;
+; Parameters:
+; $E800 - Start: The memory address of the first element of the LUT. 2 bytes.
+; $E802 - Index: The zero-based index of the element we want to retrieve. 2 bytes.
+; $E804 - Stride: The size of each element in the LUT in bytes. 1 byte.
+;
+; This subroutine overwrites these registers:
+; - R0
+; - R1
+; - R2
+; All other registers are preserved.
+LutGetPtr:
+.SCOPE
+    .DEF LutPtrParameter $E800
+    .DEF IdxParameter $E802
+    .DEF StrideParameter $E804
+    .DEF OutputAddr $E805
+
+    LDM r0, LutPtrParameter 
+    LDM r1, IdxParameter
+    LDM r2, StrideParameter
+
+    MUL r1, r2
+    ADD r0, r1
+
+    STM r0, $E805
     RET
 .ENDSCOPE

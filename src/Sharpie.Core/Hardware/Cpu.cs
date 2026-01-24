@@ -198,9 +198,6 @@ internal partial class Cpu
             Reset();
             return;
         }
-
-        if (IsHalted) // did we just halt?
-            return;
         Advance(pcDelta);
     }
 
