@@ -220,6 +220,23 @@ internal partial class Cpu
                 break;
             }
 
+            case 0x77: // CALL
+            {
+                pcDelta = 0;
+                if (_sp <= Memory.SpriteAtlasStart + 1)
+                {
+                    _mobo.TriggerSegfault(SegfaultType.StackOverflow);
+                    return;
+                }
+
+                var target = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F); // read entire word, truncate to nibble. You win some, you lose some
+                var returnAddress = (ushort)(_pc + 3);
+                _sp -= 2;
+                _mobo.WriteWord(_sp, returnAddress);
+                _pc = target;
+                break;
+            }
+
             case 0x79: // PUSH
             {
                 if (_sp <= Memory.SpriteAtlasStart)
