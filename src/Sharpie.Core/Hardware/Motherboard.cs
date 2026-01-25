@@ -171,7 +171,10 @@ internal class Motherboard : IMotherboard
             return;
 
         const int BiosCallStart = 0xFA2A;
-        var syscalls = biosData.Skip(BiosCallStart).ToArray();
+        // So, funny story: I footgunned myself here by not skipping the last 32 bytes.
+        // That overwrote the color palette with zeroes.
+        // And I had to spend half an hour in the debugger to figure out why nothing was appearing.
+        var syscalls = biosData.Skip(BiosCallStart).ToArray()[..^32];
 
         _ram.LoadData(BiosCallStart, syscalls);
     }
