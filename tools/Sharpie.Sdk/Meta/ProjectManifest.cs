@@ -56,8 +56,8 @@ public sealed class ProjectManifest
         if (!InputPath.EndsWith(".asm"))
             errors.Add("Input file is not a .asm file.");
 
-        if (Palette is null || Palette.Length != 16)
-            errors.Add("Palette must contain exactly 16 bytes.");
+        if (Palette is null || Palette.Length != 32)
+            errors.Add("Palette must contain exactly 32 bytes.");
 
         if (MinimumBiosVersion is null)
             errors.Add("Minimum BIOS version is required.");
@@ -76,9 +76,9 @@ public sealed class ProjectManifest
         }
 
         var list = Palette.ToList();
-        while (list.Count < 16)
+        while (list.Count < 32)
             list.Add(0xFF);
-        while (list.Count > 16)
+        while (list.Count > 32)
             list.RemoveAt(list.Count - 1);
 
         Palette = list.ToArray();
@@ -97,7 +97,7 @@ public sealed class ProjectManifest
         return Path.ChangeExtension(InputPath, extension);
     }
 
-    public static int[] DefaultPalette() => Enumerable.Repeat(0xFF, 16).ToArray();
+    public static int[] DefaultPalette() => Enumerable.Repeat(0xFF, 32).ToArray();
 }
 
 public class BiosVersionConverter : JsonConverter<Version>

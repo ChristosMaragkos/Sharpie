@@ -10,14 +10,14 @@ public class Exporter
     private readonly ushort _biosVersion = Meta.Constants.VersionBinFormat;
     private readonly string _fileName;
 
-    private readonly int[] _palette = new int[16];
+    private readonly int[] _palette = new int[32];
 
     public Exporter(string title, string author, string fileName, int[] palette)
     {
         _title = title;
         _author = author;
         _fileName = fileName;
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < _palette.Length; i++)
         {
             if (i >= palette.Length)
                 _palette[i] = 0xFF;
