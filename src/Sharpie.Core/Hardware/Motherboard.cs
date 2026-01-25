@@ -51,7 +51,6 @@ internal class Motherboard : IMotherboard
         ResetOam();
 
         _cpu = new Cpu(this);
-        _cpu.LoadDefaultPalette();
 
         _ppu = new Ppu(this);
 
