@@ -52,8 +52,8 @@ DrawLogo:
     ICMP r2, 7 ; did we just draw sprite 6 (the 'E' in 'SHARPIE')?
     JNE DrawLogo
 
-    LDI 2, CoverLogo
-    LDI 0, X
+    LDI r2, CoverLogo
+    LDI r0, X
 
     InitCover: ; Just cover the letters initially
         DRAW r0, r1, r2, r3
@@ -102,10 +102,13 @@ LowerCover:
 
 FlashBeep:
     ATTR YELLOWS::YLW_DEF
+
     LDI r0, 14
     IMUL r0, 8
+
     LDI r1, 31
     IMUL r1, 8
+
     LDI r2, CopyrightSymbol
     LDI r3, 0
     DRAW r0, r1, r2, r3
