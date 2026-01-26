@@ -278,11 +278,11 @@ internal class Program
 
         var list = defaultPalette.ToList();
 
-        while (defaultPalette.Length < 16)
+        while (defaultPalette.Length < 32)
         {
             list.Add(0xFF);
         }
-        while (defaultPalette.Length > 16)
+        while (defaultPalette.Length > 32)
         {
             list.RemoveAt(list.Count - 1);
         }

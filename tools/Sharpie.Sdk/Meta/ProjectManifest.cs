@@ -56,9 +56,6 @@ public sealed class ProjectManifest
         if (!InputPath.EndsWith(".asm"))
             errors.Add("Input file is not a .asm file.");
 
-        if (Palette is null || Palette.Length != 32)
-            errors.Add("Palette must contain exactly 32 bytes.");
-
         if (MinimumBiosVersion is null)
             errors.Add("Minimum BIOS version is required.");
 

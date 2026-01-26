@@ -8,7 +8,6 @@
 
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <StackTraceSupport>false</StackTraceSupport>
 
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
