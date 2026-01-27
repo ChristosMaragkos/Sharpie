@@ -77,6 +77,7 @@
     { "hex": "0xF7", "name": "TEXT",   "len": 2, "logic": null , "words": 1 , "pattern": "B", "desc": "Draw ASCII char B at cursor.", "alt": "Print Register: Interpret B as register index and draw its value." },
     { "hex": "0xF8", "name": "ATTR",   "len": 2, "logic": null , "words": 1 , "pattern": "B", "desc": "Set global text color/attributes.", "alt": "" },
     { "hex": "0xF9", "name": "SWC",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Swap Palette: Active[R1] = Master[R2].", "alt": "" },
+    { "hex": "0xFA", "name": "BANK",   "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Switch current bank to R1.", "alt": "" },
     { "hex": "0xFC", "name": "MUTE",   "len": 1, "logic": null , "words": 0 , "pattern": "", "desc": "Toggle music sequencer.", "alt": "Hard Silence: Stop all sound output." },
     { "hex": "0xFD", "name": "COL",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Check Collision for OAM[R1], store in R2.", "alt": "" },
 

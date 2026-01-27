@@ -616,6 +616,13 @@ internal partial class Cpu
         _mobo.SwapColor((byte)(GetRegister(oldIndex) & 0x1F), (byte)(GetRegister(newIndex) & 0x1F));
     }
 
+    private partial void Execute_BANK(byte opcode, ref ushort pcDelta)
+    {
+        var x = _mobo.ReadByte(_pc + 1);
+        var id = (byte)GetRegister(x);
+        _mobo.SetCurrentBank(id);
+    }
+
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta)
     {
         var x = IndexFromOpcode(opcode);

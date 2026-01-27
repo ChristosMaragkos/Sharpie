@@ -1,31 +1,69 @@
 ﻿namespace Sharpie.Core.Hardware;
 
-/// <summary>
-/// The memory of the Sharpie console.
-/// </summary>
 internal class Memory
 {
-    // Memory map:
+    // Memory map
     public const ushort RomStart = 0x0000;
-    public const ushort SpriteAtlasStart = 0xE7FF;
+    public const ushort FixedRomEnd = 0x47FF; // 18 KiB fixed region
+    public const ushort SwitchableRomStart = 0x4800; // 32 KiB swappable region
+    public const ushort SwitchableRomEnd = 0xC7FF; // right before sprite atlas
+    public const ushort SpriteAtlasStart = 0xE7FF; // grows downward, always loaded
+    public const ushort SpriteAtlasBottom = 0xC800;
     public const ushort WorkRamStart = 0xE800;
-
     public const ushort AudioRamStart = 0xF800;
     public const ushort InstrumentTableStart = AudioRamStart + 32;
-    public const ushort ReservedSpaceStart = 0xF800 + 544; // 0xFA20 - 0xFFFF is reserved. Not sure for what, but I reserved it. Might use it for BIOS.
-    public const ushort ColorPaletteStart = 0xFFE0; // 16 memory slots, one per color. Indexed as pointers to internal colors.
+    public const ushort ReservedSpaceStart = 0xF800 + 544;
+    public const ushort ColorPaletteStart = 0xFFE0;
 
-    private readonly byte[] _contents = new byte[65536];
+    private readonly byte[] _contents;
+
+    private byte[][]? _banks;
+    private int _currentBankIndex;
+    public int BankCount => _banks != null ? _banks.Length : 0;
+
+    public Memory(ushort lastAddress = ushort.MaxValue)
+    {
+        _contents = new byte[lastAddress + 1];
+    }
+
+    public void SetBanks(byte[][] banks)
+    {
+        _banks = banks;
+        _currentBankIndex = 0;
+    }
+
+    public void SelectBank(int index)
+    {
+        if (_banks == null)
+            return; // ignore if banks aren't initialized
+        _currentBankIndex = index;
+    }
+
+    private static bool IsSwitchableRegion(ushort address) =>
+        address >= SwitchableRomStart && address <= SwitchableRomEnd;
 
     public byte ReadByte(ushort address)
     {
-        return _contents[address]; //ushort caps at last ram index anyways
+        if (_banks != null && IsSwitchableRegion(address))
+        {
+            var offset = address - SwitchableRomStart;
+            return _banks[_currentBankIndex][offset];
+        }
+
+        return _contents[address];
     }
 
     public byte ReadByte(int address) => ReadByte((ushort)address);
 
     public void WriteByte(ushort address, byte value)
     {
+        if (_banks != null && IsSwitchableRegion(address))
+        {
+            var offset = address - SwitchableRomStart;
+            _banks[_currentBankIndex][offset] = value;
+            return;
+        }
+
         _contents[address] = value;
     }
 
@@ -33,9 +71,8 @@ internal class Memory
 
     public ushort ReadWord(ushort address)
     {
-        var lowByte = _contents[address];
-        var highByte = _contents[address + 1];
-
+        var lowByte = ReadByte(address);
+        var highByte = ReadByte((ushort)(address + 1));
         return (ushort)((highByte << 8) | lowByte);
     }
 
@@ -43,11 +80,8 @@ internal class Memory
 
     public void WriteWord(ushort address, ushort value)
     {
-        var lowByte = (byte)(value & 0xFF); //bitmask not strictly necessary but oh well
-        var highByte = (byte)((value >> 8) & 0xFF); //again
-
-        _contents[address] = lowByte;
-        _contents[address + 1] = highByte;
+        WriteByte(address, (byte)(value & 0xFF));
+        WriteByte((ushort)(address + 1), (byte)((value >> 8) & 0xFF));
     }
 
     public void WriteWord(int address, ushort value) => WriteWord((ushort)address, value);
@@ -64,6 +98,7 @@ internal class Memory
 
     public Span<byte> Slice(int from, int amount) => _contents.AsSpan(from, amount);
 
+    [Obsolete("ABSOLUTELY do not use this.")]
     public void Dump(ushort start, ushort amount)
     {
         for (int i = start; i < start + amount; i++)

@@ -70,6 +70,7 @@
 | `0xF7` | **TEXT** | `B` | 2 | Draw ASCII char B at cursor. | Print Register: Interpret B as register index and draw its value. |
 | `0xF8` | **ATTR** | `B` | 2 | Set global text color/attributes. |  |
 | `0xF9` | **SWC** | `R, R` | 2 | Swap Palette: Active`[R1]` = Master`[R2]`. |  |
+| `0xFA` | **BANK** | `R` | 2 | Switch current bank to R1. |  |
 | `0xFC` | **MUTE** | `-` | 1 | Toggle music sequencer. | Hard Silence: Stop all sound output. |
 | `0xFD` | **COL** | `R, R` | 2 | Check Collision for OAM`[R1]`, store in R2. |  |
 | `0xFE` | **ALT** | `-` | 1 | Prefix. Modifies next opcode logic. |  |

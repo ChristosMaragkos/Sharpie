@@ -41,7 +41,7 @@ foreach (var op in ops)
 }
 
 sb.AppendLine("            default:");
-sb.AppendLine("                Console.WriteLine($\"Unknown Opcode @ {_pc:X4} : 0x{opcode:X2}\");");
+sb.AppendLine("                _mobo.PushDebug($\"Unknown Opcode @ {_pc:X4} : 0x{opcode:X2}\");");
 sb.AppendLine("                IsHalted = true;");
 sb.AppendLine("                pcDelta = 1;");
 sb.AppendLine("                break;");

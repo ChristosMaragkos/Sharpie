@@ -353,6 +353,11 @@ internal partial class Cpu {
                 Execute_SWC(opcode, ref pcDelta);
                 break;
 
+            case 0xFA: //BANK
+                pcDelta = 2;
+                Execute_BANK(opcode, ref pcDelta);
+                break;
+
             case 0xFC: //MUTE
                 pcDelta = 1;
                 Execute_MUTE(opcode, ref pcDelta);
@@ -374,7 +379,7 @@ internal partial class Cpu {
                 break;
 
             default:
-                Console.WriteLine($"Unknown Opcode @ {_pc:X4} : 0x{opcode:X2}");
+                _mobo.PushDebug($"Unknown Opcode @ {_pc:X4} : 0x{opcode:X2}");
                 IsHalted = true;
                 pcDelta = 1;
                 break;
@@ -450,6 +455,7 @@ internal partial class Cpu {
     private partial void Execute_TEXT(byte opcode, ref ushort pcDelta);
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta);
     private partial void Execute_SWC(byte opcode, ref ushort pcDelta);
+    private partial void Execute_BANK(byte opcode, ref ushort pcDelta);
     private partial void Execute_MUTE(byte opcode, ref ushort pcDelta);
     private partial void Execute_COL(byte opcode, ref ushort pcDelta);
     private partial void Execute_ALT(byte opcode, ref ushort pcDelta);

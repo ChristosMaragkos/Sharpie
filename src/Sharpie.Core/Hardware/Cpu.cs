@@ -175,7 +175,7 @@ internal partial class Cpu
         {
             _mobo.WriteByte(
                 Memory.ColorPaletteStart + i,
-                (colorPalette[i] > 0x1F || i >= colorPalette.Length) ? i : colorPalette[i]
+                (i >= colorPalette.Length || colorPalette[i] > 0x1F) ? i : colorPalette[i]
             );
         }
     }

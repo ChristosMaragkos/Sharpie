@@ -31,6 +31,7 @@ internal interface IMotherboard
     void GetInputState();
 
     void SwapColor(byte oldIndex, byte newIndex);
+    void SetCurrentBank(byte bankIndex);
     void StopSystem();
     ushort CheckCollision(int srcIndex);
 
