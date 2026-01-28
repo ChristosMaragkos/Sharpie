@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Sharpie.Sdk.Asm.Structuring;
 
 namespace Sharpie.Sdk.Asm;
 
@@ -13,14 +14,12 @@ public partial class Assembler
         { "SYS_IDX_READ_REF", 0xFAA6 },
     };
 
-    private readonly Dictionary<int, ScopeLevel> _scopeTree = new();
-
-    private ScopeLevel GetCurrentScope() => _scopeTree[CurrentScope!.Id];
+    private ScopeLevel GetCurrentScope() => CurrentRegion.ScopeById;
 
     private bool TryDefineLabel(string name, ushort address, int lineNumber)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineLabel(name, address);
+        return CurrentRegion.CurrentScope!.TryDefineLabel(name, address);
     }
 
     private bool TryResolveLabel(string name, out ushort address) =>
@@ -29,7 +28,7 @@ public partial class Assembler
     private bool TryDefineConstant(string name, ushort value, int lineNumber)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineConstant(name, value);
+        return CurrentRegion.CurrentScope!.TryDefineConstant(name, value);
     }
 
     private bool TryResolveConstant(string name, out ushort value) =>
@@ -38,7 +37,7 @@ public partial class Assembler
     private bool TryDefineEnum(string name, int lineNumber)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineEnum(name);
+        return CurrentRegion.CurrentScope!.TryDefineEnum(name);
     }
 
     private bool TryResolveEnum(string name) => GetCurrentScope().TryResolveEnum(name);
@@ -51,7 +50,7 @@ public partial class Assembler
     )
     {
         VerifyBiosPrefix(memberName, lineNumber);
-        return CurrentScope!.TryDefineEnumMember(enumName, memberName, value);
+        return CurrentRegion.CurrentScope!.TryDefineEnumMember(enumName, memberName, value);
     }
 
     private bool TryResolveEnumMember(string enumName, string memberName, out ushort value) =>
@@ -69,7 +68,7 @@ public partial class Assembler
     private void AddBiosLabels()
     {
         foreach (var kvp in BiosCallAddresses)
-            _scopes.Peek().TryDefineLabel(kvp.Key, kvp.Value);
+            IRomBuffer.GlobalScope.TryDefineLabel(kvp.Key, kvp.Value);
     }
 
     private int? ParseNumberLiteral(
