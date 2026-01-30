@@ -223,3 +223,46 @@ LutGetPtr:
     STM r0, $E805
     RET
 .ENDSCOPE
+
+; SYS_MEM_COPY
+;
+; Address: $FAC3
+;
+; Copies (byteAmount) bytes from the starting address to the end address.
+; This overwrites everything from (end) to (end + byteAmount - 1).
+;
+; Parameters:
+; $E800 - Copy start: The address of the first byte to copy.
+; $E802 - Paste start: The address to start copying to.
+; $E804 - Byte amount: The amount of bytes to copy.
+;
+; This subroutine overwrites these registers:
+; - R0
+; - R1
+; - R2
+; - R3
+; All other registers are preserved.
+MemCopy:
+.SCOPE
+    .DEF CopyStartPtr $E800
+    .DEF PasteStartPtr $E802
+    .DEF AmountParam $E804
+
+    LDM r3, AmountParam
+    ICMP r3, 0
+    JEQ Return
+
+    LDM r0, CopyStartPtr
+    LDM r1, PasteStartPtr
+
+    Loop:
+        STP r0, r1
+        INC r0
+        INC r1
+
+        DEC r3
+        JNE Loop
+
+    Return:
+        RET
+.ENDSCOPE

@@ -703,6 +703,11 @@ internal partial class Cpu
         CursorPosY = y;
     }
 
+    private partial void Execute_SAVE(byte opcode, ref ushort pcDelta)
+    {
+        _mobo.InvokeSave();
+    }
+
     private partial void Execute_INSTR(byte opcode, ref ushort pcDelta)
     {
         var instIdReg = IndexFromOpcode(opcode);
@@ -715,11 +720,7 @@ internal partial class Cpu
         var sustain = (byte)(s * 17);
         var release = (byte)(r * 17);
 
-        var addr = Memory.AudioRamStart + 32 + (instId * 4);
-        _mobo.WriteByte(addr, attack);
-        _mobo.WriteByte(addr + 1, decay);
-        _mobo.WriteByte(addr + 2, sustain);
-        _mobo.WriteByte(addr + 3, release);
+        _mobo.DefineInstrument(instId, attack, decay, sustain, release);
     }
 
     private partial void Execute_OUT_R(byte opcode, ref ushort pcDelta)

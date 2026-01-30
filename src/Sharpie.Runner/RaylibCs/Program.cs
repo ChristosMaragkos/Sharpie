@@ -6,6 +6,7 @@ var video = new RaylibVideoOutput();
 var audio = new RaylibAudioOutput();
 var input = new RaylibInputHandler();
 var logger = new RaylibDebugOutpug(20);
+var saveHandler = new RaylibSaveHandler();
 
 var biosBytes = BiosLoader.GetEmbeddedBiosBinary();
 byte[]? romBytes = null;
@@ -66,6 +67,7 @@ while (!video.ShouldCloseWindow())
             {
                 romBytes = File.ReadAllBytes(filePath);
                 TryLoadCart();
+                saveHandler.SavePath = Path.ChangeExtension(filePath, ".sav");
             }
         }
         catch (Exception e)
@@ -82,6 +84,7 @@ while (!video.ShouldCloseWindow())
             {
                 var droppedFiles = Raylib.LoadDroppedFiles();
                 var cartridgeFile = PointerToString(droppedFiles.Paths[0]);
+                saveHandler.SavePath = Path.ChangeExtension(cartridgeFile, ".sav");
                 if (!cartridgeFile.EndsWith(".shr"))
                     Console.WriteLine($"Sharpie ROM files must end with the .shr extension.");
 
@@ -100,6 +103,7 @@ while (!video.ShouldCloseWindow())
     logger.LogAll();
 }
 
+emulator.Save -= saveHandler.SaveToDisk;
 video.Cleanup();
 audio.Cleanup();
 
@@ -110,6 +114,8 @@ void TryLoadCart()
     if (romBytes != null)
     {
         emulator.LoadCartridge(romBytes);
+        emulator.Save += saveHandler.SaveToDisk;
+        Console.WriteLine($"Set up save callback with path: {saveHandler.SavePath}");
     }
 }
 

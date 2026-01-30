@@ -14,6 +14,7 @@ public class SharpieConsole
     )
     {
         _motherboard = new Motherboard(display, audio, input, debug);
+        _motherboard.SaveRequested += OnSaveRequested;
     }
 
     public void Step() => _motherboard.Step();
@@ -26,4 +27,17 @@ public class SharpieConsole
 
     public static unsafe void FillAudioBufferRange(float* audioBuffer, uint sampleAmount) =>
         Motherboard.FillAudioBufferRange(audioBuffer, sampleAmount);
+
+    public static void FillAudioBufferRange(float[] audioBuffer, int sampleAmount) =>
+        Motherboard.FillAudioBufferRange(audioBuffer, sampleAmount);
+
+    public ReadOnlySpan<byte> GetSaveRam() => _motherboard.SaveRam();
+
+    private void OnSaveRequested()
+    {
+        Console.WriteLine($"A save was requested at {DateTime.Now}");
+        Save?.Invoke(GetSaveRam());
+    }
+
+    public event Action<ReadOnlySpan<byte>>? Save;
 }

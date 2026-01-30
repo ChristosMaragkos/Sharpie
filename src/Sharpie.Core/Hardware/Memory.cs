@@ -11,7 +11,7 @@ internal class Memory
     public const ushort SpriteAtlasBottom = 0xC800;
     public const ushort WorkRamStart = 0xE800;
     public const ushort AudioRamStart = 0xF800;
-    public const ushort InstrumentTableStart = AudioRamStart + 32;
+    public const ushort SaveRamStart = AudioRamStart + 32;
     public const ushort ReservedSpaceStart = 0xF800 + 544;
     public const ushort ColorPaletteStart = 0xFFE0;
 
@@ -98,10 +98,15 @@ internal class Memory
 
     public Span<byte> Slice(int from, int amount) => _contents.AsSpan(from, amount);
 
-    [Obsolete("ABSOLUTELY do not use this.")]
-    public void Dump(ushort start, ushort amount)
+    public ReadOnlySpan<byte> View(int from, int amount)
     {
-        for (int i = start; i < start + amount; i++)
-            Console.WriteLine(_contents[i]);
+        if ((uint)from + (uint)amount > (uint)_contents.Length)
+        {
+            Console.WriteLine(
+                "Attempted to access memory address that was out of range for this instance of the Memory class."
+            );
+            return new ReadOnlySpan<byte>(new byte[amount]); // Return an empty span instead of throwing an exception
+        }
+        return new ReadOnlySpan<byte>(_contents, from, amount);
     }
 }

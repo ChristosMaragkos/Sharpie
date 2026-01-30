@@ -4,3 +4,5 @@ This directory contains sample cartridges for the Sharpie to serve as learning m
 - **sound_check.asm**: Exactly what it says on the tin. Press the arrow keys (except the right one, since I couldn't bother adding a fourth sound) to hear the Sharpie sing.
 
 - **bluescreen.asm**: Tests the segfault functions of the sharpie BIOS. Each arrow key triggers a different segfault. 
+
+- **save_test.asm**: Saves the numbers 0-9 on disk.

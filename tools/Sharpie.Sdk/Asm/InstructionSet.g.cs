@@ -67,6 +67,7 @@ public static class InstructionSet
         { "DRAW", (3, 208, 4, true, "RRRR") },
         { "INSTR", (3, 224, 3, true, "RBB") },
         { "OAMPOS", (3, 193, 3, false, "RRR") },
+        { "SAVE", (1, 194, 0, false, "") },
         { "OAMTAG", (2, 240, 2, false, "RR") },
         { "CLS", (2, 241, 1, false, "R") },
         { "VBLNK", (1, 242, 0, false, "") },

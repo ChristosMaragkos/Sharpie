@@ -190,7 +190,7 @@ internal class Program
             }
 
             romManifest = new ProjectManifest(
-                !firmware ? author : "",
+                !firmware ? title : "",
                 !firmware ? author : "",
                 input,
                 string.IsNullOrWhiteSpace(output)

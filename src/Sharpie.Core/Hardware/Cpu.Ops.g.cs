@@ -308,6 +308,11 @@ internal partial class Cpu {
                 Execute_OAMPOS(opcode, ref pcDelta);
                 break;
 
+            case 0xC2: //SAVE
+                pcDelta = 1;
+                Execute_SAVE(opcode, ref pcDelta);
+                break;
+
             case 0xF0: //OAMTAG
                 pcDelta = 2;
                 Execute_OAMTAG(opcode, ref pcDelta);
@@ -446,6 +451,7 @@ internal partial class Cpu {
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta);
     private partial void Execute_INSTR(byte opcode, ref ushort pcDelta);
     private partial void Execute_OAMPOS(byte opcode, ref ushort pcDelta);
+    private partial void Execute_SAVE(byte opcode, ref ushort pcDelta);
     private partial void Execute_OAMTAG(byte opcode, ref ushort pcDelta);
     private partial void Execute_CLS(byte opcode, ref ushort pcDelta);
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta);

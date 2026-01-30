@@ -17,6 +17,8 @@ internal interface IMotherboard
     void SetTextAttributes(byte attributes);
     void DrawChar(int x, int y, byte charCode);
 
+    void InvokeSave();
+
     void PlayNote(
         byte channel,
         byte note,
@@ -64,6 +66,9 @@ internal interface IMotherboard
     void SetCamera(ushort x, ushort y);
 
     void TriggerSegfault(SegfaultType segfaultType);
+
+    void DefineInstrument(int index, byte a, byte d, byte s, byte r);
+    public (byte Attack, byte Decay, byte Sustain, byte Release) ReadInstrument(int index);
 
     public static ReadOnlySpan<byte> SmallFont =>
         new byte[]
