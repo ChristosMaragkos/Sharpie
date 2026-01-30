@@ -14,12 +14,6 @@ public partial class Assembler
 
     private void AddToken(TokenLine token)
     {
-        if (_firmwareMode)
-        {
-            FirmwareModeTokens.Add(token);
-            return;
-        }
-
         if (CurrentRegion == null)
             throw new AssemblySyntaxException(
                 $"Only enum, label and constant definitions are allowed outside of regions.",
@@ -39,7 +33,7 @@ public partial class Assembler
     {
         if (CurrentRegion == null && !_firmwareMode)
             throw new AssemblySyntaxException("Cannot enter local scope outside of a region.");
-        CurrentRegion!.NewScope(CurrentRegion.CurrentScope);
+        CurrentRegion!.NewScope();
     }
 
     private void ExitScope()
@@ -53,7 +47,7 @@ public partial class Assembler
         CurrentRegion == null ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
     private bool IsInLocalScope => CurrentRegion == null ? false : CurrentRegion.Scopes.Count > 2;
 
-    private void ReadFile()
+    private byte[] ReadFile()
     {
         if (FileContents == null)
             throw new NullReferenceException("File contents are null. Check your file path.");
@@ -63,13 +57,17 @@ public partial class Assembler
         var lineNum = 0;
         string cleanLine;
         AddBiosLabels();
+        if (_firmwareMode)
+        {
+            CurrentRegion = new FirmwareBuffer();
+            AllRegions["FIRMWARE"] = CurrentRegion;
+        }
 
         foreach (var line in FileContents!)
         {
             var tokenLine = new TokenLine();
             lineNum++;
             tokenLine.SourceLine = lineNum;
-            tokenLine.Address = CurrentAddress;
             cleanLine = line.Trim().ToUpper();
             RemoveComment(ref cleanLine);
             if (IsLineEmpty(cleanLine))
@@ -80,13 +78,6 @@ public partial class Assembler
                 lineNum = 0;
                 continue;
             }
-
-            var isAssetDirective =
-                cleanLine.StartsWith(".SPRITE")
-                || cleanLine.StartsWith(".DB")
-                || cleanLine.StartsWith(".DATA")
-                || cleanLine.StartsWith(".BYTES")
-                || cleanLine.StartsWith(".DW");
 
             ParseRegion(ref cleanLine, lineNum);
             if (IsLineEmpty(cleanLine))
@@ -120,8 +111,7 @@ public partial class Assembler
                 AddToken(tokenLine); // ALT is added right when tokenizing
         }
 
-        Compile();
-        return;
+        return Compile();
 
         bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
@@ -130,6 +120,12 @@ public partial class Assembler
     {
         if (cleanLine.StartsWith(".REGION"))
         {
+            AssertNoFirmware();
+            if (_firmwareMode)
+                throw new AssemblySyntaxException(
+                    "Regions are implicit in firmware mode.",
+                    lineNum
+                );
             if (CurrentRegion != null)
                 throw new AssemblySyntaxException($"Cannot create nested regions.", lineNum);
 
@@ -148,19 +144,33 @@ public partial class Assembler
         }
         else if (cleanLine.StartsWith(".ENDREGION"))
         {
+            AssertNoFirmware();
             if (CurrentRegion == null)
                 throw new AssemblySyntaxException(
                     "Directive .ENDREGION could not find an opening .REGION",
                     lineNum
                 );
-
             CurrentRegion = null;
+        }
+
+        void AssertNoFirmware()
+        {
+            if (_firmwareMode)
+                throw new AssemblySyntaxException(
+                    "Regions are implicit in firmware mode.",
+                    lineNum
+                );
         }
     }
 
     private void SwitchCurrentRegion(string regionName, int lineNum)
     {
-        int? bankId;
+        var bankId = 0;
+        if (AllRegions.TryGetValue(regionName, out var existing))
+        {
+            CurrentRegion = existing;
+            return;
+        }
         if (regionName.StartsWith("BANK"))
         {
             var parts = regionName.Split("_");
@@ -168,17 +178,29 @@ public partial class Assembler
                 throw new AssemblySyntaxException($"Unexpected token: {parts.Last()}", lineNum);
 
             regionName = parts[0]; // "BANK"
-            bankId = ParseNumberLiteral(parts[1], false, lineNum, 255);
+            bankId = ParseByte(parts[1], lineNum);
         }
+        IRomBuffer next;
         switch (regionName)
         {
             case "FIXED":
-                CurrentRegion = new FixedRegionBuffer();
+                next = new FixedRegionBuffer();
                 break;
             case "BANK":
-                CurrentRegion = new BankBuffer();
+                regionName += $"_{bankId}";
+                next = new BankBuffer();
                 break;
+            case "SPRITE_ATLAS":
+                next = new SpriteAtlasBuffer();
+                break;
+            default:
+                throw new AssemblySyntaxException(
+                    $"Invalid region name {regionName} - Valid region names are: FIXED, BANK_<bank-number>, SPRITE_ATLAS",
+                    lineNum
+                );
         }
+        AllRegions[regionName] = next;
+        CurrentRegion = next;
     }
 
     private void ParseScope(ref string cleanLine, int lineNum)
@@ -187,12 +209,12 @@ public partial class Assembler
         {
             NewScope();
             cleanLine = cleanLine.Substring(".SCOPE".Length).Trim(); // allow labels and such after scope start
-            CurrentRegion!.AddToken(
+            AddToken(
                 new TokenLine
                 {
                     Opcode = ".SCOPE",
                     SourceLine = lineNum,
-                    Address = CurrentAddress,
+                    Address = CurrentRegion!.Cursor,
                     Args = [],
                 }
             );
@@ -212,7 +234,7 @@ public partial class Assembler
                 {
                     Opcode = ".ENDSCOPE",
                     SourceLine = lineNum,
-                    Address = CurrentAddress,
+                    Address = CurrentRegion!.Cursor,
                     Args = [],
                 }
             );
@@ -358,7 +380,7 @@ public partial class Assembler
                 lineNumber
             );
 
-        line = line.Substring(line.LastIndexOf(valueStr.Last()) + 1);
+        line = string.Empty;
     }
 
     private void ParseStringDirective(ref string line, int lineNumber)
@@ -393,10 +415,10 @@ public partial class Assembler
                 Opcode = "SETCRS",
                 Args = new[] { coordArgs[0], coordArgs[1] },
                 SourceLine = lineNumber,
-                Address = CurrentAddress,
+                Address = CurrentRegion!.Cursor,
             }
         );
-        CurrentAddress += InstructionSet.GetOpcodeLength("SETCRS");
+        CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength("SETCRS"));
 
         var delta = InstructionSet.GetOpcodeLength("TEXT");
         foreach (char c in message)
@@ -406,10 +428,10 @@ public partial class Assembler
                 Opcode = "TEXT",
                 Args = new[] { TextHelper.GetFontIndex(c).ToString() },
                 SourceLine = lineNumber,
-                Address = CurrentAddress,
+                Address = CurrentRegion!.Cursor,
             };
             AddToken(tl);
-            CurrentAddress += delta;
+            CurrentRegion!.AdvanceCursor(delta);
         }
 
         var remainder = line.Substring(lastQuote + 1).TrimStart(CommonDelimiters).Trim();
@@ -425,10 +447,10 @@ public partial class Assembler
                     Opcode = "ALT",
                     Args = Array.Empty<string>(),
                     SourceLine = lineNumber,
-                    Address = CurrentAddress,
+                    Address = CurrentRegion?.Cursor,
                 }
             );
-            CurrentAddress += InstructionSet.GetOpcodeLength("ALT");
+            CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength("ALT"));
 
             AddToken(
                 new()
@@ -436,16 +458,16 @@ public partial class Assembler
                     Opcode = "TEXT",
                     Args = new[] { cleanArg },
                     SourceLine = lineNumber,
-                    Address = CurrentAddress,
+                    Address = CurrentRegion?.Cursor,
                 }
             );
-            CurrentAddress += InstructionSet.GetOpcodeLength("TEXT");
+            CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength("TEXT"));
         }
 
         line = string.Empty;
     }
 
-    public void LoadFile(string filePath)
+    public byte[] LoadFile(string filePath)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"No file by name \"{filePath}\" was found.");
@@ -454,7 +476,7 @@ public partial class Assembler
         Console.WriteLine("Assembler: Loading file...");
         var initialFile = File.ReadAllLines(filePath);
         FileContents = PreProcess(initialFile, Path.GetDirectoryName(filePath)!);
-        ReadFile();
+        return ReadFile();
     }
 
     private static void RemoveComment(ref string line)
@@ -477,7 +499,7 @@ public partial class Assembler
         var label = labelRegex.Groups[1].Value;
 
         if (
-            !TryDefineLabel(label, (ushort)CurrentAddress, lineNumber)
+            !TryDefineLabel(label, (ushort)CurrentRegion!.Cursor, lineNumber)
             || TryResolveConstant(label, out _)
             || TryResolveEnum(label)
         )
@@ -513,8 +535,19 @@ public partial class Assembler
                         );
                     else
                     {
-                        CurrentAddress = ParseWord(args[1], lineNumber);
-                        tokenLine.Address = CurrentAddress;
+                        if (CurrentRegion == null)
+                            throw new AssemblySyntaxException(
+                                ".ORG is disabled outside regions as no code is allowed.",
+                                lineNumber
+                            );
+                        var addr = ParseWord(args[1], lineNumber);
+                        if (addr >= CurrentRegion!.Size)
+                            throw new AssemblySyntaxException(
+                                $"Directive .ORG cannot jump to address {addr} as buffer {CurrentRegion!.Name} has a maximum size of {CurrentRegion!.Size}",
+                                lineNumber
+                            );
+
+                        CurrentRegion.SetCursor(addr);
                     }
 
                     break;
@@ -532,15 +565,15 @@ public partial class Assembler
                         );
                     else
                     {
-                        if (!_isInAssetMode)
-                        {
-                            _realCursor = CurrentAddress;
-                            _isInAssetMode = true;
-                        }
+                        if (CurrentRegion is not SpriteCapableBuffer spriteBuf)
+                            throw new AssemblySyntaxException(
+                                ".SPRITE is only enabled within the sprite atlas region.",
+                                lineNumber
+                            );
 
                         var spriteIndex = ParseByte(args[1], lineNumber);
-                        CurrentAddress = CalculateSpriteAddress(spriteIndex);
-                        tokenLine.Address = CurrentAddress;
+                        spriteBuf.PositionCursor(spriteIndex);
+                        tokenLine.Address = spriteBuf.Cursor;
                     }
 
                     break;
@@ -548,15 +581,20 @@ public partial class Assembler
                 case ".DB":
                 case ".BYTES":
                 case ".DATA":
-                    tokenLine.Address = CurrentAddress;
-                    CurrentAddress += (args.Length - 1);
+                    tokenLine.Address = CurrentRegion?.Cursor;
+                    CurrentRegion!.AdvanceCursor(args.Length - 1);
                     break;
 
                 case ".DW":
-                    tokenLine.Address = CurrentAddress;
-                    CurrentAddress += (2 * (args.Length - 1));
+                    tokenLine.Address = CurrentRegion?.Cursor;
+                    CurrentRegion!.AdvanceCursor(2 * (args.Length - 1));
                     break;
 
+                case ".REGION":
+                case ".ENDREGION":
+                    tokenLine.Opcode = null;
+                    tokenLine.Args = null;
+                    break;
                 case ".STR":
                 case ".DEF":
                     break;
@@ -578,17 +616,16 @@ public partial class Assembler
                     Opcode = "ALT",
                     Args = Array.Empty<string>(),
                     SourceLine = lineNumber,
-                    Address = CurrentAddress,
+                    Address = CurrentRegion!.Cursor,
                 }
             );
-            CurrentAddress += InstructionSet.GetOpcodeLength("ALT");
+            CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength("ALT"));
 
             var remainingLine = string.Join(' ', args.Skip(1));
             var nextToken = new TokenLine
             {
                 SourceLine = lineNumber,
-                Address = CurrentAddress,
-                // Args = args.Skip(1).ToArray(),
+                Address = CurrentRegion?.Cursor,
             };
             Tokenize(remainingLine, ref nextToken, lineNumber);
             AddToken(nextToken);
@@ -605,9 +642,9 @@ public partial class Assembler
             );
 
         if (!tokenLine.Address.HasValue)
-            tokenLine.Address = CurrentAddress;
+            tokenLine.Address = CurrentRegion?.Cursor;
 
-        CurrentAddress += InstructionSet.GetOpcodeLength(tokenLine.Opcode);
+        CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength(tokenLine.Opcode));
     }
 
     private List<string> PreProcess(IEnumerable<string> lines, string currentDir)

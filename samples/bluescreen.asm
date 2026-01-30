@@ -1,10 +1,12 @@
-.STR 9, 15 "PRESS ANY BUTTON"
-
 .ENUM Buttons
     Up = 0x01
     Down = 0x02
     Left = 0x04
 .ENDENUM
+
+.REGION FIXED
+
+.STR 9, 15 "PRESS ANY BUTTON"
 
 MainLoop:
     LDI r0, 0
@@ -33,3 +35,4 @@ ProtectedRegionWrite: ; Trigger a segfault by trying to write to the reserved RA
     LDI r0, 0xFF
     ALT STM r0, $FFFF
     HALT
+.ENDREGION

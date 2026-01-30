@@ -1,3 +1,5 @@
+.REGION FIXED
+
 LDI r0, 0
 MainLoop:
     VBLNK
@@ -50,3 +52,5 @@ ErrorSound:
     .DB 0, #C2, 8, 0
     .DB 0, #C2, 8, 0
     .DW 0xFF, 0
+
+.ENDREGION
