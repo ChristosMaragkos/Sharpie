@@ -64,11 +64,11 @@
   
     { "hex": "0xA0", "name": "SONG",   "len": 1, "logic": null , "family": true, "words": 1 , "pattern": "R", "desc": "Family. Start music from address in Rn.", "alt": "" },
     { "hex": "0xC0", "name": "SETCRS", "len": 3, "logic": null , "words": 2 , "pattern": "BB", "desc": "Set text cursor to (X, Y).", "alt": "Relative Move cursor by (X, Y)." },
-    { "hex": "0xC1", "name": "SAVE",   "len": 1, "logic": null , "words": 0 , "pattern": "", "desc": "Alerts the motherboard that a save was requested.", "alt": "" },
     { "hex": "0xD0", "name": "DRAW",   "len": 3, "logic": null , "family": true, "words": 4 , "pattern": "RRRR", "desc": "Family. Draw sprite: X, Y, ID, Attr. & Type (Low byte -> attr, high byte -> type)", "alt": ""},
     { "hex": "0xE0", "name": "INSTR",  "len": 3, "logic": null , "family": true, "words": 3 , "pattern": "RBB", "desc": "Family. Define ADSR for instrument Rn.", "alt": "" },
     
     { "hex": "0xC1", "name": "OAMPOS", "len": 3, "logic": null , "words": 3 , "pattern": "RRR", "desc": "Set R2, R3 to the (X, Y) coordinates of the tile at OAM[R1]", "alt": ""},
+    { "hex": "0xC2", "name": "SAVE",   "len": 1, "logic": null , "words": 0 , "pattern": "", "desc": "Alerts the motherboard that a save was requested.", "alt": "" },
     { "hex": "0xF0", "name": "OAMTAG", "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Pack Attribute and Type bytes of OAM[R1] into R2. Low Endian.", "alt": "Set R2 to the Tile ID of OAM[R1]" },
     { "hex": "0xF1", "name": "CLS",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Clear screen with color in R and invalidate OAM entries from the current OAM cursor position.", "alt": "Hard Clear: Wipe screen and reset OAM." },
     { "hex": "0xF2", "name": "VBLNK",  "len": 1, "logic": null , "words": 0 , "pattern": "", "desc": "Yield CPU until next V-Blank.", "alt": "" },

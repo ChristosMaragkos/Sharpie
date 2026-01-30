@@ -14,7 +14,7 @@ public class SharpieConsole
     )
     {
         _motherboard = new Motherboard(display, audio, input, debug);
-        _motherboard.SaveAlerted += OnSaveRequested;
+        _motherboard.SaveRequested += OnSaveRequested;
     }
 
     public void Step() => _motherboard.Step();
