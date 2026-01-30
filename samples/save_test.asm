@@ -1,0 +1,27 @@
+.DEF SRAM_START $F820
+
+.REGION FIXED
+
+.STR 10, 14 "Saving..."
+VBLNK
+
+LDI r0, SaveData
+LDI r1, SRAM_START
+LDI r2, 10
+
+STM r0, $E800
+STM r1, $E802
+STM r2, $E804
+
+CALL SYS_MEM_COPY
+SAVE
+
+.STR 8, 14 "FINISHED :)"
+VBLNK
+HALT
+
+SaveData:
+    .DB 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+.ENDREGION
+
