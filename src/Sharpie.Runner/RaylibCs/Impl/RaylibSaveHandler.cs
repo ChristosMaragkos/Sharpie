@@ -15,5 +15,6 @@ public class RaylibSaveHandler : ISaveHandler
         Directory.CreateDirectory(directoryName);
 
         File.WriteAllBytes(SavePath, saveRam);
+        Console.WriteLine($"Successfully wrote save data to {SavePath}");
     }
 }
