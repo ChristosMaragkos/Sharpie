@@ -184,21 +184,53 @@ internal class Motherboard : IMotherboard
         try
         {
             var header = fileData.Take(64).ToArray();
+
             for (int i = 0; i < 4; i++)
                 _ram.WriteByte((ushort)BiosFlagAddresses.MagicString + i, header[i]);
 
-            _ram.WriteByte((ushort)BiosFlagAddresses.Version, header[42]); // header memory addresses 42 and 43 is where the
-            _ram.WriteByte((ushort)BiosFlagAddresses.Version + 1, header[43]); // minimum BIOS version required to run the cartridge lives
+            var versionLow = header[42];
+            var versionHigh = header[43];
+            _ram.WriteByte((ushort)BiosFlagAddresses.Version, versionLow);
+            _ram.WriteByte((ushort)BiosFlagAddresses.Version + 1, versionHigh);
 
             _cartPalette = header.Skip(48).ToArray();
 
-            var cartData = fileData.Skip(64).ToArray();
-            _ram.LoadData(0, cartData);
-            _ram.WriteByte((ushort)BiosFlagAddresses.IsCartLoaded, 0x01); // yes cart loaded
+            var cartData = fileData.Skip(80).ToArray();
+
+            const int FixedRomSize = 18 * 1024;
+            const int BankSize = 32 * 1024;
+            const int SpriteAtlasSize = 8 * 1024;
+
+            _ram.LoadData(0x0000, cartData.AsSpan(0, FixedRomSize).ToArray());
+
+            var spriteAtlasOffset = cartData.Length - SpriteAtlasSize;
+            _ram.LoadData(
+                Memory.SpriteAtlasBottom,
+                cartData.AsSpan(spriteAtlasOffset, SpriteAtlasSize).ToArray()
+            );
+
+            var bankDataOffset = FixedRomSize;
+            var bankDataLength = spriteAtlasOffset - bankDataOffset;
+            var bankCount = bankDataLength / BankSize;
+
+            if (bankCount > 0)
+            {
+                var banks = new byte[bankCount][];
+
+                for (int i = 0; i < bankCount; i++)
+                {
+                    banks[i] = cartData.AsSpan(bankDataOffset + i * BankSize, BankSize).ToArray();
+                }
+
+                _ram.SetBanks(banks);
+            }
+
+            _ram.WriteByte((ushort)BiosFlagAddresses.IsCartLoaded, 0x01);
         }
-        catch
+        catch (Exception e)
         {
-            _ram.WriteByte((ushort)BiosFlagAddresses.IsCartLoaded, 0xFF); // not a rom
+            PushDebug(e.Message);
+            _ram.WriteByte((ushort)BiosFlagAddresses.IsCartLoaded, 0xFF);
         }
     }
 
@@ -337,6 +369,13 @@ internal class Motherboard : IMotherboard
     public void SwapColor(byte oldIndex, byte newIndex)
     {
         _ram.WriteByte(Memory.ColorPaletteStart + oldIndex, newIndex);
+    }
+
+    public void SetCurrentBank(byte bankIndex)
+    {
+        if (bankIndex >= _ram.BankCount)
+            TriggerSegfault(SegfaultType.ReservedRegionWrite); // TODO: Give this its own error code
+        _ram.SelectBank(bankIndex);
     }
 
     public void StopAllSounds()

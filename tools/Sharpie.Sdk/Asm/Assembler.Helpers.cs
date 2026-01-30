@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Sharpie.Sdk.Asm.Structuring;
 
 namespace Sharpie.Sdk.Asm;
 
@@ -13,32 +14,54 @@ public partial class Assembler
         { "SYS_IDX_READ_REF", 0xFAA6 },
     };
 
-    private readonly Dictionary<int, ScopeLevel> _scopeTree = new();
+    private ScopeLevel GetCurrentScope() =>
+        CurrentRegion == null ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
 
-    private ScopeLevel GetCurrentScope() => _scopeTree[CurrentScope!.Id];
-
-    private bool TryDefineLabel(string name, ushort address, int lineNumber)
+    private bool TryDefineLabel(string name, ushort address, int lineNumber, bool global = false)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineLabel(name, address);
+        var currentScope =
+            (CurrentRegion == null || global) ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
+        int offset;
+        switch (CurrentRegion)
+        {
+            case FixedRegionBuffer:
+                offset = 0;
+                break;
+            case BankBuffer:
+                var bnk = CurrentRegion as BankBuffer;
+                offset = 18 * 1024;
+                break;
+            case SpriteAtlasBuffer:
+                offset = (18 * 1024) + (32 * 1024);
+                break;
+            default:
+                offset = 0;
+                break;
+        }
+        return currentScope.TryDefineLabel(name, (ushort)(address + offset));
     }
 
     private bool TryResolveLabel(string name, out ushort address) =>
         GetCurrentScope().TryResolveLabel(name, out address);
 
-    private bool TryDefineConstant(string name, ushort value, int lineNumber)
+    private bool TryDefineConstant(string name, ushort value, int lineNumber, bool global = false)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineConstant(name, value);
+        var currentScope =
+            (CurrentRegion == null || global) ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
+        return currentScope.TryDefineConstant(name, value);
     }
 
     private bool TryResolveConstant(string name, out ushort value) =>
         GetCurrentScope().TryResolveConstant(name, out value);
 
-    private bool TryDefineEnum(string name, int lineNumber)
+    private bool TryDefineEnum(string name, int lineNumber, bool global = false)
     {
         VerifyBiosPrefix(name, lineNumber);
-        return CurrentScope!.TryDefineEnum(name);
+        var currentScope =
+            (CurrentRegion == null || global) ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
+        return currentScope.TryDefineEnum(name);
     }
 
     private bool TryResolveEnum(string name) => GetCurrentScope().TryResolveEnum(name);
@@ -47,11 +70,14 @@ public partial class Assembler
         string enumName,
         string memberName,
         ushort value,
-        int lineNumber
+        int lineNumber,
+        bool global = false
     )
     {
         VerifyBiosPrefix(memberName, lineNumber);
-        return CurrentScope!.TryDefineEnumMember(enumName, memberName, value);
+        var currentScope =
+            (CurrentRegion == null || global) ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
+        return currentScope.TryDefineEnumMember(enumName, memberName, value);
     }
 
     private bool TryResolveEnumMember(string enumName, string memberName, out ushort value) =>
@@ -69,7 +95,7 @@ public partial class Assembler
     private void AddBiosLabels()
     {
         foreach (var kvp in BiosCallAddresses)
-            _scopes.Peek().TryDefineLabel(kvp.Key, kvp.Value);
+            IRomBuffer.GlobalScope.TryDefineLabel(kvp.Key, kvp.Value);
     }
 
     private int? ParseNumberLiteral(
@@ -138,7 +164,10 @@ public partial class Assembler
         {
             int result = Convert.ToInt32(cleanArg, style);
             if (result > limit)
-                return null;
+                throw new AssemblySyntaxException(
+                    $"Numeric literal '{result}' is over the allowed limit of {limit}",
+                    lineNumber
+                );
 
             return !negative ? result : -result;
         }

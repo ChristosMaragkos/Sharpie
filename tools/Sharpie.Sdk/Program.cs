@@ -274,7 +274,7 @@ internal class Program
     )
     {
         var asm = new Assembler(isFirmware);
-        asm.LoadFile(inputFilePath);
+        var rom = asm.LoadFile(inputFilePath);
 
         var list = defaultPalette.ToList();
 
@@ -289,7 +289,7 @@ internal class Program
         defaultPalette = list.ToArray();
 
         var exporter = new Exporter(romTitle, romAuthor, outputFilePath, defaultPalette);
-        exporter.ExportRom(asm.Rom, isFirmware);
+        exporter.ExportRom(rom, isFirmware);
     }
 
     private static void PrintHelp()

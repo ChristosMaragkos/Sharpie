@@ -4,7 +4,7 @@
   "patterns": [
     { "name": "variable.other.enum.sharpie", "match": "\\b[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*\\b"
     { "name": "comment.line.semicolon.sharpie", "match": ";.*" },
-    { "name": "keyword.control.sharpie", "match": "\\b(NOP|MOV|LDM|LDP|LDI|STM|STP|STA|ADD|SUB|MUL|DIV|MOD|AND|OR|XOR|SHL|SHR|CMP|ADC|INC|DEC|NOT|NEG|IADD|ISUB|IMUL|IDIV|IMOD|IAND|IOR|IXOR|ICMP|DINC|DDEC|JMP|JEQ|JNE|JGT|JLT|JGE|JLE|CALL|RET|PUSH|POP|OUT_R|OUT_B|OUT_W|RND|FLIPR|CAM|GETOAM|SETOAM|GETSEQ|SETSEQ|SONG|SETCRS|DRAW|INSTR|OAMPOS|OAMTAG|CLS|VBLNK|PLAY|STOP|INPUT|TEXT|ATTR|SWC|MUTE|COL|ALT|HALT)\\b" },
+    { "name": "keyword.control.sharpie", "match": "\\b(NOP|MOV|LDM|LDP|LDI|STM|STP|STA|ADD|SUB|MUL|DIV|MOD|AND|OR|XOR|SHL|SHR|CMP|ADC|INC|DEC|NOT|NEG|IADD|ISUB|IMUL|IDIV|IMOD|IAND|IOR|IXOR|ICMP|DINC|DDEC|JMP|JEQ|JNE|JGT|JLT|JGE|JLE|CALL|RET|PUSH|POP|OUT_R|OUT_B|OUT_W|RND|FLIPR|CAM|GETOAM|SETOAM|GETSEQ|SETSEQ|SONG|SETCRS|DRAW|INSTR|OAMPOS|OAMTAG|CLS|VBLNK|PLAY|STOP|INPUT|TEXT|ATTR|SWC|BANK|MUTE|COL|ALT|HALT)\\b" },
     { "name": "variable.parameter.register.sharpie", "match": "\\b[rR]([0-9]|1[0-5])\\b" },
     { "name": "constant.numeric.hex.sharpie", "match": "(\\$|0x)[0-9A-Fa-f]+\\b" },
     { "name": "entity.name.function.label.sharpie", "match": "^[A-Za-z_][A-Za-z0-9_]*:" },
