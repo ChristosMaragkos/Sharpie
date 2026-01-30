@@ -134,16 +134,17 @@ internal class Apu
     {
         var gateOn = (control & 0x01) != 0;
         var instrumentId = (control >> 1);
-        var instrumentAddr = Memory.AudioRamStart + 32 + (instrumentId * 4);
         var chanBaseAddr = Memory.AudioRamStart + (channel * 4);
         var chanMaxVolume = _mobo.ReadByte(chanBaseAddr + 2) / 255f;
         const float divisor = 100000f;
 
-        var aStep = (_mobo.ReadByte(instrumentAddr) / divisor) + 0.000001f;
-        var dStep = (_mobo.ReadByte(instrumentAddr + 1) / divisor) + 0.000001f;
-        var sLevel = _mobo.ReadByte(instrumentAddr + 2) / 255f;
+        var instr = _mobo.ReadInstrument(instrumentId);
+
+        var aStep = (instr.Attack / divisor) + 0.000001f;
+        var dStep = ((instr.Decay + 1) / divisor) + 0.000001f;
+        var sLevel = instr.Sustain / 255f;
         var realSustain = sLevel * chanMaxVolume; // always a percentage of max volume
-        var rStep = (_mobo.ReadByte(instrumentAddr + 3) / divisor) + 0.000001f;
+        var rStep = (instr.Release / divisor) + 0.000001f;
 
         if (!gateOn)
         {
@@ -290,8 +291,6 @@ internal class Apu
 
     internal void LoadDefaultInstruments()
     {
-        var addr = Memory.InstrumentTableStart;
-
         byte[][] defaults = new byte[][]
         {
             // 0: Fast Attack, Full Sustain, Short Release
@@ -304,12 +303,10 @@ internal class Apu
             new byte[] { 0xF0, 0x20, 0x00, 0xF0 },
         };
 
-        foreach (var inst in defaults)
+        for (var i = 0; i < 4; i++)
         {
-            for (int i = 0; i < 4; i++)
-            {
-                _mobo.WriteByte(addr++, inst[i]);
-            }
+            var instr = defaults[i];
+            _mobo.DefineInstrument(i, instr[0], instr[1], instr[2], instr[3]);
         }
     }
 

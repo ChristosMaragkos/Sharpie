@@ -65,6 +65,9 @@ internal interface IMotherboard
 
     void TriggerSegfault(SegfaultType segfaultType);
 
+    void DefineInstrument(int index, byte a, byte d, byte s, byte r);
+    public (byte Attack, byte Decay, byte Sustain, byte Release) ReadInstrument(int index);
+
     public static ReadOnlySpan<byte> SmallFont =>
         new byte[]
         {

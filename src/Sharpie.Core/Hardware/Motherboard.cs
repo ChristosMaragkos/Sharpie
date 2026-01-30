@@ -10,6 +10,7 @@ internal class Motherboard : IMotherboard
     private static Apu? Apu { get; set; }
     private readonly Memory _ram;
     private readonly Memory _biosRom;
+    private readonly Memory _instrumentTable;
     private readonly OamBank _oam;
     private readonly Sequencer _sequencer;
 
@@ -47,6 +48,7 @@ internal class Motherboard : IMotherboard
     {
         _ram = new Memory();
         _biosRom = new Memory();
+        _instrumentTable = new Memory(511);
         _oam = new OamBank();
         ResetOam();
 
@@ -460,6 +462,37 @@ internal class Motherboard : IMotherboard
     {
         _ppu.CamX = x;
         _ppu.CamY = y;
+    }
+
+    public void DefineInstrument(int index, byte a, byte d, byte s, byte r)
+    {
+        if (index >= 512)
+        {
+            TriggerSegfault(SegfaultType.ReservedRegionWrite);
+            return;
+        }
+
+        var addr = index * 4;
+        _instrumentTable.WriteByte(addr, a);
+        _instrumentTable.WriteByte(addr + 1, d);
+        _instrumentTable.WriteByte(addr + 2, s);
+        _instrumentTable.WriteByte(addr + 3, r);
+    }
+
+    public (byte Attack, byte Decay, byte Sustain, byte Release) ReadInstrument(int index)
+    {
+        if (index >= 512)
+        {
+            TriggerSegfault(SegfaultType.ReservedRegionWrite);
+            return (0, 0, 0, 0);
+        }
+        var addr = index * 4;
+        return (
+            _instrumentTable.ReadByte(addr),
+            _instrumentTable.ReadByte(addr + 1),
+            _instrumentTable.ReadByte(addr + 2),
+            _instrumentTable.ReadByte(addr + 3)
+        );
     }
 
     public void Step()
