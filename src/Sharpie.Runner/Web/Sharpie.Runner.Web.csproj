@@ -34,7 +34,9 @@
 
   <ItemGroup>
     <!-- Link shared implementation files from RaylibCs project -->
-    <Compile Include="../RaylibCs/Impl/*.cs" Link="Impl/%(Filename)%(Extension)" />
+              <Compile Include="../RaylibCs/Impl/*.cs"
+                       Exclude="../RaylibCs/Impl/RaylibSaveHandler.cs"
+                       Link="Impl/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

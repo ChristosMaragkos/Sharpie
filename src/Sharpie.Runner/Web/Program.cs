@@ -22,7 +22,7 @@ public partial class Program
         logger = new RaylibDebugOutpug(20);
 
         var biosBytes = BiosLoader.GetEmbeddedBiosBinary();
-        
+
         emulator = new SharpieConsole(video, audio, input, logger);
         emulator.LoadBios(biosBytes);
     }

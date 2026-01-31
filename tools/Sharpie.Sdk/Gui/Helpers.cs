@@ -2,6 +2,9 @@ using Sharpie.Sdk.Meta;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
+#if Windows
+using System.Reflection;
+#endif
 
 namespace Sharpie.Sdk.Gui;
 
