@@ -18,6 +18,7 @@ if (args.Length != 0)
         if (!args[0].EndsWith(".shr"))
             throw new FormatException("Sharpie ROM files must end with the .shr extension.");
         romBytes = File.ReadAllBytes(args[0]);
+        saveHandler.SavePath = Path.ChangeExtension(args[0], ".sav");
     }
     catch (Exception e)
     {
