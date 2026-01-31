@@ -513,4 +513,9 @@ internal class Motherboard : IMotherboard
         VBlank();
         _cpu.IsAwaitingVBlank = false;
     }
+
+    internal void LoadSaveData(byte[] saveData)
+    {
+        _ram.LoadData(Memory.SaveRamStart, saveData.Take(512).ToArray());
+    }
 }

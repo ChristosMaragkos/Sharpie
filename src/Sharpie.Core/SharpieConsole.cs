@@ -33,6 +33,8 @@ public class SharpieConsole
 
     public ReadOnlySpan<byte> GetSaveRam() => _motherboard.SaveRam();
 
+    public void LoadSaveData(byte[] saveData) => _motherboard.LoadSaveData(saveData);
+
     private void OnSaveRequested()
     {
         Console.WriteLine($"A save was requested at {DateTime.Now}");

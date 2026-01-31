@@ -113,9 +113,11 @@ void TryLoadCart()
 {
     if (romBytes != null)
     {
-        emulator.LoadCartridge(romBytes);
         emulator.Save += saveHandler.SaveToDisk;
         Console.WriteLine($"Set up save callback with path: {saveHandler.SavePath}");
+        emulator.LoadCartridge(romBytes);
+        if (File.Exists(saveHandler.SavePath))
+            emulator.LoadSaveData(File.ReadAllBytes(saveHandler.SavePath));
     }
 }
 
