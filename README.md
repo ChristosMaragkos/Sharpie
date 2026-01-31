@@ -8,10 +8,10 @@ It features its own custom Assembly language that facilitates most of what you'd
 
 ## Hardware Specs
 * **CPU:** 16-bit custom architecture.
-* **Registers:** 16 general-purpose registers (R0-R15).
+* **Registers:** 32 general-purpose registers (Two pages of 16 each).
 * **Memory:** 64KB of addressable space.
-* **Color:** An internal 32-color palette and 16 active colors at any time, with support for color swapping.
-* **Graphics:** Sprite-based rendering with a 256x256 internal display and a text overlay.
+* **Color:** A 32 color palette with support for palette swaps and alternative palettes
+* **Graphics:** Sprite-based rendering with a camera, a 65536x65536 internal display and a text overlay.
 * **Audio:** 8 monophonic channels that can play audio simultaneously, with support for **Square, Triangle, Sawtooth** and **Noise** waveforms as well as up to 128 distinct instruments.
 * **Input:** Support for up to two players.
 
@@ -19,7 +19,7 @@ It features its own custom Assembly language that facilitates most of what you'd
 The Sharpie SDK handles your entire development pipeline. 
 
 ### Features
-* **Assembler:** A lightning-fast CLI (and soon™ a GUI) that turns `.asm` code into `.shr` cartridges.
+* **Assembler:** A lightning-fast CLI (and now a GUI) that turns `.asm` code into `.shr` cartridges.
 * **Syntax Highlighting:** First-class support for Neovim and VS Code (located in `tools/editor-support`).
 
 ## Getting Started
@@ -45,7 +45,7 @@ If you'd like to ask something specific about the Sharpie, feel free to open an 
 * `/assets`: Logos, icons, and release materials.
 
 ## License
-Sharpie, the Sharpie Logo and the Sharpie BIOS are all licensed under the LGPL License. See [LICENSE.md](https://github.com/ChristosMaragkos/Sharpie/blob/main/LICENSE.md) for the boring legal details.
+Sharpie, the Sharpie Logo and the Sharpie BIOS are all licensed under the LGPL License, and the Sharpie SDK uses ImageSharp for its PNG->ASM conversion. See [LICENSE.md](https://github.com/ChristosMaragkos/Sharpie/blob/main/LICENSE.md) for the boring legal details.
 
 ### But, can I sell my Sharpie game?
 There are plans for standalone self-contained Sharpie ROM support by packaging them with a runner of your choice. No ETA on that yet, but stay tuned.
