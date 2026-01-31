@@ -1,7 +1,7 @@
 # Sharpie Console
 ![Sharpie Logo](https://raw.githubusercontent.com/ChristosMaragkos/Sharpie/refs/heads/main/assets/icons/icon_large.png)
 
-[Try the new web-based runner!](https://christosmaragkos.github.io/Sharpie/)
+[Try the new web-based runner](https://christosmaragkos.github.io/Sharpie/) or [Join the Discord!](https://discord.gg/M7X58TCV6M)
 
 Sharpie is a 16-bit fantasy console implemented in C#. It is a powerhouse designed to get in your way as little as possible while mimicking how old NES- and SNES-era games were programmed.
 It features its own custom Assembly language that facilitates most of what you'd need to not pull your hair out in the process of making a game.
