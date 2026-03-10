@@ -4,6 +4,7 @@
     <Project Path="src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/Sharpie.CCompiler/Sharpie.CCompiler.csproj" />
     <Project Path="tools/Sharpie.Generator/Sharpie.Generator.csproj" />
     <Project Path="tools/Sharpie.Sdk/Sharpie.Sdk.csproj" />
   </Folder>
