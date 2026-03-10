@@ -16,6 +16,7 @@ public static class InstructionSet
         { "STA", (2, 19, 2, false, "RR") },
         { "LDS", (2, 20, 2, false, "RR") },
         { "STS", (2, 21, 2, false, "RR") },
+        { "GETSP", (2, 22, 1, false, "R") },
         { "ADD", (2, 64, 2, false, "RR") },
         { "SUB", (2, 65, 2, false, "RR") },
         { "MUL", (2, 66, 2, false, "RR") },
