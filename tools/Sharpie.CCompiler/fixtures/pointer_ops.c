@@ -1,6 +1,6 @@
 int main(void) {
-  // int x = 500; TODO: This requires addressing logic so I'll implement it
-  // later. int* p = &x;
+  int x = 500;
+  int *p = &x;
 
   // Manual pointer math
   int *ptr = (int *)1000;
