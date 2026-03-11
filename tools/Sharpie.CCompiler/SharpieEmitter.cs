@@ -15,7 +15,6 @@ public sealed class SharpieEmitter
         var asm = new StringBuilder();
         asm.AppendLine(".REGION FIXED");
 
-        // 1. Get all function declarations in the file
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
             .ToList();
@@ -79,9 +78,7 @@ public sealed class SharpieEmitter
         foreach (var stmt in GetChildren(compoundStmt))
         {
             if (context.HasReturn)
-                throw new InvalidOperationException(
-                    "Statements after return are not supported in this MVP."
-                );
+                throw new InvalidOperationException("Dead code is not supported in this MVP");
 
             switch (stmt.Kind)
             {
@@ -774,4 +771,3 @@ public sealed class SharpieEmitter
         }
     }
 }
-

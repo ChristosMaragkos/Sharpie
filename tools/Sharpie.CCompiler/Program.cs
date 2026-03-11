@@ -1,5 +1,4 @@
 ﻿using Sharpie.CCompiler;
-using ClangSharp.Interop;
 
 // CRITICAL: Configure libclang resolver BEFORE any ClangSharp API calls
 // This must happen before type initialization of clang occurs
@@ -91,7 +90,11 @@ static bool PrintDiagnostics(ClangSharp.Interop.CXTranslationUnit tu)
         var level = severity.ToString().Replace("CXDiagnostic_", string.Empty);
         Console.Error.WriteLine($"[{level}] {diag.Spelling}");
 
-        if (severity is ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Error or ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Fatal)
+        if (
+            severity
+            is ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Error
+                or ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Fatal
+        )
             hasErrors = true;
     }
 
@@ -102,5 +105,7 @@ static void PrintHelp()
 {
     Console.WriteLine("Sharpie.CCompiler");
     Console.WriteLine("Usage: Sharpie.CCompiler <input.c> [output.asm]");
-    Console.WriteLine("Supported MVP: int main(void) with int locals, assignments, and arithmetic return expressions.");
+    Console.WriteLine(
+        "Supported MVP: int main(void) with int locals, assignments, and arithmetic return expressions."
+    );
 }
