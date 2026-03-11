@@ -14,6 +14,7 @@ public partial class Assembler
         { "SYS_IDX_READ_REF", 0xFAA6 },
         { "SYS_MEM_COPY", 0xFAC3 },
         { "SYS_PAL_RESET", 0xFAE2 },
+        { "SYS_ALLOC_STACKFRAME", 0xFAF4 },
     };
 
     private ScopeLevel GetCurrentScope() =>
