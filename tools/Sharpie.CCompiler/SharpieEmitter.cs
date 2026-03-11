@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-public sealed class SharpieEmitter
+public sealed partial class SharpieEmitter
 {
     private const int TempRegisterStart = 1;
     private const int TempRegisterEnd = 7;
