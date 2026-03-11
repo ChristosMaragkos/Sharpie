@@ -327,3 +327,32 @@ Alloca:
         GETSP r0
         RET
 .ENDSCOPE
+
+; SYS_FREE_STACKFRAME
+;
+; Address:
+;
+; Parameters:
+; byte amount (expected in r0)
+;
+; The opposite to SYS_ALLOC_STACKFRAME. This subroutine simply frees N bytes from the stack and returns nothing.
+;
+; This subroutine overwrites these registers:
+; - R0
+; - R1
+; - R2
+FreeFrame:
+.SCOPE
+    ICMP r0, 0
+    JEQ End
+    POP r1
+
+    Loop:
+        ALT POP r2
+        DEC r0
+        JGT Loop
+
+    PUSH r1
+    End:
+        RET
+.ENDSCOPE

@@ -15,6 +15,7 @@ public partial class Assembler
         { "SYS_MEM_COPY", 0xFAC3 },
         { "SYS_PAL_RESET", 0xFAE2 },
         { "SYS_ALLOC_STACKFRAME", 0xFAF4 },
+        { "SYS_FREE_STACKFRAME", 0xFB09 },
     };
 
     private ScopeLevel GetCurrentScope() =>
