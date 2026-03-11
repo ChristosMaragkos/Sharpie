@@ -60,7 +60,7 @@ public sealed partial class SharpieEmitter
                 context.Locals[paramName] = offset;
 
                 using var offsetReg = context.AcquireTempRegister();
-                context.Emit($"LDI r{offsetReg.Value}, {offset}");
+                context.Emit($"LDI r3, {offset}");
                 context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
             }
 
@@ -158,7 +158,7 @@ public sealed partial class SharpieEmitter
         var body = children[0];
         var condition = children[1];
 
-        var labelStart = EmissionContext.GenerateLabel();
+        var labelStart = EmissionContext.GenerateLabel("do-start");
         context.Emit($"{labelStart}:");
         EmitStatement(body, context);
         EmitCondition(condition, labelStart, true, context);
@@ -168,8 +168,8 @@ public sealed partial class SharpieEmitter
     {
         var children = GetChildren(forStatement);
 
-        var labelStart = EmissionContext.GenerateLabel();
-        var labelEnd = EmissionContext.GenerateLabel();
+        var labelStart = EmissionContext.GenerateLabel("for-start");
+        var labelEnd = EmissionContext.GenerateLabel("for-end");
 
         var init = children[0];
         if (init.Kind != CXCursorKind.CXCursor_NoDeclFound)
@@ -200,8 +200,8 @@ public sealed partial class SharpieEmitter
         var condition = children[0];
         var body = children[1];
 
-        var labelStart = EmissionContext.GenerateLabel();
-        var labelEnd = EmissionContext.GenerateLabel();
+        var labelStart = EmissionContext.GenerateLabel("while-start");
+        var labelEnd = EmissionContext.GenerateLabel("while-end");
 
         context.Emit($"{labelStart}:");
         EmitCondition(condition, labelEnd, false, context);
@@ -236,6 +236,7 @@ public sealed partial class SharpieEmitter
             is CXTypeKind.CXType_Int
                 or CXTypeKind.CXType_UInt
                 or CXTypeKind.CXType_Pointer;
+
         if (!isSupported)
             throw new InvalidOperationException(
                 $"Type `{varDecl.Type.Spelling}` is not supported for local variables in this MVP."
@@ -255,13 +256,18 @@ public sealed partial class SharpieEmitter
         using var valReg = context.AcquireTempRegister();
 
         if (initExpr.Kind is CXCursorKind.CXCursor_NoDeclFound)
-            context.Emit($"    LDI r{valReg.Value}, 0"); // TODO: Account for larget than 16-bit values (structs)
+        {
+            context.Emit($"LDI r{valReg.Value}, 0"); // TODO: Account for larger than 16-bit values
+        }
         else
+        {
             EmitExpression(initExpr, valReg.Value, context);
+        }
 
+        // Push to stack using STS
         using var offsetReg = context.AcquireTempRegister();
-        context.Emit($"    LDI r{offsetReg.Value}, {offset}");
-        context.Emit($"    STS r{valReg.Value}, r{offsetReg.Value}");
+        context.Emit($"LDI r{offsetReg.Value}, {offset}");
+        context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
     }
 
     private static void EmitAssignmentStatement(CXCursor assignmentCursor, EmissionContext context)
@@ -273,6 +279,7 @@ public sealed partial class SharpieEmitter
         var lhs = PeelExpression(children[0]);
         var rhs = PeelExpression(children[1]);
 
+        // Handle *ptr = value
         if (
             lhs.Kind == CXCursorKind.CXCursor_UnaryOperator
             && GetUnaryOperatorKind(lhs) == CXUnaryOperatorKind.CXUnaryOperator_Deref
@@ -296,12 +303,12 @@ public sealed partial class SharpieEmitter
             );
 
         var variableName = lhs.Spelling.ToString();
-        if (!context.Locals.TryGetValue(variableName, out var lhsReg))
+        if (!context.Locals.TryGetValue(variableName, out var offset))
             throw new InvalidOperationException($"Unknown local variable `{variableName}`.");
 
         if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
         {
-            EmitCompoundAssignment(assignmentCursor, lhsReg, rhs, context);
+            EmitCompoundAssignment(assignmentCursor, offset, rhs, context);
             return;
         }
 
@@ -310,40 +317,59 @@ public sealed partial class SharpieEmitter
                 "Only simple assignment statements are currently supported."
             );
 
-        EmitExpression(rhs, lhsReg, context);
+        // Evaluate the new value
+        using var rhsReg = context.AcquireTempRegister();
+        EmitExpression(rhs, rhsReg.Value, context);
+
+        // Save it to the stack
+        using var offsetReg = context.AcquireTempRegister();
+        context.Emit($"LDI r{offsetReg.Value}, {offset}");
+        context.Emit($"STS r{rhsReg.Value}, r{offsetReg.Value}");
     }
 
     private static void EmitCompoundAssignment(
         CXCursor assignmentCursor,
-        int lhsReg,
+        int lhsOffset,
         CXCursor rhs,
         EmissionContext context
     )
     {
         var kind = GetBinaryOperatorKind(assignmentCursor);
 
-        if (TryEmitImmediateMath(kind, lhsReg, rhs, context))
-            return;
+        // load the current value from the stack
+        using var valReg = context.AcquireTempRegister();
+        using var offsetReg = context.AcquireTempRegister();
+        context.Emit($"LDI r{offsetReg.Value}, {lhsOffset}");
+        context.Emit($"LDS r{valReg.Value}, r{offsetReg.Value}");
 
-        using var scratch = context.AcquireTempRegister();
-        EmitExpression(rhs, scratch.Value, context);
-
-        var op = kind switch
+        // perform the math directly on the temporary value register
+        if (!TryEmitImmediateMath(kind, valReg.Value, rhs, context))
         {
-            CXBinaryOperatorKind.CXBinaryOperator_AddAssign => "ADD",
-            CXBinaryOperatorKind.CXBinaryOperator_SubAssign => "SUB",
-            CXBinaryOperatorKind.CXBinaryOperator_MulAssign => "MUL",
-            CXBinaryOperatorKind.CXBinaryOperator_DivAssign => "DIV",
-            CXBinaryOperatorKind.CXBinaryOperator_RemAssign => "MOD",
-            CXBinaryOperatorKind.CXBinaryOperator_AndAssign => "AND",
-            CXBinaryOperatorKind.CXBinaryOperator_OrAssign => "OR",
-            CXBinaryOperatorKind.CXBinaryOperator_XorAssign => "XOR",
-            CXBinaryOperatorKind.CXBinaryOperator_ShlAssign => "SHL",
-            CXBinaryOperatorKind.CXBinaryOperator_ShrAssign => "SHR",
-            _ => throw new InvalidOperationException($"Unsupported compound assignment: {kind}"),
-        };
+            using var scratch = context.AcquireTempRegister();
+            EmitExpression(rhs, scratch.Value, context);
 
-        context.Emit($"{op} r{lhsReg}, r{scratch.Value}");
+            var op = kind switch
+            {
+                CXBinaryOperatorKind.CXBinaryOperator_AddAssign => "ADD",
+                CXBinaryOperatorKind.CXBinaryOperator_SubAssign => "SUB",
+                CXBinaryOperatorKind.CXBinaryOperator_MulAssign => "MUL",
+                CXBinaryOperatorKind.CXBinaryOperator_DivAssign => "DIV",
+                CXBinaryOperatorKind.CXBinaryOperator_RemAssign => "MOD",
+                CXBinaryOperatorKind.CXBinaryOperator_AndAssign => "AND",
+                CXBinaryOperatorKind.CXBinaryOperator_OrAssign => "OR",
+                CXBinaryOperatorKind.CXBinaryOperator_XorAssign => "XOR",
+                CXBinaryOperatorKind.CXBinaryOperator_ShlAssign => "SHL",
+                CXBinaryOperatorKind.CXBinaryOperator_ShrAssign => "SHR",
+                _ => throw new InvalidOperationException(
+                    $"Unsupported compound assignment: {kind}"
+                ),
+            };
+
+            context.Emit($"{op} r{valReg.Value}, r{scratch.Value}");
+        }
+
+        // 3. Write the new value back to the stack
+        context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
     }
 
     private static void EmitReturn(CXCursor returnStmt, EmissionContext context)
@@ -373,10 +399,16 @@ public sealed partial class SharpieEmitter
 
             case CXCursorKind.CXCursor_DeclRefExpr:
                 var name = node.Spelling.ToString();
-                if (!context.Locals.TryGetValue(name, out var sourceReg))
+                if (!context.Locals.TryGetValue(name, out var offset))
                     throw new InvalidOperationException($"Unknown local variable `{name}`.");
-                if (sourceReg != targetReg)
-                    context.Emit($"MOV r{targetReg}, r{sourceReg}");
+
+                // Only load from the stack if someone is actually asking for the value
+                if (targetReg >= 0)
+                {
+                    using var offsetReg = context.AcquireTempRegister();
+                    context.Emit($"LDI r{offsetReg.Value}, {offset}");
+                    context.Emit($"LDS r{targetReg}, r{offsetReg.Value}");
+                }
                 return;
 
             case CXCursorKind.CXCursor_UnaryOperator:
@@ -424,6 +456,21 @@ public sealed partial class SharpieEmitter
 
                 return;
 
+            case CXUnaryOperatorKind.CXUnaryOperator_AddrOf:
+                var varName = peeled.Spelling.ToString();
+                if (!context.Locals.TryGetValue(varName, out var offset))
+                    throw new InvalidOperationException(
+                        $"Unknown variable `{varName}` for address-of."
+                    );
+
+                context.Emit($"GETSP r{targetReg}");
+                while (offset > 0)
+                {
+                    context.Emit($"IADD r{targetReg}, {offset}");
+                    offset -= 255;
+                }
+                return;
+
             case CXUnaryOperatorKind.CXUnaryOperator_Deref:
                 // Standard *ptr read
                 EmitExpression(operand, targetReg, context);
@@ -457,26 +504,37 @@ public sealed partial class SharpieEmitter
     {
         switch (peeled.Kind)
         {
-            // 1. Handle Local Variable (Register-backed)
+            // Handle Local Variable (Stack-backed)
             case CXCursorKind.CXCursor_DeclRefExpr:
             {
                 var name = peeled.Spelling.ToString();
-                if (!context.Locals.TryGetValue(name, out var varReg))
+                if (!context.Locals.TryGetValue(name, out var offset))
                     throw new InvalidOperationException($"Unknown variable {name}");
+
+                using var valReg = context.AcquireTempRegister();
+                using var offsetReg = context.AcquireTempRegister();
+
+                // Load current value from the stack
+                context.Emit($"LDI r{offsetReg.Value}, {offset}");
+                context.Emit($"LDS r{valReg.Value}, r{offsetReg.Value}");
 
                 if (isPost)
                 {
                     if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{varReg}");
-                    context.Emit($"{op} r{varReg}");
+                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+
+                    context.Emit($"{op} r{valReg.Value}");
                 }
                 else
                 {
-                    context.Emit($"{op} r{varReg}");
+                    context.Emit($"{op} r{valReg.Value}");
+
                     if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{varReg}");
+                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
                 }
 
+                // NOTE: All operations are read-modify-write. Refactor to actually allocate registers first and then spill to stack.
+                context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
                 break;
             }
             // 2. Handle Pointer Dereference (*ptr)++
@@ -487,22 +545,29 @@ public sealed partial class SharpieEmitter
                 var ptrExpr = GetChildren(peeled).First();
                 EmitExpression(ptrExpr, addrReg.Value, context);
 
+                // We must use a temp register to load the value so we don't emit "LDP r-1"
+                using var valReg = context.AcquireTempRegister();
+
                 // Load value from memory
-                context.Emit($"LDP r{targetReg}, r{addrReg.Value}");
+                context.Emit($"LDP r{valReg.Value}, r{addrReg.Value}");
 
-                using var newValReg = context.AcquireTempRegister();
-                context.Emit($"MOV r{newValReg.Value}, r{targetReg}");
-                context.Emit($"{op} r{newValReg.Value}");
-
-                // Write back to memory
-                context.Emit($"STA r{newValReg.Value}, r{addrReg.Value}");
-
-                // If it was PRE, we need to return the NEW value in targetReg
-                if (!isPost)
+                if (isPost)
                 {
-                    context.Emit($"MOV r{targetReg}, r{newValReg.Value}");
+                    if (targetReg >= 0)
+                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+
+                    context.Emit($"{op} r{valReg.Value}");
+                }
+                else
+                {
+                    context.Emit($"{op} r{valReg.Value}");
+
+                    if (targetReg >= 0)
+                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
                 }
 
+                // Write back to memory
+                context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
                 break;
             }
         }
@@ -561,8 +626,8 @@ public sealed partial class SharpieEmitter
         var thenBranch = children[1];
         var hasElse = children.Count > 2;
 
-        var labelEnd = EmissionContext.GenerateLabel();
-        var labelElse = hasElse ? EmissionContext.GenerateLabel() : labelEnd;
+        var labelEnd = EmissionContext.GenerateLabel("if");
+        var labelElse = hasElse ? EmissionContext.GenerateLabel("else") : labelEnd;
 
         EmitCondition(condition, labelElse, false, context);
 
@@ -807,106 +872,5 @@ public sealed partial class SharpieEmitter
                 queue.Enqueue(child);
         }
         return count;
-    }
-
-    private sealed class EmissionContext
-    {
-        private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
-
-        public int TotalStackBytes { get; }
-
-        private int _currentStackOffset = 0;
-
-        private int _nextLocalRegister = LocalRegisterStart;
-
-        private static int _labelCount;
-
-        public static string GenerateLabel(string prefix = "") => $"_{prefix}_L{_labelCount++}";
-
-        public Dictionary<string, int> Locals { get; } = new(StringComparer.Ordinal);
-        public List<string> Instructions { get; } = [];
-        public bool HasReturn { get; set; }
-
-        public bool IsMain { get; set; }
-        public string ReturnInstruction => IsMain ? "HALT" : "RET";
-
-        public EmissionContext(int totalStackBytes)
-        {
-            TotalStackBytes = totalStackBytes;
-        }
-
-        public void Emit(string asm)
-        {
-            Instructions.Add(asm);
-        }
-
-        public int AllocateStackSpace(int bytes = 2)
-        {
-            int offset = _currentStackOffset;
-            _currentStackOffset += bytes;
-            return offset;
-        }
-
-        public void EmitEpilogue()
-        {
-            if (TotalStackBytes > 0)
-            {
-                Emit($"LDI r1, {TotalStackBytes}");
-            }
-        }
-
-        public int AllocateLocalRegister()
-        {
-            if (_nextLocalRegister > LocalRegisterEnd)
-                throw new InvalidOperationException(
-                    "Too many local variables for register-only MVP backend."
-                );
-
-            return _nextLocalRegister++;
-        }
-
-        public TempLease AcquireTempRegister()
-        {
-            for (var i = 0; i < _tempInUse.Length; i++)
-            {
-                if (_tempInUse[i])
-                    continue;
-
-                _tempInUse[i] = true;
-                return new TempLease(this, TempRegisterStart + i);
-            }
-
-            throw new InvalidOperationException(
-                "Expression is too complex for temporary register budget."
-            );
-        }
-
-        private void ReleaseTempRegister(int register)
-        {
-            var index = register - TempRegisterStart;
-            if (index < 0 || index >= _tempInUse.Length)
-                throw new InvalidOperationException(
-                    $"Attempted to release invalid temp register r{register}."
-                );
-
-            _tempInUse[index] = false;
-        }
-
-        public readonly struct TempLease : IDisposable
-        {
-            private readonly EmissionContext _ctx;
-            public int Value { get; }
-
-            public TempLease(EmissionContext ctx, int value)
-            {
-                _ctx = ctx;
-                Value = value;
-            }
-
-            public void Dispose()
-            {
-                _ctx.ReleaseTempRegister(Value);
-            }
-        }
     }
 }
