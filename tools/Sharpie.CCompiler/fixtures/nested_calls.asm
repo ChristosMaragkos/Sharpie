@@ -2,8 +2,8 @@
 square:
     LDI r0, 2
     CALL SYS_ALLOC_STACKFRAME
-    LDI r1, 0
-    STS r3, r1
+    LDI r3, 0
+    STS r1, r3
     LDI r1, 0
     LDS r0, r1
     LDI r2, 0

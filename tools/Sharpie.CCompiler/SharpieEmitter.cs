@@ -61,7 +61,7 @@ public sealed partial class SharpieEmitter
 
                 using var offsetReg = context.AcquireTempRegister();
                 context.Emit($"LDI r3, {offset}");
-                context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+                context.Emit($"STS r{i + 1}, r3");
             }
 
             EmitFunctionBody(body, context);
