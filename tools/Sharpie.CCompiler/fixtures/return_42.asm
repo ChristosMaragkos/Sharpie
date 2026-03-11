@@ -1,0 +1,5 @@
+.REGION FIXED
+Main:
+    LDI r0, 42
+    HALT
+.ENDREGION
