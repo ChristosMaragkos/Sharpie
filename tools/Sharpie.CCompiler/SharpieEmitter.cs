@@ -61,8 +61,8 @@ public sealed class SharpieEmitter
             if (!context.HasReturn)
             {
                 if (context.IsMain)
-                    asm.AppendLine("    LDI r0, 0");
-                asm.AppendLine($"    {context.ReturnInstruction}");
+                    context.Emit("    LDI r0, 0");
+                context.Emit(context.ReturnInstruction);
             }
 
             foreach (var line in context.Instructions)
@@ -80,43 +80,124 @@ public sealed class SharpieEmitter
             if (context.HasReturn)
                 throw new InvalidOperationException("Dead code is not supported in this MVP");
 
-            switch (stmt.Kind)
-            {
-                case CXCursorKind.CXCursor_DeclStmt:
-                    EmitDeclarationStatement(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_VarDecl:
-                    EmitVariableDeclaration(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_BinaryOperator:
-                case CXCursorKind.CXCursor_CompoundAssignOperator:
-                    EmitAssignmentStatement(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_CallExpr:
-                    EmitCall(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_ReturnStmt:
-                    EmitReturn(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_IfStmt:
-                    EmitIfStatement(stmt, context);
-                    break;
-
-                case CXCursorKind.CXCursor_CompoundStmt:
-                    EmitFunctionBody(stmt, context);
-                    break;
-
-                default:
-                    throw new InvalidOperationException(
-                        $"Unsupported statement kind in `main`: {stmt.Kind}"
-                    );
-            }
+            EmitStatement(stmt, context);
         }
+    }
+
+    private static void EmitStatement(CXCursor stmt, EmissionContext context)
+    {
+        switch (stmt.Kind)
+        {
+            case CXCursorKind.CXCursor_DeclStmt:
+                EmitDeclarationStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_VarDecl:
+                EmitVariableDeclaration(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_BinaryOperator:
+            case CXCursorKind.CXCursor_CompoundAssignOperator:
+                EmitAssignmentStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_CallExpr:
+                EmitCall(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_ReturnStmt:
+                EmitReturn(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_IfStmt:
+                EmitIfStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_WhileStmt:
+                EmitWhileStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_ForStmt:
+                EmitForStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_DoStmt:
+                EmitDoStatement(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_CompoundStmt:
+                EmitFunctionBody(stmt, context);
+                break;
+
+            case CXCursorKind.CXCursor_UnaryOperator:
+            case CXCursorKind.CXCursor_UnexposedExpr:
+                EmitExpression(stmt, -1, context);
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported statement kind in `main`: {stmt.Kind}"
+                );
+        }
+    }
+
+    private static void EmitDoStatement(CXCursor doStatement, EmissionContext context)
+    {
+        var children = GetChildren(doStatement);
+        var body = children[0];
+        var condition = children[1];
+
+        var labelStart = EmissionContext.GenerateLabel();
+        context.Emit($"{labelStart}:");
+        EmitStatement(body, context);
+        EmitCondition(condition, labelStart, true, context);
+    }
+
+    private static void EmitForStatement(CXCursor forStatement, EmissionContext context)
+    {
+        var children = GetChildren(forStatement);
+
+        var labelStart = EmissionContext.GenerateLabel();
+        var labelEnd = EmissionContext.GenerateLabel();
+
+        var init = children[0];
+        if (init.Kind != CXCursorKind.CXCursor_NoDeclFound)
+            EmitStatement(init, context);
+
+        context.Emit($"{labelStart}:");
+
+        var condition = children[1];
+        if (condition.Kind != CXCursorKind.CXCursor_NoDeclFound)
+            EmitCondition(condition, labelEnd, false, context);
+
+        EmitStatement(children[3], context); // emit the body and THEN the increment
+
+        var inc = children[2];
+        if (inc.Kind != CXCursorKind.CXCursor_NoDeclFound)
+        {
+            using var dummy = context.AcquireTempRegister();
+            EmitExpression(inc, dummy.Value, context);
+        }
+
+        context.Emit($"JMP {labelStart}");
+        context.Emit($"{labelEnd}:");
+    }
+
+    private static void EmitWhileStatement(CXCursor whileStatement, EmissionContext context)
+    {
+        var children = GetChildren(whileStatement);
+        var condition = children[0];
+        var body = children[1];
+
+        var labelStart = EmissionContext.GenerateLabel();
+        var labelEnd = EmissionContext.GenerateLabel();
+
+        context.Emit($"{labelStart}:");
+        EmitCondition(condition, labelEnd, false, context);
+        EmitStatement(body, context);
+
+        context.Emit($"JMP {labelStart}");
+        context.Emit($"{labelEnd}:");
     }
 
     private static void EmitDeclarationStatement(CXCursor declStmt, EmissionContext context)
@@ -370,17 +451,15 @@ public sealed class SharpieEmitter
 
                 if (isPost)
                 {
-                    // POST: Result is the current value. Save it to targetReg FIRST.
-                    context.Emit($"MOV r{targetReg}, r{varReg}");
-                    // Then change the actual variable
+                    if (targetReg >= 0)
+                        context.Emit($"MOV r{targetReg}, r{varReg}");
                     context.Emit($"{op} r{varReg}");
                 }
                 else
                 {
-                    // PRE: Change the variable first
                     context.Emit($"{op} r{varReg}");
-                    // Then the Result is the new value
-                    context.Emit($"MOV r{targetReg}, r{varReg}");
+                    if (targetReg >= 0)
+                        context.Emit($"MOV r{targetReg}, r{varReg}");
                 }
 
                 break;
