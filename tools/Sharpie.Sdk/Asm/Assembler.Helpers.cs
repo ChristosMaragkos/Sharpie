@@ -13,6 +13,7 @@ public partial class Assembler
         { "SYS_IDX_WRITE_VAL", 0xFA7D },
         { "SYS_IDX_READ_REF", 0xFAA6 },
         { "SYS_MEM_COPY", 0xFAC3 },
+        { "SYS_PAL_RESET", 0xFAE2 },
     };
 
     private ScopeLevel GetCurrentScope() =>
