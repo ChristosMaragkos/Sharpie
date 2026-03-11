@@ -35,9 +35,19 @@ public sealed class SharpieEmitter
             if (body.Kind == CXCursorKind.CXCursor_NoDeclFound)
                 continue;
 
-            // Create a FRESH context for every function which is okay because the label counter is static
-            var context = new EmissionContext();
+            var localCount = CountLocals(func);
+            var stackBytes = localCount * 2; // 2 bytes / variable
+
+            var context = new EmissionContext(stackBytes);
             context.IsMain = (funcName == "main");
+
+            asm.AppendLine($"{(context.IsMain ? "Main" : funcName)}:");
+
+            if (context.TotalStackBytes > 0)
+            {
+                context.Emit($"LDI r0, {context.TotalStackBytes}");
+                context.Emit($"CALL SYS_ALLOC_STACKFRAME");
+            }
 
             var parameters = GetChildren(func)
                 .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)
@@ -46,13 +56,13 @@ public sealed class SharpieEmitter
             for (int i = 0; i < parameters.Count; i++)
             {
                 var paramName = parameters[i].Spelling.ToString();
-                // Map param 1 to r1, param 2 to r2
-                // We add them to the locals so the compiler knows where they live
-                // FIXME: This is a really bad way to handle this. Fix once calling conventions, stack semantics and actual function handling is implemented
-                context.Locals[paramName] = i + 1;
-            }
+                var offset = context.AllocateStackSpace();
+                context.Locals[paramName] = offset;
 
-            asm.AppendLine($"{(context.IsMain ? "Main" : funcName)}:");
+                using var offsetReg = context.AcquireTempRegister();
+                context.Emit($"LDI r{offsetReg.Value}, {offset}");
+                context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+            }
 
             EmitFunctionBody(body, context);
 
@@ -62,6 +72,7 @@ public sealed class SharpieEmitter
             {
                 if (context.IsMain)
                     context.Emit("    LDI r0, 0");
+                context.EmitEpilogue();
                 context.Emit(context.ReturnInstruction);
             }
 
@@ -237,17 +248,20 @@ public sealed class SharpieEmitter
         if (context.Locals.ContainsKey(variableName))
             throw new InvalidOperationException($"Duplicate local variable `{variableName}`.");
 
-        var targetReg = context.AllocateLocalRegister();
-        context.Locals[variableName] = targetReg;
+        var offset = context.AllocateStackSpace();
+        context.Locals[variableName] = offset;
 
         var initExpr = GetChildren(varDecl).FirstOrDefault();
-        if (initExpr.Kind == CXCursorKind.CXCursor_NoDeclFound)
-        {
-            context.Emit($"LDI r{targetReg}, 0");
-            return;
-        }
+        using var valReg = context.AcquireTempRegister();
 
-        EmitExpression(initExpr, targetReg, context);
+        if (initExpr.Kind is CXCursorKind.CXCursor_NoDeclFound)
+            context.Emit($"    LDI r{valReg.Value}, 0"); // TODO: Account for larget than 16-bit values (structs)
+        else
+            EmitExpression(initExpr, valReg.Value, context);
+
+        using var offsetReg = context.AcquireTempRegister();
+        context.Emit($"    LDI r{offsetReg.Value}, {offset}");
+        context.Emit($"    STS r{valReg.Value}, r{offsetReg.Value}");
     }
 
     private static void EmitAssignmentStatement(CXCursor assignmentCursor, EmissionContext context)
@@ -338,6 +352,7 @@ public sealed class SharpieEmitter
         if (expr.Kind != CXCursorKind.CXCursor_NoDeclFound)
             EmitExpression(expr, 0, context);
 
+        context.EmitEpilogue();
         context.Emit(context.ReturnInstruction);
         context.HasReturn = true;
     }
@@ -774,14 +789,39 @@ public sealed class SharpieEmitter
         return children;
     }
 
+    private static int CountLocals(CXCursor functionCursor)
+    {
+        var count = 0;
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(functionCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            // we count both the parameters as well as local variables
+            if (current.Kind is CXCursorKind.CXCursor_VarDecl or CXCursorKind.CXCursor_ParmDecl)
+                count++;
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
+        return count;
+    }
+
     private sealed class EmissionContext
     {
         private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
+
+        public int TotalStackBytes { get; }
+
+        private int _currentStackOffset = 0;
+
         private int _nextLocalRegister = LocalRegisterStart;
 
         private static int _labelCount;
 
-        public static string GenerateLabel() => $"_L{_labelCount++}";
+        public static string GenerateLabel(string prefix = "") => $"_{prefix}_L{_labelCount++}";
 
         public Dictionary<string, int> Locals { get; } = new(StringComparer.Ordinal);
         public List<string> Instructions { get; } = [];
@@ -790,9 +830,29 @@ public sealed class SharpieEmitter
         public bool IsMain { get; set; }
         public string ReturnInstruction => IsMain ? "HALT" : "RET";
 
+        public EmissionContext(int totalStackBytes)
+        {
+            TotalStackBytes = totalStackBytes;
+        }
+
         public void Emit(string asm)
         {
             Instructions.Add(asm);
+        }
+
+        public int AllocateStackSpace(int bytes = 2)
+        {
+            int offset = _currentStackOffset;
+            _currentStackOffset += bytes;
+            return offset;
+        }
+
+        public void EmitEpilogue()
+        {
+            if (TotalStackBytes > 0)
+            {
+                Emit($"LDI r1, {TotalStackBytes}");
+            }
         }
 
         public int AllocateLocalRegister()
