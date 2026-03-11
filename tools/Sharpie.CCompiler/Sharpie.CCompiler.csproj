@@ -5,6 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sharpie.Sdk\Sharpie.Sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="fixtures\pointer_ops.c" />
   </ItemGroup>
 
 </Project>
