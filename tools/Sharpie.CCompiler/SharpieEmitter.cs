@@ -631,7 +631,7 @@ public sealed partial class SharpieEmitter
 
         EmitCondition(condition, labelElse, false, context);
 
-        EmitFunctionBody(thenBranch, context);
+        EmitStatement(thenBranch, context);
 
         if (hasElse)
         {
@@ -640,7 +640,7 @@ public sealed partial class SharpieEmitter
 
             context.Emit($"{labelElse}:");
             context.HasReturn = false;
-            EmitFunctionBody(children[2], context);
+            EmitStatement(children[2], context);
         }
 
         context.Emit($"{labelEnd}:");
