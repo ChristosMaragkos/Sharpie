@@ -1,28 +1,28 @@
 .REGION FIXED
 factorial:
-    LDI r0, 2
-    CALL SYS_ALLOC_STACKFRAME
-    LDI r3, 0
-    STS r1, r3
-    LDI r2, 0
-    LDS r1, r2
+    PUSH r8
+    MOV r8, r1
+    MOV r1, r8
     ICMP r1, 1
     JNE else_L1
     LDI r0, 1
-    LDI r1, 2
-    CALL SYS_FREE_STACKFRAME
+    POP r8
     RET
     else_L1:
-    LDI r1, 0
-    LDS r0, r1
-    LDI r2, 0
-    LDS r1, r2
-    ISUB r1, 1
+    MOV r1, r8
+    MOV r4, r8
+    ISUB r4, 1
+    MOV r3, r4
+    PUSH r2
+    PUSH r2
+    MOV r1, r3
     CALL factorial
-    MOV r1, r0
-    MUL r0, r1
-    LDI r1, 2
-    CALL SYS_FREE_STACKFRAME
+    POP r2
+    POP r2
+    MOV r2, r0
+    MUL r0, r2
+    MOV r0, r1
+    POP r8
     RET
     if_L0:
 Main:

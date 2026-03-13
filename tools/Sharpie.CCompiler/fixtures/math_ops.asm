@@ -1,66 +1,37 @@
 .REGION FIXED
 Main:
-    LDI r0, 4
-    CALL SYS_ALLOC_STACKFRAME
+    PUSH r8
+    PUSH r9
     LDI r1, 5
-    LDI r2, 0
-    STS r1, r2
+    MOV r8, r1
     LDI r1, 3
-    LDI r2, 2
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
-    LDI r4, 2
-    LDS r3, r4
-    ADD r1, r3
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
-    ISUB r1, 1
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
-    IMUL r1, 2
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
-    IDIV r1, 3
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
-    IMOD r1, 4
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r9, r1
+    MOV r1, r9
+    ADD r8, r1
+    ISUB r8, 1
+    IMUL r8, 2
+    IDIV r8, 3
+    IMOD r8, 4
+    MOV r1, r8
     IAND r1, 7
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r8, r1
+    MOV r1, r8
     IOR r1, 8
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r8, r1
+    MOV r1, r8
     IXOR r1, 2
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r8, r1
+    MOV r1, r8
     LDI r2, 1
-    SHL r1, r2
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    SHL r8, r2
+    MOV r8, r1
+    MOV r1, r8
     LDI r2, 2
-    SHR r1, r2
-    LDI r2, 0
-    STS r1, r2
-    LDI r1, 0
-    LDS r0, r1
+    SHR r8, r2
+    MOV r8, r1
+    MOV r0, r8
     NEG r0
-    LDI r1, 4
-    CALL SYS_FREE_STACKFRAME
+    POP r9
+    POP r8
     HALT
 .ENDREGION

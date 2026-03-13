@@ -1,32 +1,27 @@
 .REGION FIXED
 square:
-    LDI r0, 2
-    CALL SYS_ALLOC_STACKFRAME
-    LDI r3, 0
-    STS r1, r3
-    LDI r1, 0
-    LDS r0, r1
-    LDI r2, 0
-    LDS r1, r2
-    MUL r0, r1
-    LDI r1, 2
-    CALL SYS_FREE_STACKFRAME
+    PUSH r8
+    MOV r8, r1
+    MOV r1, r8
+    MOV r2, r8
+    MUL r0, r2
+    MOV r0, r1
+    POP r8
     RET
 Main:
-    LDI r0, 4
-    CALL SYS_ALLOC_STACKFRAME
+    PUSH r8
+    PUSH r9
     LDI r1, 5
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r8, r1
+    MOV r2, r8
+    PUSH r2
+    MOV r1, r2
     CALL square
+    POP r2
     MOV r1, r0
-    LDI r2, 2
-    STS r1, r2
-    LDI r1, 2
-    LDS r0, r1
-    LDI r1, 4
-    CALL SYS_FREE_STACKFRAME
+    MOV r9, r1
+    MOV r0, r9
+    POP r9
+    POP r8
     HALT
 .ENDREGION

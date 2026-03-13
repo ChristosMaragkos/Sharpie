@@ -1,22 +1,17 @@
 .REGION FIXED
 Main:
-    LDI r0, 2
-    CALL SYS_ALLOC_STACKFRAME
+    PUSH r8
     LDI r1, 10
-    LDI r2, 0
-    STS r1, r2
-    LDI r2, 0
-    LDS r1, r2
+    MOV r8, r1
+    MOV r1, r8
     ICMP r1, 10
     JNE else_L1
     LDI r0, 1
-    LDI r1, 2
-    CALL SYS_FREE_STACKFRAME
+    POP r8
     HALT
     else_L1:
     LDI r0, 0
-    LDI r1, 2
-    CALL SYS_FREE_STACKFRAME
+    POP r8
     HALT
     if_L0:
 .ENDREGION
