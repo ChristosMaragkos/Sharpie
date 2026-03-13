@@ -319,3 +319,54 @@ FreeFrame:
     End:
         RET
 .ENDSCOPE
+
+; SYS_MEM_SET
+; Sets (R3) bytes starting at address (R1) to the value (R2).
+MemSet:
+.SCOPE
+    ICMP r2, 0
+    JEQ Return
+
+    Loop:
+        ALT STA r2, r1
+        INC r1
+
+        DEC r3
+        JGT Loop
+
+    Return:
+        RET
+.ENDSCOPE
+
+; SYS_MEM_CMP
+; Compares (R3) bytes in the memory regions starting at (R1) and (R2).
+; Returns 0 if they match byte-for-byte, or the difference of the first non-matching bytes,
+; which may be negative or positive.
+MemCmp:
+.SCOPE
+    LDI r0, 0
+    ICMP r3, 0
+    JEQ Return
+
+    Loop:
+        ALT LDP r4, r1
+        ALT LDP r5, r2
+
+        CMP r4, r5
+        JNE Diff
+
+        INC r1
+        INC r2
+
+        DEC r3
+        JGT Loop
+
+        JMP Return
+
+    Diff:
+        MOV r0, r4
+        SUB r0, r5
+
+    Return:
+        RET
+.ENDSCOPE
