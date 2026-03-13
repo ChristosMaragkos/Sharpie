@@ -31,37 +31,42 @@ public sealed partial class SharpieEmitter
             var body = GetChildren(func)
                 .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
 
-            // Skip functions without a body (prototypes)
             if (body.Kind == CXCursorKind.CXCursor_NoDeclFound)
                 continue;
 
             var localCount = CountLocals(func);
             var stackBytes = localCount * 2; // 2 bytes / variable
 
-            var context = new EmissionContext(stackBytes);
+            // because I can't be bothered to make this a two-pass compiler,
+            // we're just gonna have to emit the body, scan for variables that need to be spilled,
+            // then stitch the prologue and epilogue after the fact.
+            // FIXME: This does not allow arguments on the stack. Once the ABI is complete, we need to move into spilling arguments 5+ as well as any args that we take the address of into the stack.
+            var escapedVars = DetectEscapingVariables(func);
+            var context = new EmissionContext(escapedVars);
             context.IsMain = (funcName == "main");
 
             asm.AppendLine($"{(context.IsMain ? "Main" : funcName)}:");
 
-            if (context.TotalStackBytes > 0)
-            {
-                context.Emit($"LDI r0, {context.TotalStackBytes}");
-                context.Emit($"CALL SYS_ALLOC_STACKFRAME");
-            }
-
             var parameters = GetChildren(func)
                 .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)
                 .ToList();
-
-            for (int i = 0; i < parameters.Count; i++)
+            for (var i = 0; i < parameters.Count; i++)
             {
                 var paramName = parameters[i].Spelling.ToString();
-                var offset = context.AllocateStackSpace();
-                context.Locals[paramName] = offset;
+                var needsStack = context.EscapedVariables.Contains(paramName);
 
-                using var offsetReg = context.AcquireTempRegister();
-                context.Emit($"LDI r3, {offset}");
-                context.Emit($"STS r{i + 1}, r3");
+                var space = context.AllocateStorage(paramName, needsStack);
+
+                if (space.Type == StorageType.Register)
+                {
+                    context.Emit($"MOV r{space.Value}, r{i + 1}");
+                }
+                else
+                {
+                    using var offsetReg = context.AcquireTempRegister();
+                    context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
+                    context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+                }
             }
 
             EmitFunctionBody(body, context);
@@ -71,13 +76,17 @@ public sealed partial class SharpieEmitter
             if (!context.HasReturn)
             {
                 if (context.IsMain)
-                    context.Emit("    LDI r0, 0");
-                context.EmitEpilogue();
+                    context.Emit("LDI r0, 0");
                 context.Emit(context.ReturnInstruction);
             }
 
+            foreach (var line in context.GetPrologue())
+                asm.AppendLine($"    {line}");
+
             foreach (var line in context.Instructions)
                 asm.AppendLine($"    {line}");
+
+            // EmitReturn is responsible for the epilogue
         }
 
         asm.AppendLine(".ENDREGION");
@@ -249,25 +258,27 @@ public sealed partial class SharpieEmitter
         if (context.Locals.ContainsKey(variableName))
             throw new InvalidOperationException($"Duplicate local variable `{variableName}`.");
 
-        var offset = context.AllocateStackSpace();
-        context.Locals[variableName] = offset;
+        var needsStack = context.EscapedVariables.Contains(variableName);
+        var space = context.AllocateStorage(variableName, needsStack);
 
         var initExpr = GetChildren(varDecl).FirstOrDefault();
         using var valReg = context.AcquireTempRegister();
 
         if (initExpr.Kind is CXCursorKind.CXCursor_NoDeclFound)
+            context.Emit($"LDI r{valReg.Value}, 0");
+        else
+            EmitExpression(initExpr, valReg.Value, context);
+
+        if (space.Type == StorageType.Register)
         {
-            context.Emit($"LDI r{valReg.Value}, 0"); // TODO: Account for larger than 16-bit values
+            context.Emit($"MOV r{space.Value}, r{valReg.Value}");
         }
         else
         {
-            EmitExpression(initExpr, valReg.Value, context);
+            using var offsetReg = context.AcquireTempRegister();
+            context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
+            context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
         }
-
-        // Push to stack using STS
-        using var offsetReg = context.AcquireTempRegister();
-        context.Emit($"LDI r{offsetReg.Value}, {offset}");
-        context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
     }
 
     private static void EmitAssignmentStatement(CXCursor assignmentCursor, EmissionContext context)
@@ -378,7 +389,7 @@ public sealed partial class SharpieEmitter
         if (expr.Kind != CXCursorKind.CXCursor_NoDeclFound)
             EmitExpression(expr, 0, context);
 
-        context.EmitEpilogue();
+        context.GetEpilogue();
         context.Emit(context.ReturnInstruction);
         context.HasReturn = true;
     }
@@ -871,5 +882,32 @@ public sealed partial class SharpieEmitter
                 queue.Enqueue(child);
         }
         return count;
+    }
+
+    private static HashSet<string> DetectEscapingVariables(CXCursor functionCursor)
+    {
+        var escaped = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(functionCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            if (
+                current.Kind == CXCursorKind.CXCursor_UnaryOperator
+                && GetUnaryOperatorKind(current) == CXUnaryOperatorKind.CXUnaryOperator_AddrOf
+            )
+            {
+                var operand = PeelExpression(GetChildren(current).FirstOrDefault());
+
+                if (operand.Kind == CXCursorKind.CXCursor_DeclRefExpr)
+                    escaped.Add(operand.Spelling.ToString());
+            }
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
+        return escaped;
     }
 }
