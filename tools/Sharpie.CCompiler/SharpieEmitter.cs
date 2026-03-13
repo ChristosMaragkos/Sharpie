@@ -699,7 +699,6 @@ public sealed partial class SharpieEmitter
         };
     }
 
-    // TODO: This does not take calling conventions into account, so it still needs caller- and callee-saved registers etc.
     private static void EmitCall(CXCursor callExpr, EmissionContext context)
     {
         EmitCallExpression(callExpr, -1, context);
