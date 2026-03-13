@@ -25,26 +25,29 @@ public sealed partial class SharpieEmitter
     {
         private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
 
-        public int TotalStackBytes { get; }
-
+        public int TotalStackBytes { get; private set; }
         private int _currentStackOffset = 0;
-
         private int _nextLocalRegister = LocalRegisterStart;
 
         private static int _labelCount;
 
         public static string GenerateLabel(string prefix = "") => $"{prefix}_L{_labelCount++}";
 
-        public Dictionary<string, int> Locals { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, StorageLocation> Locals { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> EscapedVariables { get; }
+
+        // track callee saved registers (r8-r15)
+        public List<int> UsedPreservedRegisters { get; } = new();
+
         public List<string> Instructions { get; } = [];
         public bool HasReturn { get; set; }
 
         public bool IsMain { get; set; }
         public string ReturnInstruction => IsMain ? "HALT" : "RET";
 
-        public EmissionContext(int totalStackBytes)
+        public EmissionContext(HashSet<string> escapedVariables)
         {
-            TotalStackBytes = totalStackBytes;
+            EscapedVariables = escapedVariables;
         }
 
         public void Emit(string asm)
@@ -52,30 +55,56 @@ public sealed partial class SharpieEmitter
             Instructions.Add(asm);
         }
 
-        public int AllocateStackSpace(int bytes = 2)
+        public StorageLocation AllocateStorage(string name, bool forceStack, int bytes = 2)
         {
-            int offset = _currentStackOffset;
-            _currentStackOffset += bytes;
-            return offset;
-        }
-
-        public void EmitEpilogue()
-        {
-            if (TotalStackBytes > 0)
+            if (!forceStack && _nextLocalRegister <= LocalRegisterEnd)
             {
-                Emit($"LDI r1, {TotalStackBytes}");
-                Emit($"CALL SYS_FREE_STACKFRAME");
+                int reg = _nextLocalRegister++;
+                UsedPreservedRegisters.Add(reg);
+
+                var loc = new StorageLocation(StorageType.Register, reg);
+                Locals[name] = loc;
+                return loc;
+            }
+            else // fall back to the stack
+            {
+                int offset = _currentStackOffset;
+                _currentStackOffset += bytes;
+                TotalStackBytes = _currentStackOffset;
+
+                var loc = new StorageLocation(StorageType.Stack, offset);
+                Locals[name] = loc;
+                return loc;
             }
         }
 
-        public int AllocateLocalRegister()
+        public IEnumerable<string> GetPrologue()
         {
-            if (_nextLocalRegister > LocalRegisterEnd)
-                throw new InvalidOperationException(
-                    "Too many local variables for register-only MVP backend."
-                );
+            foreach (var reg in UsedPreservedRegisters)
+            {
+                yield return $"PUSH r{reg}";
+            }
 
-            return _nextLocalRegister++;
+            if (TotalStackBytes > 0)
+            {
+                yield return $"LDI r0, {TotalStackBytes}";
+                yield return "CALL SYS_ALLOC_STACKFRAME";
+            }
+        }
+
+        public IEnumerable<string> GetEpilogue()
+        {
+            if (TotalStackBytes > 0)
+            {
+                yield return $"LDI r0, {TotalStackBytes}";
+                yield return "CALL SYS_FREE_STACKFRAME";
+            }
+
+            // Restore preserved registers (in REVERSE order)
+            for (int i = UsedPreservedRegisters.Count - 1; i >= 0; i--)
+            {
+                yield return $"POP r{UsedPreservedRegisters[i]}";
+            }
         }
 
         public TempLease AcquireTempRegister()
