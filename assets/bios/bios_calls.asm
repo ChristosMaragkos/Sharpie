@@ -3,6 +3,7 @@
 ; This file contains subroutines available to all Sharpie cartridges at runtime. They may be called using their assigned name,
 ; such as CALL SYS_IDX_READ_VAL.
 ; TODO: memset, memcmp
+; TODO: make all these methods take arguments in registers
 .ORG $FA2A
 ; SYS_IDX_READ_VAL(start, index, stride)
 ;
@@ -326,6 +327,7 @@ Alloca:
     PUSH r1
     End:
         GETSP r0
+        IADD r0, 2
         RET
 .ENDSCOPE
 
