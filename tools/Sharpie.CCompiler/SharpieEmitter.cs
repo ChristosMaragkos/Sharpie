@@ -3,6 +3,8 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
+// TODO: Intrinsics for syscalls, functions with >=5 parameters (by using the stack), structs, unions, function pointers, jump tables.
+// In no particular order.
 public sealed partial class SharpieEmitter
 {
     private const int TempRegisterStart = 1;
