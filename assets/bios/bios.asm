@@ -231,6 +231,10 @@ PleaseInsertCart:
     LDI r0, 0
     CLS r0
 
+    INPUT r0, r14
+    ICMP r14, 48
+    JEQ SyscallPrint
+
     LDI r0, YELLOWS::YLW_DEF
     SWC r0, r0 ; reset color 5 to bright yellow
     ATTR YELLOWS::YLW_DEF ; set text color to it as well
@@ -367,3 +371,60 @@ ManualTriggerErrorCode:
 Crash:
     .STR 1, 12 "Please restart"
     HALT
+
+SyscallPrint:
+    CALL ResetPalette
+    ATTR 1
+    .STR 0, 0 "BIOS CALL ADDRESSES"
+    SETCRS 0, 0
+
+    LDI r0, LutRead
+    CALL PrintAddr
+
+    LDI r0, Stackalloc
+    CALL PrintAddr
+
+    LDI r0, FrameDelay
+    CALL PrintAddr
+
+    LDI r0, LutWrite
+    CALL PrintAddr
+
+    LDI r0, LutGetPtr
+    CALL PrintAddr
+
+    LDI r0, MemCopy
+    CALL PrintAddr
+
+    LDI r0, ResetPalette
+    CALL PrintAddr
+
+    LDI r0, Alloca
+    CALL PrintAddr
+
+    LDI r0, FreeFrame
+    CALL PrintAddr
+
+    LDI r0, MemSet
+    CALL PrintAddr
+
+    LDI r0, MemCmp
+    CALL PrintAddr ; Line 22
+
+    .SCOPE
+    LDI r1, 0
+    Loop:
+        VBLNK
+        INPUT r1, r0
+
+        ICMP r0, 192
+        JEQ Reset
+        JMP Loop
+    .ENDSCOPE
+
+    PrintAddr:
+        LDI r1, 10
+        CALL FrameDelay
+        ALT SETCRS -5, 2
+        ALT TEXT r0
+        RET

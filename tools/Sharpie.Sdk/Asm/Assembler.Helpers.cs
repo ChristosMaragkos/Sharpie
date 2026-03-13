@@ -7,15 +7,17 @@ public partial class Assembler
 {
     private static readonly Dictionary<string, ushort> BiosCallAddresses = new()
     {
-        { "SYS_IDX_READ_VAL", 0xFA2A },
-        { "SYS_STACKALLOC", 0xFA4E },
-        { "SYS_FRAME_DELAY", 0xFA6F },
-        { "SYS_IDX_WRITE_VAL", 0xFA7D },
-        { "SYS_IDX_READ_REF", 0xFAA6 },
-        { "SYS_MEM_COPY", 0xFAC3 },
-        { "SYS_PAL_RESET", 0xFAE2 },
-        { "SYS_ALLOC_STACKFRAME", 0xFAF4 },
-        { "SYS_FREE_STACKFRAME", 0xFB09 },
+        { "SYS_IDX_READ_VAL", 64042 },
+        { "SYS_STACKALLOC", 64065 },
+        { "SYS_FRAME_DELAY", 64103 },
+        { "SYS_IDX_WRITE_VAL", 64110 },
+        { "SYS_IDX_READ_REF", 64133 },
+        { "SYS_MEM_COPY", 64140 },
+        { "SYS_PAL_RESET", 64164 },
+        { "SYS_ALLOC_STACKFRAME", 64182 },
+        { "SYS_FREE_STACKFRAME", 64206 },
+        { "SYS_MEM_SET", 64225 },
+        { "SYS_MEM_CMP", 64242 },
     };
 
     private ScopeLevel GetCurrentScope() =>
