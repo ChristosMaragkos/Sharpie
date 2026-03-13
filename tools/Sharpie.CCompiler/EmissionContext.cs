@@ -2,6 +2,25 @@ namespace Sharpie.CCompiler;
 
 public sealed partial class SharpieEmitter
 {
+    private enum StorageType
+    {
+        Register,
+        Stack,
+    }
+
+    // PLEASE MICROSOFT GIVE US DISCRIMINATED UNIONS PLEASE
+    private readonly struct StorageLocation
+    {
+        public StorageType Type { get; }
+        public int Value { get; }
+
+        public StorageLocation(StorageType type, int value)
+        {
+            Type = type;
+            Value = value;
+        }
+    }
+
     private sealed class EmissionContext
     {
         private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
