@@ -123,6 +123,17 @@ public sealed partial class SharpieEmitter
             );
         }
 
+        public List<int> GetActiveTempRegisters()
+        {
+            var active = new List<int>();
+            for (int i = 0; i < _tempInUse.Length; i++)
+            {
+                if (_tempInUse[i])
+                    active.Add(TempRegisterStart + 1);
+            }
+            return active;
+        }
+
         private void ReleaseTempRegister(int register)
         {
             var index = register - TempRegisterStart;
