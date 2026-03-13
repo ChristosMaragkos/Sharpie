@@ -52,6 +52,11 @@ public sealed partial class SharpieEmitter
                 .ToList();
             for (var i = 0; i < parameters.Count; i++)
             {
+                if (i >= 4)
+                    throw new NotImplementedException(
+                        "TODO: Implement functions with 5+ arguments by shoving extra parameters into the stack"
+                    );
+
                 var paramName = parameters[i].Spelling.ToString();
                 var needsStack = context.EscapedVariables.Contains(paramName);
 
@@ -314,47 +319,58 @@ public sealed partial class SharpieEmitter
             );
 
         var variableName = lhs.Spelling.ToString();
-        if (!context.Locals.TryGetValue(variableName, out var offset))
+        if (!context.Locals.TryGetValue(variableName, out var allocatedSpace))
             throw new InvalidOperationException($"Unknown local variable `{variableName}`.");
 
         if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
         {
-            EmitCompoundAssignment(assignmentCursor, offset, rhs, context);
+            EmitCompoundAssignment(assignmentCursor, allocatedSpace, rhs, context);
             return;
         }
 
-        if (GetBinaryOperatorKind(assignmentCursor) != CXBinaryOperatorKind.CXBinaryOperator_Assign)
-            throw new InvalidOperationException(
-                "Only simple assignment statements are currently supported."
-            );
+        if (allocatedSpace.Type == StorageType.Stack)
+        {
+            using var rhsReg = context.AcquireTempRegister();
+            EmitExpression(rhs, rhsReg.Value, context);
 
-        // Evaluate the new value
-        using var rhsReg = context.AcquireTempRegister();
-        EmitExpression(rhs, rhsReg.Value, context);
-
-        // Save it to the stack
-        using var offsetReg = context.AcquireTempRegister();
-        context.Emit($"LDI r{offsetReg.Value}, {offset}");
-        context.Emit($"STS r{rhsReg.Value}, r{offsetReg.Value}");
+            using var offsetReg = context.AcquireTempRegister();
+            context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
+            context.Emit($"STS r{rhsReg.Value}, r{offsetReg.Value}");
+        }
+        else
+        {
+            EmitExpression(rhs, allocatedSpace.Value, context);
+        }
     }
 
     private static void EmitCompoundAssignment(
         CXCursor assignmentCursor,
-        int lhsOffset,
+        StorageLocation lhsLoc,
         CXCursor rhs,
         EmissionContext context
     )
     {
         var kind = GetBinaryOperatorKind(assignmentCursor);
 
-        // load the current value from the stack
-        using var valReg = context.AcquireTempRegister();
-        using var offsetReg = context.AcquireTempRegister();
-        context.Emit($"LDI r{offsetReg.Value}, {lhsOffset}");
-        context.Emit($"LDS r{valReg.Value}, r{offsetReg.Value}");
+        int mathReg;
+        EmissionContext.TempLease valRegLease = default;
+        EmissionContext.TempLease offsetRegLease = default;
 
-        // perform the math directly on the temporary value register
-        if (!TryEmitImmediateMath(kind, valReg.Value, rhs, context))
+        if (lhsLoc.Type == StorageType.Register)
+        {
+            mathReg = lhsLoc.Value;
+        }
+        else
+        {
+            valRegLease = context.AcquireTempRegister();
+            offsetRegLease = context.AcquireTempRegister();
+            mathReg = valRegLease.Value;
+
+            context.Emit($"LDI r{offsetRegLease.Value}, {lhsLoc.Value}");
+            context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
+        }
+
+        if (!TryEmitImmediateMath(kind, mathReg, rhs, context))
         {
             using var scratch = context.AcquireTempRegister();
             EmitExpression(rhs, scratch.Value, context);
@@ -376,11 +392,16 @@ public sealed partial class SharpieEmitter
                 ),
             };
 
-            context.Emit($"{op} r{valReg.Value}, r{scratch.Value}");
+            context.Emit($"{op} r{mathReg}, r{scratch.Value}");
         }
 
-        // 3. Write the new value back to the stack
-        context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
+        // write back (only if it lives on the stack)
+        if (lhsLoc.Type == StorageType.Stack)
+        {
+            context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
+            valRegLease.Dispose();
+            offsetRegLease.Dispose();
+        }
     }
 
     private static void EmitReturn(CXCursor returnStmt, EmissionContext context)
@@ -389,7 +410,9 @@ public sealed partial class SharpieEmitter
         if (expr.Kind != CXCursorKind.CXCursor_NoDeclFound)
             EmitExpression(expr, 0, context);
 
-        context.GetEpilogue();
+        foreach (var line in context.GetEpilogue())
+            context.Emit(line);
+
         context.Emit(context.ReturnInstruction);
         context.HasReturn = true;
     }
@@ -410,15 +433,23 @@ public sealed partial class SharpieEmitter
 
             case CXCursorKind.CXCursor_DeclRefExpr:
                 var name = node.Spelling.ToString();
-                if (!context.Locals.TryGetValue(name, out var offset))
+                if (!context.Locals.TryGetValue(name, out var allocatedSpace))
                     throw new InvalidOperationException($"Unknown local variable `{name}`.");
 
                 // Only load from the stack if someone is actually asking for the value
                 if (targetReg >= 0)
                 {
-                    using var offsetReg = context.AcquireTempRegister();
-                    context.Emit($"LDI r{offsetReg.Value}, {offset}");
-                    context.Emit($"LDS r{targetReg}, r{offsetReg.Value}");
+                    if (allocatedSpace.Type == StorageType.Stack)
+                    {
+                        using var offsetReg = context.AcquireTempRegister();
+                        context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
+                        context.Emit($"LDS r{targetReg}, r{offsetReg.Value}");
+                    }
+                    else
+                    {
+                        if (targetReg != allocatedSpace.Value)
+                            context.Emit($"MOV r{targetReg}, r{allocatedSpace.Value}");
+                    }
                 }
                 return;
 
@@ -469,16 +500,24 @@ public sealed partial class SharpieEmitter
 
             case CXUnaryOperatorKind.CXUnaryOperator_AddrOf:
                 var varName = peeled.Spelling.ToString();
-                if (!context.Locals.TryGetValue(varName, out var offset))
+                if (!context.Locals.TryGetValue(varName, out var allocated))
                     throw new InvalidOperationException(
                         $"Unknown variable `{varName}` for address-of."
                     );
 
+                if (allocated.Type == StorageType.Register)
+                    throw new InvalidOperationException(
+                        $"Cannot take the address of register-allocated '{varName}'"
+                    );
+
                 context.Emit($"GETSP r{targetReg}");
-                while (offset > 0)
+
+                var remainingOffset = allocated.Value;
+                while (remainingOffset > 0)
                 {
-                    context.Emit($"IADD r{targetReg}, {offset}");
-                    offset -= 255;
+                    var chunk = Math.Min(remainingOffset, 255);
+                    context.Emit($"IADD r{targetReg}, {chunk}");
+                    remainingOffset -= chunk;
                 }
                 return;
 
@@ -519,33 +558,46 @@ public sealed partial class SharpieEmitter
             case CXCursorKind.CXCursor_DeclRefExpr:
             {
                 var name = peeled.Spelling.ToString();
-                if (!context.Locals.TryGetValue(name, out var offset))
+                if (!context.Locals.TryGetValue(name, out var loc))
                     throw new InvalidOperationException($"Unknown variable {name}");
 
-                using var valReg = context.AcquireTempRegister();
-                using var offsetReg = context.AcquireTempRegister();
+                int mathReg;
+                EmissionContext.TempLease valRegLease = default;
+                EmissionContext.TempLease offsetRegLease = default;
 
-                // Load current value from the stack
-                context.Emit($"LDI r{offsetReg.Value}, {offset}");
-                context.Emit($"LDS r{valReg.Value}, r{offsetReg.Value}");
+                if (loc.Type == StorageType.Register)
+                {
+                    mathReg = loc.Value;
+                }
+                else
+                {
+                    valRegLease = context.AcquireTempRegister();
+                    offsetRegLease = context.AcquireTempRegister();
+                    mathReg = valRegLease.Value;
+
+                    context.Emit($"LDI r{offsetRegLease.Value}, {loc.Value}");
+                    context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
+                }
 
                 if (isPost)
                 {
                     if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
-
-                    context.Emit($"{op} r{valReg.Value}");
+                        context.Emit($"MOV r{targetReg}, r{mathReg}");
+                    context.Emit($"{op} r{mathReg}");
                 }
                 else
                 {
-                    context.Emit($"{op} r{valReg.Value}");
-
+                    context.Emit($"{op} r{mathReg}");
                     if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+                        context.Emit($"MOV r{targetReg}, r{mathReg}");
                 }
 
-                // NOTE: All operations are read-modify-write. Refactor to actually allocate registers first and then spill to stack.
-                context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
+                if (loc.Type == StorageType.Stack)
+                {
+                    context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
+                    valRegLease.Dispose();
+                    offsetRegLease.Dispose();
+                }
                 break;
             }
             // 2. Handle Pointer Dereference (*ptr)++
@@ -603,30 +655,34 @@ public sealed partial class SharpieEmitter
         var lhs = PeelExpression(operands[0]);
         var rhs = PeelExpression(operands[1]);
 
-        EmitExpression(lhs, targetReg, context);
+        using var lhsScratch = context.AcquireTempRegister();
+        EmitExpression(lhs, lhsScratch.Value, context);
 
-        if (TryEmitImmediateMath(kind, targetReg, rhs, context))
-            return;
-
-        using var scratch = context.AcquireTempRegister();
-        EmitExpression(rhs, scratch.Value, context);
-
-        var op = kind switch
+        if (!TryEmitImmediateMath(kind, lhsScratch.Value, rhs, context))
         {
-            CXBinaryOperatorKind.CXBinaryOperator_Add => "ADD",
-            CXBinaryOperatorKind.CXBinaryOperator_Sub => "SUB",
-            CXBinaryOperatorKind.CXBinaryOperator_Mul => "MUL",
-            CXBinaryOperatorKind.CXBinaryOperator_Div => "DIV",
-            CXBinaryOperatorKind.CXBinaryOperator_Rem => "MOD",
-            CXBinaryOperatorKind.CXBinaryOperator_And => "AND",
-            CXBinaryOperatorKind.CXBinaryOperator_Or => "OR",
-            CXBinaryOperatorKind.CXBinaryOperator_Xor => "XOR",
-            CXBinaryOperatorKind.CXBinaryOperator_Shl => "SHL",
-            CXBinaryOperatorKind.CXBinaryOperator_Shr => "SHR",
-            _ => throw new InvalidOperationException($"Unsupported binary operator: {kind}"),
-        };
+            using var rhsScratch = context.AcquireTempRegister();
+            EmitExpression(rhs, rhsScratch.Value, context);
 
-        context.Emit($"{op} r{targetReg}, r{scratch.Value}");
+            var op = kind switch
+            {
+                CXBinaryOperatorKind.CXBinaryOperator_Add => "ADD",
+                CXBinaryOperatorKind.CXBinaryOperator_Sub => "SUB",
+                CXBinaryOperatorKind.CXBinaryOperator_Mul => "MUL",
+                CXBinaryOperatorKind.CXBinaryOperator_Div => "DIV",
+                CXBinaryOperatorKind.CXBinaryOperator_Rem => "MOD",
+                CXBinaryOperatorKind.CXBinaryOperator_And => "AND",
+                CXBinaryOperatorKind.CXBinaryOperator_Or => "OR",
+                CXBinaryOperatorKind.CXBinaryOperator_Xor => "XOR",
+                CXBinaryOperatorKind.CXBinaryOperator_Shl => "SHL",
+                CXBinaryOperatorKind.CXBinaryOperator_Shr => "SHR",
+                _ => throw new InvalidOperationException($"Unsupported binary operator: {kind}"),
+            };
+
+            context.Emit($"{op} r{targetReg}, r{rhsScratch.Value}");
+        }
+
+        if (targetReg >= 0 && targetReg != lhsScratch.Value)
+            context.Emit($"MOV r{targetReg}, r{lhsScratch.Value}");
     }
 
     private static void EmitIfStatement(CXCursor ifStatement, EmissionContext context)
@@ -724,21 +780,45 @@ public sealed partial class SharpieEmitter
         var children = GetChildren(callExpr);
         var funcName = children[0].Spelling.ToString();
 
-        // Evaluate arguments and place them in the parameter registers
-        // r1 and r2 are our convention for passing data to functions for now (see TODO)
+        var tempsToProtect = context.GetActiveTempRegisters();
+
+        var argLeases = new List<EmissionContext.TempLease>();
         for (int i = 1; i < children.Count; i++)
         {
-            if (i > 2)
-                throw new InvalidOperationException("Sharpie MVP only supports 2 arguments.");
+            if (i > 4)
+                throw new NotImplementedException("TODO: Implement pushing args 5+ to the stack.");
 
-            EmitExpression(children[i], i, context);
+            var argLease = context.AcquireTempRegister();
+            EmitExpression(children[i], argLease.Value, context);
+            argLeases.Add(argLease);
+        }
+
+        foreach (var reg in tempsToProtect)
+        {
+            context.Emit($"PUSH r{reg}");
+        }
+
+        for (var i = 0; i < argLeases.Count; i++)
+        {
+            if ((i + 1) != argLeases[i].Value)
+                context.Emit($"MOV r{i + 1}, r{argLeases[i].Value}");
         }
 
         context.Emit($"CALL {funcName}");
 
+        for (var i = tempsToProtect.Count - 1; i >= 0; i--)
+        {
+            context.Emit($"POP r{tempsToProtect[i]}");
+        }
+
         if (targetReg > 0)
         {
             context.Emit($"MOV r{targetReg}, r0"); // MOV r0, r0 is redundant
+        }
+
+        foreach (var lease in argLeases)
+        {
+            lease.Dispose();
         }
     }
 
