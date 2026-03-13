@@ -1,7 +1,7 @@
 [
     { "hex": "0x00", "name": "NOP",    "len": 1, "logic": "" , "words": 0 , "pattern": "", "desc": "No operation.", "alt": "" },
     { "hex": "0x01", "name": "MOV",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Copy value from R2 to R1.", "alt": "" },
-  
+ 
     { "hex": "0x10", "name": "LDM",    "len": 4, "logic": null, "words": 2 , "pattern": "RW", "desc": "Load 16-bit word from address W to R.", "alt": "Load single byte from address W." },
     { "hex": "0x11", "name": "LDP",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Load word from [R2] into R1.", "alt": "Load single byte from [R2]." },
     { "hex": "0x20", "name": "LDI",    "len": 3, "logic": null, "family": true , "words": 2 , "pattern": "RW", "desc": "Load immediate word W into Rn.", "alt": "" },
@@ -11,7 +11,7 @@
     { "hex": "0x14", "name": "LDS",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Load word from [SP + R2] (signed) into R1.", "alt": "Load byte from [SP + R2] (signed) into R1." },
     { "hex": "0x15", "name": "STS",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Store word from R1 to SP + R2 (signed).", "alt": "Store the low byte of R1 SP + R2 (signed)." },
     { "hex": "0x16", "name": "GETSP",  "len": 2, "logic": null, "words": 1 , "pattern": "R",  "desc": "Set R1 to the value of SP", "alt": "" },
-  
+
     { "hex": "0x40", "name": "ADD",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 + R2. Updates Z, N, C, V.", "alt": "" },
     { "hex": "0x41", "name": "SUB",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 - R2. Updates Z, N, C, V.", "alt": "" },
     { "hex": "0x42", "name": "MUL",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 * R2. Sets C/V if result > 65535.", "alt": "" },
@@ -24,12 +24,12 @@
     { "hex": "0x49", "name": "SHR",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Bitwise shift right R1 by (R2 & 0xF).", "alt": "" },
     { "hex": "0x4A", "name": "CMP",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Internal subtraction to set flags.", "alt": "" },
     { "hex": "0x4B", "name": "ADC",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Add with Carry: R1 + R2 + C.", "alt": "" },
-  
+
     { "hex": "0x50", "name": "INC",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Increment register R by 1.", "alt": "" },
     { "hex": "0x51", "name": "DEC",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Decrement register R by 1.", "alt": "" },
     { "hex": "0x52", "name": "NOT",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Bitwise NOT (Invert all bits).", "alt": "" },
     { "hex": "0x53", "name": "NEG",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Two's complement negation (0 - R).", "alt": "" },
-  
+
     { "hex": "0x60", "name": "IADD",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Add immediate byte B to R.", "alt": "Add byte B to word at [R] in memory." },
     { "hex": "0x61", "name": "ISUB",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Subtract immediate byte B from R.", "alt": "Sub byte B from word at [R] in memory." },
     { "hex": "0x62", "name": "IMUL",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Multiply R by immediate byte B.", "alt": "Mul word at [R] by B in memory." },
@@ -41,7 +41,7 @@
     { "hex": "0x68", "name": "ICMP",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Compare R with immediate byte B.", "alt": "Compare word at [R] with byte B in memory." },
     { "hex": "0x69", "name": "DINC",   "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Increment word at memory address [R].", "alt": "" },
     { "hex": "0x6A", "name": "DDEC",   "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Decrement word at memory address [R].", "alt": "" },
-  
+
     { "hex": "0x70", "name": "JMP",    "len": 3, "logic": null , "words": 1 , "pattern": "W", "desc": "Unconditional jump to address W.", "alt": "Uses register instead of immediate word" },
     { "hex": "0x71", "name": "JEQ",    "len": 3, "logic": null , "words": 1 , "pattern": "W", "desc": "Jump if Zero (equal).", "alt": "Uses register instead of immediate word" },
     { "hex": "0x72", "name": "JNE",    "len": 3, "logic": null , "words": 1 , "pattern": "W", "desc": "Jump if Not Zero (not equal).", "alt": "Uses register instead of immediate word" },
@@ -56,7 +56,7 @@
     { "hex": "0x7B", "name": "OUT_R",  "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Log register R to debug console.", "alt": "" },
     { "hex": "0x7C", "name": "OUT_B",  "len": 2, "logic": null , "words": 1 , "pattern": "B", "desc": "Log immediate byte B to debug console.", "alt": "" },
     { "hex": "0x7D", "name": "OUT_W",  "len": 3, "logic": null , "words": 1 , "pattern": "W", "desc": "Log immediate word W to debug console.", "alt": "" },
-    
+
     { "hex": "0x80", "name": "RND",    "len": 3, "logic": null , "family": true , "words": 2 , "pattern": "RW", "desc": "Family. Random (0 to W-1) into Rn.", "alt": "" },
     { "hex": "0x90", "name": "FLIPR",  "len": 1, "logic": null , "words": 1 , "pattern": "", "desc": "Flips between using registers 0-15 and 16-31.", "alt": "" },
     { "hex": "0x91", "name": "CAM",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Relatively moves camera by the values in (rX,rY). The values in rX and rY are treated as signed.", "alt": "Sets the camera position to (rX,rY)" },
@@ -64,12 +64,12 @@
     { "hex": "0x93", "name": "SETOAM", "len": 2, "logic": null , "words": 2 , "pattern": "R", "desc": "Sets the value of the OAM cursor to the value in rX", "alt": "" },
     { "hex": "0x94", "name": "GETSEQ", "len": 2, "logic": null , "words": 2 , "pattern": "R", "desc": "Copies the current value of the Sequencer cursor to rX.", "alt": "" },
     { "hex": "0x95", "name": "SETSEQ", "len": 2, "logic": null , "words": 2 , "pattern": "R", "desc": "Sets the value of the Sequencer cursor to the value in rX. Does not start playing.", "alt": "" },
-  
+
     { "hex": "0xA0", "name": "SONG",   "len": 1, "logic": null , "family": true, "words": 1 , "pattern": "R", "desc": "Family. Start music from address in Rn.", "alt": "" },
     { "hex": "0xC0", "name": "SETCRS", "len": 3, "logic": null , "words": 2 , "pattern": "BB", "desc": "Set text cursor to (X, Y).", "alt": "Relative Move cursor by (X, Y)." },
     { "hex": "0xD0", "name": "DRAW",   "len": 3, "logic": null , "family": true, "words": 4 , "pattern": "RRRR", "desc": "Family. Draw sprite: X, Y, ID, Attr. & Type (Low byte -> attr, high byte -> type)", "alt": ""},
     { "hex": "0xE0", "name": "INSTR",  "len": 3, "logic": null , "family": true, "words": 3 , "pattern": "RBB", "desc": "Family. Define ADSR for instrument Rn.", "alt": "" },
-    
+
     { "hex": "0xC1", "name": "OAMPOS", "len": 3, "logic": null , "words": 3 , "pattern": "RRR", "desc": "Set R2, R3 to the (X, Y) coordinates of the tile at OAM[R1]", "alt": ""},
     { "hex": "0xC2", "name": "SAVE",   "len": 1, "logic": null , "words": 0 , "pattern": "", "desc": "Alerts the motherboard that a save was requested.", "alt": "Appends to an existing save file, or creates a new one." },
     { "hex": "0xF0", "name": "OAMTAG", "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Pack Attribute and Type bytes of OAM[R1] into R2. Low Endian.", "alt": "Set R2 to the Tile ID of OAM[R1]" },
