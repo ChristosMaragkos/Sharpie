@@ -67,15 +67,16 @@ DrawLogo:
         JNE InitCover
 
 
+LDI r10, Y
 LowerCover:
     LDI r4, 8 ; the first box is in OAM slot 7. The last is in OAM slot 13.
     SETOAM r4
     CLS r12
     LDI r0, X ; reset X
-    INC r1 ; Pull down by one pixel
+    INC r10 ; Pull down by one pixel
 
     RedrawCover:
-        DRAW r0, r1, r2, r3
+        DRAW r0, r10, r2, r3
 
         IADD r0, 8
 
@@ -84,8 +85,7 @@ LowerCover:
         ICMP r4, 15 ; Did we just alter the sprite at slot 13?
         JNE RedrawCover
 
-        LDI r15, 4
-        STM r15, $E800
+        LDI r1, 4
         CALL FrameDelay
 
         ICMP r14, 1 ; did we press the UP key at all?
@@ -94,7 +94,7 @@ LowerCover:
         INPUT r13, r14
 
         SkipInput:
-            ICMP r1, 108 ; Did we fully uncover the logo?
+            ICMP r10, 108 ; Did we fully uncover the logo?
             JEQ FlashBeep
 
             JMP LowerCover
@@ -132,37 +132,32 @@ FlashBeep:
     PlaySound:
         SONG r2
 
-        LDI r15, 4
-        STM r15, $E800
+        LDI r1, 4
         CALL FrameDelay
 
         LDI r0, YELLOWS::YLW_DEF
         SWC r0, r0
 
-    LDI r15, 60
-    STM r15, $E800
+    LDI r1, 60
     CALL FrameDelay
 
     LDI r0, YELLOWS::YLW_DEF
     LDI r1, YELLOWS::YLW_DARK
     SWC r0, r1
 
-    LDI r15, 30
-    STM r15, $E800
+    LDI r1, 30
     CALL FrameDelay
 
     LDI r1, YELLOWS::YLW_DARKER
     SWC r0, r1
 
-    LDI r15, 30
-    STM r15, $E800
+    LDI r1, 30
     CALL FrameDelay
 
     LDI r0, 0
     ALT CLS 0
 
-    LDI r15, 60
-    STM r15, $E800
+    LDI r1, 60
     CALL FrameDelay
 
     JMP IsRomLoaded
@@ -228,8 +223,7 @@ InvalidCart:
     LDI r0, 0
     ALT STM r0, MAGICADDR::IS_CART_LOADED_ADDR ; Disregard the currently loaded cartridge
 
-    LDI r15, 120
-    STM r15, $E800
+    LDI r1, 120
     CALL FrameDelay
 
 
@@ -247,39 +241,34 @@ PleaseInsertCart:
         .STR 5, 12 "Please Insert Cartridge"
         LDI r0, YELLOWS::YLW_DEF
 
-        LDI r1, YELLOWS::YLW_DARKER
-        SWC r0, r1
-        LDI r15, 10
-        STM r15, $E800
+        LDI r2, YELLOWS::YLW_DARKER
+        SWC r0, r2
+        LDI r1, 10
         CALL FrameDelay
 
-        LDI r1, YELLOWS::YLW_DARK
-        SWC r0, r1
-        LDI r15, 10
-        STM r15, $E800
+        LDI r2, YELLOWS::YLW_DARK
+        SWC r0, r2
+        LDI r1, 10
         CALL FrameDelay
 
         LDI r0, YELLOWS::YLW_DEF ; gotta reset to 5 since IsRomLoaded overwrites it
         SWC r0, r0
-        LDI r15, 10
-        STM r15, $E800
+        LDI r1, 10
         CALL FrameDelay
 
-        SWC r0, r1
-        LDI r15, 10
-        STM r15, $E800
+        LDI r2, YELLOWS::YLW_DARK
+        SWC r0, r2
+        LDI r1, 10
         CALL FrameDelay
 
         LDI r1, YELLOWS::YLW_DARKER
         SWC r0, r1
-        LDI r15, 10
-        STM r15, $E800
+        LDI r1, 10
         CALL FrameDelay
 
-        LDI r1, 0
-        SWC r0, r1
-        LDI r15, 20
-        STM r15, $E800
+        LDI r2, 0
+        SWC r0, r2
+        LDI r1, 20
         CALL FrameDelay
 
     JMP IsRomLoaded
