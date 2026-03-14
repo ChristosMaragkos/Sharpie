@@ -129,7 +129,7 @@ public sealed partial class SharpieEmitter
             for (int i = 0; i < _tempInUse.Length; i++)
             {
                 if (_tempInUse[i])
-                    active.Add(TempRegisterStart + 1);
+                    active.Add(TempRegisterStart + i);
             }
             return active;
         }
