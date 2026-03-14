@@ -29,25 +29,23 @@ public sealed partial class SharpieEmitter
 
         foreach (var func in functions)
         {
+            var hasBody = GetChildren(func).Any(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
+            if (!hasBody)
+                continue; // skip prototypes entirely
+
             var funcName = func.Spelling.ToString();
             if (funcName.StartsWith("__sharpie_"))
                 throw new InvalidOperationException(
                     $"Cannot define function '{funcName}'. Identifiers beginning with '__sharpie_' are reserved for hardware intrinsics."
                 );
 
-            var body = GetChildren(func)
-                .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
-
-            if (body.Kind == CXCursorKind.CXCursor_NoDeclFound)
-                continue;
-
+            var body = GetChildren(func).First(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
             var localCount = CountLocals(func);
             var stackBytes = localCount * 2; // 2 bytes / variable
 
             // because I can't be bothered to make this a two-pass compiler,
             // we're just gonna have to emit the body, scan for variables that need to be spilled,
             // then stitch the prologue and epilogue after the fact.
-            // FIXME: This does not allow arguments on the stack. Once the ABI is complete, we need to move into spilling arguments 5+ as well as any args that we take the address of into the stack.
             var escapedVars = DetectEscapingVariables(func);
             var context = new EmissionContext(escapedVars);
             context.IsMain = (funcName == "main");
@@ -59,25 +57,26 @@ public sealed partial class SharpieEmitter
                 .ToList();
             for (var i = 0; i < parameters.Count; i++)
             {
-                if (i >= 4)
-                    throw new NotImplementedException(
-                        "TODO: Implement functions with 5+ arguments by shoving extra parameters into the stack"
-                    );
-
                 var paramName = parameters[i].Spelling.ToString();
                 var needsStack = context.EscapedVariables.Contains(paramName);
-
                 var space = context.AllocateStorage(paramName, needsStack);
 
-                if (space.Type == StorageType.Register)
+                if (i < 4)
                 {
-                    context.Emit($"MOV r{space.Value}, r{i + 1}");
+                    if (space.Type == StorageType.Register)
+                    {
+                        context.Emit($"MOV r{space.Value}, r{i + 1}");
+                    }
+                    else
+                    {
+                        using var offsetReg = context.AcquireTempRegister();
+                        context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
+                        context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+                    }
                 }
                 else
                 {
-                    using var offsetReg = context.AcquireTempRegister();
-                    context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
-                    context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+                    context.PendingStackArguments.Add((i, space));
                 }
             }
 

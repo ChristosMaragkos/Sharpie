@@ -257,11 +257,18 @@ public partial class SharpieEmitter
     {
         var node = PeelExpression(expr);
 
+        var eval = node.Evaluate;
+        if (eval.Kind == CXEvalResultKind.CXEval_Int)
+        {
+            context.Emit($"LDI r{targetReg}, {unchecked((ushort)eval.AsLongLong)}");
+            return;
+        }
+
         switch (node.Kind)
         {
-            case CXCursorKind.CXCursor_IntegerLiteral:
-                context.Emit($"LDI r{targetReg}, {unchecked((ushort)GetLiteralValue(node))}");
-                return;
+            // case CXCursorKind.CXCursor_IntegerLiteral:
+            //     context.Emit($"LDI r{targetReg}, {unchecked((ushort)GetLiteralValue(node))}");
+            //     return;
 
             case CXCursorKind.CXCursor_CallExpr:
                 EmitCallExpression(node, targetReg, context);
@@ -296,6 +303,8 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_BinaryOperator:
                 EmitBinaryExpression(node, targetReg, context);
                 return;
+
+            // case CXCursorKind
         }
 
         throw new InvalidOperationException($"Unsupported expression kind: {node.Kind}");
@@ -514,7 +523,7 @@ public partial class SharpieEmitter
                 _ => throw new InvalidOperationException($"Unsupported binary operator: {kind}"),
             };
 
-            context.Emit($"{op} r{targetReg}, r{rhsScratch.Value}");
+            context.Emit($"{op} r{lhsScratch.Value}, r{rhsScratch.Value}");
         }
 
         if (targetReg >= 0 && targetReg != lhsScratch.Value)
@@ -616,51 +625,59 @@ public partial class SharpieEmitter
         var children = GetChildren(callExpr);
         var funcName = children[0].Spelling.ToString();
 
+        // identify which temporary registers are in use to protect them
         var tempsToProtect = context.GetActiveTempRegisters();
-
-        var argLeases = new List<EmissionContext.TempLease>();
-        for (int i = 1; i < children.Count; i++)
-        {
-            if (i > 4)
-                throw new NotImplementedException("TODO: Implement pushing args 5+ to the stack.");
-
-            var argLease = context.AcquireTempRegister();
-            EmitExpression(children[i], argLease.Value, context);
-            argLeases.Add(argLease);
-        }
-
         foreach (var reg in tempsToProtect)
-        {
             context.Emit($"PUSH r{reg}");
+
+        // if we have 5+ args push to the stack
+        for (int i = children.Count - 1; i >= 5; i--)
+        {
+            using (var argLease = context.AcquireTempRegister())
+            {
+                EmitExpression(children[i], argLease.Value, context);
+                context.Emit($"PUSH r{argLease.Value}");
+            } // Leases are disposed at this boundary, r1 is free for the next argument
         }
 
-        for (var i = 0; i < argLeases.Count; i++)
+        // handle args 1-4 by shoving them into registers. TODO: Refactor this once I implement structs.
+        var regArgLeases = new List<EmissionContext.TempLease>();
+        int numRegArgs = Math.Min(children.Count - 1, 4);
+
+        for (int i = 1; i <= numRegArgs; i++)
         {
-            if ((i + 1) != argLeases[i].Value)
-                context.Emit($"MOV r{i + 1}, r{argLeases[i].Value}");
+            var lease = context.AcquireTempRegister();
+            EmitExpression(children[i], lease.Value, context);
+            regArgLeases.Add(lease);
+        }
+
+        for (int i = 0; i < regArgLeases.Count; i++)
+        {
+            int targetRegIdx = i + 1;
+            if (targetRegIdx != regArgLeases[i].Value)
+                context.Emit($"MOV r{targetRegIdx}, r{regArgLeases[i].Value}");
         }
 
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
             context.Emit($"CALL {funcName}");
 
-            if (targetReg > 0)
-                context.Emit($"MOV r{targetReg}, r0");
+            // Cleanup the stack if we pushed excess args. TODO: Merge this with SYS_FREE_STACKFRAME of callee
+            int excessArgs = (children.Count - 1) - 4;
+            if (excessArgs > 0)
+            {
+                context.Emit($"LDI r1, {excessArgs * 2}");
+                context.Emit("CALL SYS_FREE_STACKFRAME");
+            }
         }
 
-        for (var i = tempsToProtect.Count - 1; i >= 0; i--)
-        {
+        for (int i = tempsToProtect.Count - 1; i >= 0; i--)
             context.Emit($"POP r{tempsToProtect[i]}");
-        }
 
         if (targetReg > 0)
-        {
-            context.Emit($"MOV r{targetReg}, r0"); // MOV r0, r0 is redundant
-        }
+            context.Emit($"MOV r{targetReg}, r0");
 
-        foreach (var lease in argLeases)
-        {
+        foreach (var lease in regArgLeases)
             lease.Dispose();
-        }
     }
 }

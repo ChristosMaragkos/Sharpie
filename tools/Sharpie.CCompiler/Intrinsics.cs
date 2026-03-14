@@ -18,10 +18,6 @@ public partial class SharpieEmitter
         if (biosAliases.TryGetValue(funcName, out var syscall))
         {
             context.Emit($"CALL {syscall}");
-
-            if (targetReg > 0)
-                context.Emit($"MOV r{targetReg}, r0");
-
             return true;
         }
 

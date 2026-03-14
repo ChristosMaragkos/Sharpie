@@ -25,6 +25,8 @@ public sealed partial class SharpieEmitter
     {
         private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
 
+        public List<(int ArgIndex, StorageLocation Target)> PendingStackArguments { get; } = new();
+
         public int TotalStackBytes { get; private set; }
         private int _currentStackOffset = 0;
         private int _nextLocalRegister = LocalRegisterStart;
@@ -89,6 +91,31 @@ public sealed partial class SharpieEmitter
             {
                 yield return $"LDI r1, {TotalStackBytes}";
                 yield return "CALL SYS_ALLOC_STACKFRAME";
+            }
+
+            foreach (var pending in PendingStackArguments)
+            {
+                // Calculate absolute offset of the argument relative to current SP
+                // Offset = Locals Size + Preserved Regs Size + Return Addr(2) + Argument Position
+                int argOffset =
+                    TotalStackBytes
+                    + (UsedPreservedRegisters.Count * 2)
+                    + 2
+                    + ((pending.ArgIndex - 4) * 2);
+
+                yield return $"LDI r6, {argOffset}";
+                yield return "LDS r7, r6";
+
+                // Store it into its permanent local home
+                if (pending.Target.Type == StorageType.Register)
+                {
+                    yield return $"MOV r{pending.Target.Value}, r7";
+                }
+                else
+                {
+                    yield return $"LDI r6, {pending.Target.Value}";
+                    yield return $"STS r7, r6";
+                }
             }
         }
 
