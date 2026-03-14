@@ -322,7 +322,7 @@ FreeFrame:
 ; Sets (R3) bytes starting at address (R1) to the value (R2).
 MemSet:
 .SCOPE
-    ICMP r2, 0
+    ICMP r3, 0
     JEQ Return
 
     Loop:
