@@ -80,18 +80,6 @@ public partial class SharpieEmitter
 
     private static void EmitVariableDeclaration(CXCursor varDecl, EmissionContext context)
     {
-        var typeKind = varDecl.Type.kind;
-        var isSupported =
-            typeKind
-            is CXTypeKind.CXType_Int
-                or CXTypeKind.CXType_UInt
-                or CXTypeKind.CXType_Pointer;
-
-        if (!isSupported)
-            throw new InvalidOperationException(
-                $"Type `{varDecl.Type.Spelling}` is not supported for local variables in this MVP."
-            );
-
         var variableName = varDecl.Spelling.ToString();
         if (string.IsNullOrWhiteSpace(variableName))
             throw new InvalidOperationException("Encountered unnamed local variable.");
@@ -99,16 +87,39 @@ public partial class SharpieEmitter
         if (context.Locals.ContainsKey(variableName))
             throw new InvalidOperationException($"Duplicate local variable `{variableName}`.");
 
-        var needsStack = context.EscapedVariables.Contains(variableName);
-        var space = context.AllocateStorage(variableName, needsStack);
+        var typeKind = varDecl.Type.CanonicalType.kind;
+        bool isRecord = typeKind == CXTypeKind.CXType_Record; // CanonicalType safely resolves typedefs
+        long sizeBytes = varDecl.Type.SizeOf;
 
-        var initExpr = GetChildren(varDecl).FirstOrDefault();
+        if (sizeBytes < 0)
+            throw new InvalidOperationException($"Cannot determine size for `{varDecl.Spelling}`.");
+
+        var needsStack = isRecord || context.EscapedVariables.Contains(variableName);
+        var space = context.AllocateStorage(variableName, needsStack, (int)sizeBytes);
+
+        var initExprs = GetChildren(varDecl)
+            .Where(c =>
+                c.Kind >= CXCursorKind.CXCursor_FirstExpr
+                && c.Kind <= CXCursorKind.CXCursor_LastExpr
+            )
+            .ToList();
+        // If it's a struct, we don't support inline initialization like {1, 2} yet.
+        // The memory is already allocated on the stack, so we just return
+        if (isRecord)
+        {
+            if (initExprs.Count > 0)
+                throw new InvalidOperationException(
+                    "Inline struct initialization is not supported in this MVP."
+                );
+            return;
+        }
+
         using var valReg = context.AcquireTempRegister();
 
-        if (initExpr.Kind is CXCursorKind.CXCursor_NoDeclFound)
+        if (initExprs.Count == 0)
             context.Emit($"LDI r{valReg.Value}, 0");
         else
-            EmitExpression(initExpr, valReg.Value, context);
+            EmitExpression(initExprs[0], valReg.Value, context);
 
         if (space.Type == StorageType.Register)
         {
@@ -131,52 +142,34 @@ public partial class SharpieEmitter
         var lhs = PeelExpression(children[0]);
         var rhs = PeelExpression(children[1]);
 
-        // Handle *ptr = value
-        if (
-            lhs.Kind == CXCursorKind.CXCursor_UnaryOperator
-            && GetUnaryOperatorKind(lhs) == CXUnaryOperatorKind.CXUnaryOperator_Deref
-        )
+        // Fast Path: Direct local variable in a register (r8-r15)
+        if (lhs.Kind == CXCursorKind.CXCursor_DeclRefExpr)
         {
-            using var valReg = context.AcquireTempRegister();
-            using var addrReg = context.AcquireTempRegister();
+            var variableName = lhs.Spelling.ToString();
+            if (
+                context.Locals.TryGetValue(variableName, out var loc)
+                && loc.Type == StorageType.Register
+            )
+            {
+                if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
+                    EmitCompoundAssignment(assignmentCursor, loc, rhs, context);
+                else
+                    EmitExpression(rhs, loc.Value, context);
 
-            EmitExpression(rhs, valReg.Value, context);
-
-            var ptrOperand = GetChildren(lhs).FirstOrDefault();
-            EmitExpression(ptrOperand, addrReg.Value, context);
-
-            context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
-            return;
+                return;
+            }
         }
 
-        if (lhs.Kind != CXCursorKind.CXCursor_DeclRefExpr)
-            throw new InvalidOperationException(
-                "Only assignments to local variables are supported."
-            );
+        // Standard Path: Memory Assignment (Stack variables, pointers, or struct members)
+        // Evaluate the RHS value first
+        using var valReg = context.AcquireTempRegister();
+        EmitExpression(rhs, valReg.Value, context);
 
-        var variableName = lhs.Spelling.ToString();
-        if (!context.Locals.TryGetValue(variableName, out var allocatedSpace))
-            throw new InvalidOperationException($"Unknown local variable `{variableName}`.");
+        // Calculate the exact memory address of the LHS
+        using var addrReg = context.AcquireTempRegister();
+        EmitLValueAddress(lhs, addrReg.Value, context);
 
-        if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
-        {
-            EmitCompoundAssignment(assignmentCursor, allocatedSpace, rhs, context);
-            return;
-        }
-
-        if (allocatedSpace.Type == StorageType.Stack)
-        {
-            using var rhsReg = context.AcquireTempRegister();
-            EmitExpression(rhs, rhsReg.Value, context);
-
-            using var offsetReg = context.AcquireTempRegister();
-            context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
-            context.Emit($"STS r{rhsReg.Value}, r{offsetReg.Value}");
-        }
-        else
-        {
-            EmitExpression(rhs, allocatedSpace.Value, context);
-        }
+        context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
     }
 
     private static void EmitCompoundAssignment(
@@ -266,10 +259,6 @@ public partial class SharpieEmitter
 
         switch (node.Kind)
         {
-            // case CXCursorKind.CXCursor_IntegerLiteral:
-            //     context.Emit($"LDI r{targetReg}, {unchecked((ushort)GetLiteralValue(node))}");
-            //     return;
-
             case CXCursorKind.CXCursor_CallExpr:
                 EmitCallExpression(node, targetReg, context);
                 return;
@@ -304,7 +293,14 @@ public partial class SharpieEmitter
                 EmitBinaryExpression(node, targetReg, context);
                 return;
 
-            // case CXCursorKind
+            case CXCursorKind.CXCursor_MemberRefExpr:
+                if (targetReg >= 0)
+                {
+                    using var addrReg = context.AcquireTempRegister();
+                    EmitLValueAddress(node, addrReg.Value, context);
+                    context.Emit($"LDP r{targetReg}, r{addrReg.Value}");
+                }
+                return;
         }
 
         throw new InvalidOperationException($"Unsupported expression kind: {node.Kind}");
@@ -344,26 +340,7 @@ public partial class SharpieEmitter
                 return;
 
             case CXUnaryOperatorKind.CXUnaryOperator_AddrOf:
-                var varName = peeled.Spelling.ToString();
-                if (!context.Locals.TryGetValue(varName, out var allocated))
-                    throw new InvalidOperationException(
-                        $"Unknown variable `{varName}` for address-of."
-                    );
-
-                if (allocated.Type == StorageType.Register)
-                    throw new InvalidOperationException(
-                        $"Cannot take the address of register-allocated '{varName}'"
-                    );
-
-                context.Emit($"GETSP r{targetReg}");
-
-                var remainingOffset = allocated.Value;
-                while (remainingOffset > 0)
-                {
-                    var chunk = Math.Min(remainingOffset, 255);
-                    context.Emit($"IADD r{targetReg}, {chunk}");
-                    remainingOffset -= chunk;
-                }
+                EmitLValueAddress(peeled, targetReg, context);
                 return;
 
             case CXUnaryOperatorKind.CXUnaryOperator_Deref:
@@ -640,7 +617,6 @@ public partial class SharpieEmitter
             } // Leases are disposed at this boundary, r1 is free for the next argument
         }
 
-        // handle args 1-4 by shoving them into registers. TODO: Refactor this once I implement structs.
         var regArgLeases = new List<EmissionContext.TempLease>();
         int numRegArgs = Math.Min(children.Count - 1, 4);
 
@@ -679,5 +655,74 @@ public partial class SharpieEmitter
 
         foreach (var lease in regArgLeases)
             lease.Dispose();
+    }
+
+    private static void EmitLValueAddress(CXCursor lvalue, int targetReg, EmissionContext context)
+    {
+        var peeled = PeelExpression(lvalue);
+
+        // stack variable
+        if (peeled.Kind == CXCursorKind.CXCursor_DeclRefExpr)
+        {
+            var name = peeled.Spelling.ToString();
+            var loc = context.Locals[name];
+
+            if (loc.Type == StorageType.Register)
+                throw new InvalidOperationException(
+                    $"Cannot take address of register-allocated '{name}'"
+                );
+
+            context.Emit($"GETSP r{targetReg}");
+            AccumulateOffset(targetReg, loc.Value, context);
+        }
+        // pointer
+        else if (
+            peeled.Kind == CXCursorKind.CXCursor_UnaryOperator
+            && GetUnaryOperatorKind(peeled) == CXUnaryOperatorKind.CXUnaryOperator_Deref
+        )
+        {
+            var ptrExpr = GetChildren(peeled).First();
+            EmitExpression(ptrExpr, targetReg, context);
+        }
+        // struct member
+        else if (peeled.Kind == CXCursorKind.CXCursor_MemberRefExpr)
+        {
+            var baseExpr = GetChildren(peeled).First();
+            bool isPointer = baseExpr.Type.CanonicalType.kind == CXTypeKind.CXType_Pointer;
+
+            // Get the base address (either by dereferencing the pointer, or finding the stack struct)
+            if (isPointer)
+                EmitExpression(baseExpr, targetReg, context);
+            else
+                EmitLValueAddress(baseExpr, targetReg, context);
+
+            var fieldDecl = clang.getCursorReferenced(peeled);
+
+            long offsetBits = clang.Cursor_getOffsetOfField(fieldDecl);
+            if (offsetBits < 0)
+                throw new InvalidOperationException(
+                    $"Could not determine offset for struct field '{peeled.Spelling}'"
+                );
+
+            // Clang gives us the offset in bits, so we divide by 8 to get bytes
+            long offsetBytes = offsetBits / 8;
+            AccumulateOffset(targetReg, (int)offsetBytes, context);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Cannot compute memory address for expression kind: {peeled.Kind}"
+            );
+        }
+    }
+
+    private static void AccumulateOffset(int targetReg, int offset, EmissionContext context)
+    {
+        while (offset > 0)
+        {
+            var chunk = Math.Min(offset, 255);
+            context.Emit($"IADD r{targetReg}, {chunk}");
+            offset -= chunk;
+        }
     }
 }

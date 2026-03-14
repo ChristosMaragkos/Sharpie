@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: Intrinsics for syscalls, functions with >=5 parameters (by using the stack), structs, unions, function pointers, jump tables.
+// TODO: structs, unions, function pointers, jump tables, booleans, chars, arrays.
 // In no particular order.
 public sealed partial class SharpieEmitter
 {
@@ -40,8 +40,6 @@ public sealed partial class SharpieEmitter
                 );
 
             var body = GetChildren(func).First(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
-            var localCount = CountLocals(func);
-            var stackBytes = localCount * 2; // 2 bytes / variable
 
             // because I can't be bothered to make this a two-pass compiler,
             // we're just gonna have to emit the body, scan for variables that need to be spilled,
@@ -57,10 +55,18 @@ public sealed partial class SharpieEmitter
                 .ToList();
             for (var i = 0; i < parameters.Count; i++)
             {
-                var paramName = parameters[i].Spelling.ToString();
-                var needsStack = context.EscapedVariables.Contains(paramName);
-                var space = context.AllocateStorage(paramName, needsStack);
+                var paramDecl = parameters[i];
+                var paramName = paramDecl.Spelling.ToString();
 
+                var typeKind = paramDecl.Type.CanonicalType.kind;
+                bool isRecord = typeKind == CXTypeKind.CXType_Record;
+                long sizeBytes = paramDecl.Type.SizeOf;
+
+                if (sizeBytes < 0)
+                    sizeBytes = 2; // Fallback for void*/unresolved
+
+                var needsStack = isRecord || context.EscapedVariables.Contains(paramName);
+                var space = context.AllocateStorage(paramName, needsStack, (int)sizeBytes);
                 if (i < 4)
                 {
                     if (space.Type == StorageType.Register)
