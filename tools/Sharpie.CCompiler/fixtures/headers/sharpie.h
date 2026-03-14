@@ -44,6 +44,7 @@ int __sharpie_oam_tag(int oam_idx);
 int __sharpie_get_oam(void);
 void __sharpie_set_oam(int cursor);
 void __sharpie_play_note(AudioChannel channel, int note, int instr);
+void __sharpie_play_song(void *address);
 void __sharpie_stop(int channel);
 void __sharpie_mute(void);
 void __sharpie_hard_mute(void);
@@ -71,5 +72,6 @@ void __sharpie_halt(void);
 #define move_camera(dx, dy) __sharpie_cam(dx, dy)
 #define get_input(controller) __sharpie_input(controller)
 #define check_collision(idx) __sharpie_col(idx)
-#define play_note(ch, note, i) __sharpie_play(ch, note, i)
+#define play_note(ch, note, i) __sharpie_play_note(ch, note, i)
+#define play_song(addr) __sharpie_play_song(addr)
 #define halt() __sharpie_halt()

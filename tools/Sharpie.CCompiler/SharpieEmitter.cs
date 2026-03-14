@@ -30,6 +30,11 @@ public sealed partial class SharpieEmitter
         foreach (var func in functions)
         {
             var funcName = func.Spelling.ToString();
+            if (funcName.StartsWith("__sharpie_"))
+                throw new InvalidOperationException(
+                    $"Cannot define function '{funcName}'. Identifiers beginning with '__sharpie_' are reserved for hardware intrinsics."
+                );
+
             var body = GetChildren(func)
                 .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
 

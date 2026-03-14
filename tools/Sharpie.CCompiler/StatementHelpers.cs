@@ -640,7 +640,13 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r{i + 1}, r{argLeases[i].Value}");
         }
 
-        context.Emit($"CALL {funcName}");
+        if (!TryEmitIntrinsic(funcName, targetReg, context))
+        {
+            context.Emit($"CALL {funcName}");
+
+            if (targetReg > 0)
+                context.Emit($"MOV r{targetReg}, r0");
+        }
 
         for (var i = tempsToProtect.Count - 1; i >= 0; i--)
         {
