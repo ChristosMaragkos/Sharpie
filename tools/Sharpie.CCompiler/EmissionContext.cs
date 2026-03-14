@@ -87,7 +87,7 @@ public sealed partial class SharpieEmitter
 
             if (TotalStackBytes > 0)
             {
-                yield return $"LDI r0, {TotalStackBytes}";
+                yield return $"LDI r1, {TotalStackBytes}";
                 yield return "CALL SYS_ALLOC_STACKFRAME";
             }
         }
@@ -96,7 +96,7 @@ public sealed partial class SharpieEmitter
         {
             if (TotalStackBytes > 0)
             {
-                yield return $"LDI r0, {TotalStackBytes}";
+                yield return $"LDI r1, {TotalStackBytes}";
                 yield return "CALL SYS_FREE_STACKFRAME";
             }
 

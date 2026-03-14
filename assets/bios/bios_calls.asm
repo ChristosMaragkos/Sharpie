@@ -262,31 +262,32 @@ ResetPalette:
 ; Address: 0xFAF4
 ;
 ; Parameters:
-; byte amount (expected in r0)
+; byte amount (expected in r1)
 ;
 ; This subroutine simply allocates N bytes in the stack. It is only meant to be used by C compilers to streamline creating a stack frame.
 ; After completing the allocation, r0 contains the final address of the stack pointer, effectively returning a pointer to the allocated space.
 ; If you do use this in assembly, note that the space allocated is left uninitialized (and, being stack space, it contains garbgage).
 ;
 ; This subroutine overwrites these registers:
-; - R0
 ; - R1
+; - R2
 Alloca:
 .SCOPE
-    ICMP r0, 0
-    JEQ End
-    POP r1
+    ICMP r1, 0
+    JEQ Return
+    POP r2
 
     Loop:
-        ALT PUSH r0 ; ALT PUSH to allocate one byte per instruction
-        DEC r0
+        ALT PUSH r1 ; ALT PUSH to allocate one byte per instruction
+        DEC r1
         JGT Loop
  
-    PUSH r1
-    End:
+    PUSH r2
+    Return:
         GETSP r0
         IADD r0, 2
         RET
+
 .ENDSCOPE
 
 ; SYS_FREE_STACKFRAME
@@ -294,7 +295,7 @@ Alloca:
 ; Address:
 ;
 ; Parameters:
-; byte amount (expected in r0)
+; byte amount (expected in r1)
 ;
 ; The opposite to SYS_ALLOC_STACKFRAME. This subroutine simply frees N bytes from the stack and returns nothing.
 ;
@@ -304,17 +305,17 @@ Alloca:
 ; - R2
 FreeFrame:
 .SCOPE
-    ICMP r0, 0
-    JEQ End
-    POP r1
+    ICMP r1, 0
+    JEQ Return
+    POP r2
 
     Loop:
-        ALT POP r2
-        DEC r0
+        ALT POP r3
+        DEC r1
         JGT Loop
 
-    PUSH r1
-    End:
+    PUSH r2
+    Return:
         RET
 .ENDSCOPE
 
