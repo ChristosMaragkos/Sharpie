@@ -10,17 +10,17 @@ factorial:
     RET
     else_L1:
     MOV r1, r8
+    PUSH r1
+    PUSH r2
     MOV r4, r8
     ISUB r4, 1
     MOV r3, r4
-    PUSH r2
-    PUSH r2
     MOV r1, r3
     CALL factorial
     POP r2
-    POP r2
+    POP r1
     MOV r2, r0
-    MUL r0, r2
+    MUL r1, r2
     MOV r0, r1
     POP r8
     RET

@@ -3,7 +3,7 @@ Main:
     PUSH r8
     PUSH r9
     PUSH r10
-    LDI r0, 2
+    LDI r1, 2
     CALL SYS_ALLOC_STACKFRAME
     LDI r1, 500
     LDI r2, 0
@@ -19,7 +19,7 @@ Main:
     LDP r1, r1
     MOV r10, r1
     MOV r0, r10
-    LDI r0, 2
+    LDI r1, 2
     CALL SYS_FREE_STACKFRAME
     POP r10
     POP r9

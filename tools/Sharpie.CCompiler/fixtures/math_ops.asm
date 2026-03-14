@@ -9,7 +9,8 @@ Main:
     MOV r1, r9
     ADD r8, r1
     ISUB r8, 1
-    IMUL r8, 2
+    LDI r1, 2
+    MUL r8, r1
     IDIV r8, 3
     IMOD r8, 4
     MOV r1, r8
@@ -23,11 +24,11 @@ Main:
     MOV r8, r1
     MOV r1, r8
     LDI r2, 1
-    SHL r8, r2
+    SHL r1, r2
     MOV r8, r1
     MOV r1, r8
     LDI r2, 2
-    SHR r8, r2
+    SHR r1, r2
     MOV r8, r1
     MOV r0, r8
     NEG r0
