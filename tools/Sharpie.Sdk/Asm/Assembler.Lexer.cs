@@ -483,7 +483,7 @@ public partial class Assembler
             TokenLine tl = new()
             {
                 Opcode = "TEXT",
-                Args = new[] { TextHelper.AsciiToGlyphIndex(c).ToString() },
+                Args = new[] { TextHelper.AsciiToByte(c).ToString() },
                 SourceLine = lineNumber,
                 Address = CurrentRegion!.Cursor,
             };
@@ -565,12 +565,60 @@ public partial class Assembler
         line = line.Substring(labelRegex.Index + labelRegex.Length).Trim();
     }
 
-    private void Tokenize(string line, string originalLine, ref TokenLine tokenLine, int lineNumber)
+    private static string[] SplitArgsPreservingQuotedLiterals(string line, int lineNumber)
     {
-        var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        var tokens = new List<string>();
+        var tokenStart = -1;
+        char activeQuote = '\0';
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var ch = line[i];
+
+            if (activeQuote != '\0')
+            {
+                if (ch == activeQuote)
+                    activeQuote = '\0';
+                continue;
+            }
+
+            if (ch == '\'' || ch == '"')
+            {
+                if (tokenStart < 0)
+                    tokenStart = i;
+                activeQuote = ch;
+                continue;
+            }
+
+            if (ch == ',' || char.IsWhiteSpace(ch))
+            {
+                if (tokenStart >= 0)
+                {
+                    tokens.Add(line.Substring(tokenStart, i - tokenStart));
+                    tokenStart = -1;
+                }
+                continue;
+            }
+
+            if (tokenStart < 0)
+                tokenStart = i;
+        }
+
+        if (activeQuote != '\0')
+            throw new AssemblySyntaxException("Unterminated quoted literal", lineNumber);
+
+        if (tokenStart >= 0)
+            tokens.Add(line.Substring(tokenStart));
+
+        return tokens
             .Select(str => str.Trim(CommonDelimiters))
             .Where(str => !string.IsNullOrWhiteSpace(str))
             .ToArray();
+    }
+
+    private void Tokenize(string line, string originalLine, ref TokenLine tokenLine, int lineNumber)
+    {
+        var args = SplitArgsPreservingQuotedLiterals(line, lineNumber);
 
         tokenLine.Opcode = args[0];
         tokenLine.Args = args.Skip(1).ToArray();
@@ -642,7 +690,7 @@ public partial class Assembler
                     tokenLine.Address = CurrentRegion?.Cursor;
                     // Reparse args from the original (mixed-case) line so that:
                     //   1. Quoted string literals are kept as a single token.
-                    //   2. Case inside strings is preserved for AsciiToGlyphIndex.
+                    //   2. Case inside strings is preserved for raw ASCII emission.
                     tokenLine.Args = ParseDbArgs(originalLine, lineNumber);
                     var byteCount = CountDbBytes(originalLine, lineNumber);
                     CurrentRegion!.AdvanceCursor(byteCount);

@@ -188,7 +188,7 @@ public partial class Assembler
         var isChar = arg.StartsWith('\'') && arg.EndsWith('\'');
         if (isChar)
             return arg.Length == 3
-                ? TextHelper.GetFontIndex(arg[1])
+                ? TextHelper.AsciiToByte(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
         if (TryResolveConstant(arg, out var val))
@@ -212,7 +212,7 @@ public partial class Assembler
         var isChar = arg.StartsWith('\'') && arg.EndsWith('\'');
         if (isChar)
             return arg.Length == 3
-                ? TextHelper.GetFontIndex(arg[1])
+                ? TextHelper.AsciiToByte(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
         if (TryResolveConstant(arg, out var val))
@@ -251,7 +251,7 @@ public partial class Assembler
             if (arg.Length != 3)
                 throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
-            var charVal = TextHelper.GetFontIndex(arg[1]);
+            var charVal = TextHelper.AsciiToByte(arg[1]);
             if (charVal < 0 || charVal >= 16)
                 throw new AssemblySyntaxException(
                     $"Register index {arg} ({charVal}) is not valid - must be 0-15",

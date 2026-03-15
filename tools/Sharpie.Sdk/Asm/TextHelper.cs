@@ -26,6 +26,17 @@ public static class TextHelper
     //   56    : SPACE
 
     /// <summary>
+    /// Encodes a character as a single-byte ASCII value.
+    /// Non-ASCII input falls back to '?'.
+    /// </summary>
+    public static byte AsciiToByte(char c) => c <= 0x7F ? (byte)c : (byte)'?';
+
+    /// <summary>
+    /// Decodes a byte to ASCII, replacing non-ASCII bytes with '?'.
+    /// </summary>
+    public static char ByteToAscii(byte value) => value <= 0x7F ? (char)value : '?';
+
+    /// <summary>
     /// Maps an ASCII (or Unicode) character to a 1-byte Sharpie glyph index.
     /// Lowercase letters are folded to their uppercase equivalents.
     /// Unrecognized characters produce the '?' glyph (index 39).

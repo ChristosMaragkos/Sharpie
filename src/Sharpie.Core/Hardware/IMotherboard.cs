@@ -545,8 +545,51 @@ internal interface IMotherboard
     }
 
     /// <summary>
+    /// Maps an ASCII byte to a Sharpie glyph index for rendering.
+    /// Lowercase letters are folded to uppercase; unsupported bytes map to '?'.
+    /// </summary>
+    internal static byte AsciiToGlyphIndex(byte ascii)
+    {
+        var c = ascii <= 0x7F ? (char)ascii : '?';
+
+        if (c >= 'a' && c <= 'z')
+            c = (char)(c - 32);
+
+        if (c >= 'A' && c <= 'Z')
+            return (byte)(c - 'A');
+        if (c >= '0' && c <= '9')
+            return (byte)(c - '0' + 26);
+
+        return c switch
+        {
+            '.' => 36,
+            ',' => 37,
+            '!' => 38,
+            '?' => 39,
+            '[' => 40,
+            ']' => 41,
+            '(' => 42,
+            ')' => 43,
+            '^' => 44,
+            'V' => 45,
+            '<' => 46,
+            '>' => 47,
+            '/' => 48,
+            '-' => 49,
+            '+' => 50,
+            '=' => 51,
+            '%' => 52,
+            '"' or '\'' => 53,
+            ';' => 54,
+            ':' => 55,
+            ' ' => 56,
+            _ => 39,
+        };
+    }
+
+    /// <summary>
     /// Maps a 1-byte Sharpie glyph index back to its representative ASCII character.
-    /// Glyph indices 0-25 → uppercase A-Z, 26-35 → digits 0-9, etc.
+    /// Glyph indices 0-25 -> uppercase A-Z, 26-35 -> digits 0-9, etc.
     /// Unknown / out-of-range indices return '?'.
     /// </summary>
     internal static char GlyphIndexToAscii(byte index) =>

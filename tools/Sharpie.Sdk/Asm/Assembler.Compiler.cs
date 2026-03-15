@@ -104,11 +104,11 @@ public partial class Assembler
                             var arg = token.Args[i];
                             if (arg.StartsWith('"') && arg.EndsWith('"') && arg.Length >= 2)
                             {
-                                // Quoted ASCII string literal — expand each char to a glyph index.
+                                // Quoted string literal emits raw ASCII bytes.
                                 var str = arg.Substring(1, arg.Length - 2);
                                 foreach (char c in str)
                                 {
-                                    WriteToRom(TextHelper.AsciiToGlyphIndex(c), buffer, offset);
+                                    WriteToRom(TextHelper.AsciiToByte(c), buffer, offset);
                                     offset++;
                                 }
                             }

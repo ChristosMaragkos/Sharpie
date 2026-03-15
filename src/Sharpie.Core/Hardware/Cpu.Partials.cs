@@ -633,8 +633,9 @@ internal partial class Cpu
     {
         var x = CursorPosX;
         var y = CursorPosY;
-        var charCode = _mobo.ReadByte(_pc + 1);
-        _mobo.DrawChar(x, y, charCode);
+        var ascii = _mobo.ReadByte(_pc + 1);
+        var glyph = IMotherboard.AsciiToGlyphIndex(ascii);
+        _mobo.DrawChar(x, y, glyph);
 
         CursorPosX++;
     }
@@ -643,9 +644,10 @@ internal partial class Cpu
     {
         var x = CursorPosX;
         var y = CursorPosY;
-        var charCode = GetRegister(_mobo.ReadByte(_pc + 1) & 0xF);
+        var ascii = (byte)GetRegister(_mobo.ReadByte(_pc + 1) & 0xF);
+        var glyph = IMotherboard.AsciiToGlyphIndex(ascii);
 
-        _mobo.DrawChar(x, y, (byte)charCode);
+        _mobo.DrawChar(x, y, glyph);
 
         CursorPosX++;
     }

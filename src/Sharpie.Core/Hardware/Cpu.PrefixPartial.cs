@@ -364,11 +364,10 @@ internal partial class Cpu
                 pcDelta = 2;
                 var x = _mobo.ReadByte(_pc + 1) & 0x0F; // truncate to register index since we tokenize it as a byte
                 var digits = GetRegister(x).ToString();
-                const int FontZeroIndex = 26 - '0'; // this is the first number's index in the Sharpie font
                 foreach (var c in digits)
                 {
-                    var fontIndex = (byte)(c + FontZeroIndex);
-                    _mobo.DrawChar(CursorPosX, CursorPosY, fontIndex);
+                    var glyph = IMotherboard.AsciiToGlyphIndex((byte)c);
+                    _mobo.DrawChar(CursorPosX, CursorPosY, glyph);
                     CursorPosX++;
                 }
 
