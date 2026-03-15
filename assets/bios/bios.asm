@@ -372,59 +372,59 @@ Crash:
     .STR 1, 12 "Please restart"
     HALT
 
+; Strings are emitted as ASCII bytes so NUL terminators can be compared with zero reliably.
 SyscallPrint:
-    CALL ResetPalette
-    ATTR 1
-    .STR 0, 0 "BIOS CALL ADDRESSES"
     SETCRS 0, 0
+    CALL ResetPalette
 
-    LDI r0, LutRead
-    CALL PrintAddr
+    LDI r1, NameTable
+    LDI r3, 0
 
-    LDI r0, Stackalloc
-    CALL PrintAddr
+    PrintLoop:
+        ALT LDP r2, r1
 
-    LDI r0, FrameDelay
-    CALL PrintAddr
+        ICMP r2, 0
+        JEQ NextString
 
-    LDI r0, LutWrite
-    CALL PrintAddr
+        PRNT r2
+        INC r3
+        INC r1
+        JMP PrintLoop
 
-    LDI r0, LutGetPtr
-    CALL PrintAddr
+    NextString:
+        ISUB r3, 32
+        NEG r3
 
-    LDI r0, MemCopy
-    CALL PrintAddr
+        NewlineLoop:
+            ALT SETCRS 1, 0
 
-    LDI r0, ResetPalette
-    CALL PrintAddr
+            DEC r3
+            JGT NewlineLoop
 
-    LDI r0, Alloca
-    CALL PrintAddr
+            ALT SETCRS 0, 1
+            LDI r3, 0
 
-    LDI r0, FreeFrame
-    CALL PrintAddr
+        INC r1
 
-    LDI r0, MemSet
-    CALL PrintAddr
+        ALT LDP r2, r1
 
-    LDI r0, MemCmp
-    CALL PrintAddr ; Line 22
+        ICMP r2, 0
+        JNE PrintLoop
 
-    .SCOPE
-    LDI r1, 0
-    Loop:
-        VBLNK
-        INPUT r1, r0
+Done:
+    HALT
 
-        ICMP r0, 192
-        JEQ Reset
-        JMP Loop
-    .ENDSCOPE
+NameTable:
+    .DB "IDXREAD:", 0
+    .DB "STACKALLOC:", 0
+    .DB "FRAMEDELAY:", 0
+    .DB "IDXWRITE:", 0
+    .DB "IDXADDROF:", 0
+    .DB "MEMCPY:", 0
+    .DB "RESETPAL:", 0
+    .DB "ALLOCA:", 0
+    .DB "DEALLOCA:", 0
+    .DB "MEMSET:", 0
+    .DB "MEMCMP:", 0
 
-    PrintAddr:
-        LDI r1, 10
-        CALL FrameDelay
-        ALT SETCRS -5, 2
-        ALT TEXT r0
-        RET
+    .DB 0
