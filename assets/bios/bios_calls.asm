@@ -269,20 +269,22 @@ ResetPalette:
 ; If you do use this in assembly, note that the space allocated is left uninitialized (and, being stack space, it contains garbgage).
 ;
 ; This subroutine overwrites these registers:
+; - R0
 ; - R1
 ; - R2
 Alloca:
 .SCOPE
     ICMP r1, 0
     JEQ Return
+
     POP r2
 
-    Loop:
-        ALT PUSH r1 ; ALT PUSH to allocate one byte per instruction
-        DEC r1
-        JGT Loop
+    GETSP r0
+    SUB r0, r1 ; downwards growing stack
+    SETSP r0
  
     PUSH r2
+
     Return:
         GETSP r0
         IADD r0, 2
@@ -300,19 +302,18 @@ Alloca:
 ; The opposite to SYS_ALLOC_STACKFRAME. This subroutine simply frees N bytes from the stack and returns nothing.
 ;
 ; This subroutine overwrites these registers:
-; - R0
 ; - R1
 ; - R2
 FreeFrame:
 .SCOPE
     ICMP r1, 0
     JEQ Return
+
     POP r2
 
-    Loop:
-        ALT POP r3
-        DEC r1
-        JGT Loop
+    GETSP r3
+    ADD r3, r1
+    SETSP r3
 
     PUSH r2
     Return:

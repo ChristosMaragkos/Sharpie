@@ -533,6 +533,9 @@ internal interface IMotherboard
 
     internal static byte[] GetCharacter(int index)
     {
+        if (index >= SmallFont.Length)
+            return GetCharacter(39);
+
         var pixels = new byte[8];
         for (var i = 0; i < 8; i++)
         {
@@ -540,6 +543,40 @@ internal interface IMotherboard
         }
         return pixels;
     }
+
+    /// <summary>
+    /// Maps a 1-byte Sharpie glyph index back to its representative ASCII character.
+    /// Glyph indices 0-25 → uppercase A-Z, 26-35 → digits 0-9, etc.
+    /// Unknown / out-of-range indices return '?'.
+    /// </summary>
+    internal static char GlyphIndexToAscii(byte index) =>
+        index switch
+        {
+            <= 25 => (char)('A' + index),
+            >= 26 and <= 35 => (char)('0' + (index - 26)),
+            36 => '.',
+            37 => ',',
+            38 => '!',
+            39 => '?',
+            40 => '[',
+            41 => ']',
+            42 => '(',
+            43 => ')',
+            44 => '^',
+            45 => 'v',
+            46 => '<',
+            47 => '>',
+            48 => '/',
+            49 => '-',
+            50 => '+',
+            51 => '=',
+            52 => '%',
+            53 => '"',
+            54 => ';',
+            55 => ':',
+            56 => ' ',
+            _ => '?',
+        };
 
     internal static ReadOnlySpan<(byte R, byte G, byte B)> MasterPalette =>
         new (byte R, byte G, byte B)[]

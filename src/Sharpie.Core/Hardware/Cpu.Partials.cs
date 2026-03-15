@@ -639,6 +639,17 @@ internal partial class Cpu
         CursorPosX++;
     }
 
+    private partial void Execute_PRNT(byte opcode, ref ushort pcDelta)
+    {
+        var x = CursorPosX;
+        var y = CursorPosY;
+        var charCode = GetRegister(_mobo.ReadByte(_pc + 1) & 0xF);
+
+        _mobo.DrawChar(x, y, (byte)charCode);
+
+        CursorPosX++;
+    }
+
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta)
     {
         var attributes = _mobo.ReadByte(_pc + 1);

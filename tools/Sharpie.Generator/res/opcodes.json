@@ -30,6 +30,7 @@
     { "hex": "0x51", "name": "DEC",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Decrement register R by 1.", "alt": "" },
     { "hex": "0x52", "name": "NOT",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Bitwise NOT (Invert all bits).", "alt": "" },
     { "hex": "0x53", "name": "NEG",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Two's complement negation (0 - R).", "alt": "" },
+    { "hex": "0x54", "name": "PRNT",    "len": 2, "logic": null , "words": 1 , "pattern": "R", "desc": "Print character stored in register R.", "alt": "" },
 
     { "hex": "0x60", "name": "IADD",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Add immediate byte B to R.", "alt": "Add byte B to word at [R] in memory." },
     { "hex": "0x61", "name": "ISUB",   "len": 3, "logic": null , "words": 2 , "pattern": "RB", "desc": "Subtract immediate byte B from R.", "alt": "Sub byte B from word at [R] in memory." },
