@@ -74,6 +74,19 @@ internal partial class Cpu
         GetRegister(x) = _sp;
     }
 
+    private partial void Execute_SETSP(byte opcode, ref ushort pcDelta)
+    {
+        var x = _mobo.ReadByte(_pc + 1) & 0xF;
+        var value = GetRegister(x);
+
+        if (value > Memory.AudioRamStart)
+            _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
+        else if (value <= Memory.SpriteAtlasStart)
+            _mobo.TriggerSegfault(SegfaultType.StackOverflow);
+        else
+            _sp = value;
+    }
+
     private partial void Execute_ADD(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();

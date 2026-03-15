@@ -11,6 +11,7 @@
     { "hex": "0x14", "name": "LDS",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Load word from [SP + R2] (signed) into R1.", "alt": "Load byte from [SP + R2] (signed) into R1." },
     { "hex": "0x15", "name": "STS",    "len": 2, "logic": null, "words": 2 , "pattern": "RR", "desc": "Store word from R1 to SP + R2 (signed).", "alt": "Store the low byte of R1 SP + R2 (signed)." },
     { "hex": "0x16", "name": "GETSP",  "len": 2, "logic": null, "words": 1 , "pattern": "R",  "desc": "Set R1 to the value of SP", "alt": "" },
+    { "hex": "0x17", "name": "SETSP",  "len": 2, "logic": null, "words": 1 , "pattern": "R",  "desc": "Set SP to the value of R1", "alt": "" },
 
     { "hex": "0x40", "name": "ADD",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 + R2. Updates Z, N, C, V.", "alt": "" },
     { "hex": "0x41", "name": "SUB",    "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "R1 = R1 - R2. Updates Z, N, C, V.", "alt": "" },
