@@ -372,13 +372,14 @@ Crash:
     .STR 1, 12 "Please restart"
     HALT
 
-; Strings are emitted as ASCII bytes so NUL terminators can be compared with zero reliably.
 SyscallPrint:
     SETCRS 0, 0
     CALL ResetPalette
 
     LDI r1, NameTable
     LDI r3, 0
+
+    LDI r4, AddrTable
 
     PrintLoop:
         ALT LDP r2, r1
@@ -394,6 +395,7 @@ SyscallPrint:
     NextString:
         ISUB r3, 32
         NEG r3
+        ISUB r3, 5
 
         NewlineLoop:
             ALT SETCRS 1, 0
@@ -401,10 +403,15 @@ SyscallPrint:
             DEC r3
             JGT NewlineLoop
 
-            ALT SETCRS 0, 1
             LDI r3, 0
 
+        LDP r5, r4
+        ALT TEXT r5
+
+        ALT SETCRS 0, 1
+
         INC r1
+        IADD r4, 2
 
         ALT LDP r2, r1
 
@@ -415,16 +422,29 @@ Done:
     HALT
 
 NameTable:
-    .DB "IDXREAD:", 0
+    .DB "IDX-READ:", 0
     .DB "STACKALLOC:", 0
-    .DB "FRAMEDELAY:", 0
-    .DB "IDXWRITE:", 0
-    .DB "IDXADDROF:", 0
+    .DB "FRAME-DELAY:", 0
+    .DB "IDX-WRITE:", 0
+    .DB "IDX-ADDR-OF:", 0
     .DB "MEMCPY:", 0
-    .DB "RESETPAL:", 0
+    .DB "RESET-PAL:", 0
     .DB "ALLOCA:", 0
     .DB "DEALLOCA:", 0
     .DB "MEMSET:", 0
     .DB "MEMCMP:", 0
 
     .DB 0
+
+AddrTable:
+    .DW LutRead
+    .DW Stackalloc
+    .DW FrameDelay
+    .DW LutWrite
+    .DW LutGetPtr
+    .DW MemCopy
+    .DW ResetPalette
+    .DW Alloca
+    .DW FreeFrame
+    .DW MemSet
+    .DW MemCmp
