@@ -69,8 +69,15 @@ public partial class Assembler
             var tokenLine = new TokenLine();
             lineNum++;
             tokenLine.SourceLine = lineNum;
-            cleanLine = line.Trim().ToUpper();
+            // Keep the original (mixed-case) trimmed line so string literals
+            // inside .STR / .DB directives preserve their casing before we
+            // upper-case everything else for opcode/keyword matching.
+            var originalLine = line.Trim();
+            cleanLine = originalLine.ToUpper();
             RemoveComment(ref cleanLine);
+            // Mirror the comment removal on the original line so that ParseDbArgs /
+            // CountDbBytes never see text that follows a ';' comment marker.
+            RemoveComment(ref originalLine);
             if (IsLineEmpty(cleanLine))
                 continue;
 
@@ -100,7 +107,8 @@ public partial class Assembler
             if (IsLineEmpty(cleanLine)) // should be empty but oh well
                 continue;
 
-            ParseStringDirective(ref cleanLine, lineNum);
+            // Pass originalLine so quoted string content is not upper-cased.
+            ParseStringDirective(ref cleanLine, originalLine, lineNum);
             if (IsLineEmpty(cleanLine))
                 continue;
 
@@ -108,7 +116,7 @@ public partial class Assembler
             if (IsLineEmpty(cleanLine))
                 continue;
 
-            Tokenize(cleanLine, ref tokenLine, lineNum);
+            Tokenize(cleanLine, originalLine, ref tokenLine, lineNum);
 
             if (tokenLine.ArePropertiesNull())
                 continue;
@@ -382,7 +390,7 @@ public partial class Assembler
                 lineNumber
             );
 
-        for (int i = 0; i < args.Length; i++)
+        for (var i = 0; i < args.Length; i++)
             args[i] = args[i].Trim(CommonDelimiters).Trim();
 
         var (name, valueStr) = (args[1], args[2]);
@@ -410,22 +418,44 @@ public partial class Assembler
         line = string.Empty;
     }
 
-    private void ParseStringDirective(ref string line, int lineNumber)
+    private void ParseStringDirective(ref string line, string originalLine, int lineNumber)
     {
         if (!line.StartsWith(".STR"))
             return;
 
-        int firstQuote = line.IndexOf('"');
-        int lastQuote = line.LastIndexOf('"');
-
-        if (firstQuote == -1 || lastQuote == -1 || firstQuote == lastQuote)
+        // Locate quotes in the ORIGINAL (mixed-case) line so string content is preserved.
+        var firstQuote = originalLine.IndexOf('"');
+        if (firstQuote == -1)
             throw new AssemblySyntaxException(
                 "String literal must be wrapped in double quotes",
                 lineNumber
             );
 
-        string message = line.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
-        string coordPart = line.Substring(4, firstQuote - 4).Trim();
+        var sb = new System.Text.StringBuilder();
+        var j = firstQuote + 1;
+        while (j < originalLine.Length && originalLine[j] != '"')
+        {
+            if (originalLine[j] == '\\' && j + 1 < originalLine.Length && originalLine[j + 1] == '"')
+            {
+                sb.Append('"');
+                j += 2;
+            }
+            else
+            {
+                sb.Append(originalLine[j]);
+                j++;
+            }
+        }
+        if (j >= originalLine.Length)
+            throw new AssemblySyntaxException(
+                "String literal must be wrapped in double quotes",
+                lineNumber
+            );
+        var lastQuote = j;
+
+        var message = sb.ToString();
+
+        var coordPart = line.Substring(4, firstQuote - 4).Trim();
         var coordArgs = coordPart.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         if (coordArgs.Length != 2)
@@ -433,7 +463,7 @@ public partial class Assembler
                 "Expected X and Y coordinates before the string",
                 lineNumber
             );
-        for (int i = 0; i < coordArgs.Length; i++)
+        for (var i = 0; i < coordArgs.Length; i++)
             coordArgs[i] = coordArgs[i].Trim(CommonDelimiters);
 
         AddToken(
@@ -448,12 +478,12 @@ public partial class Assembler
         CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength("SETCRS"));
 
         var delta = InstructionSet.GetOpcodeLength("TEXT");
-        foreach (char c in message)
+        foreach (var c in message)
         {
             TokenLine tl = new()
             {
                 Opcode = "TEXT",
-                Args = new[] { TextHelper.GetFontIndex(c).ToString() },
+                Args = new[] { TextHelper.AsciiToGlyphIndex(c).ToString() },
                 SourceLine = lineNumber,
                 Address = CurrentRegion!.Cursor,
             };
@@ -535,7 +565,7 @@ public partial class Assembler
         line = line.Substring(labelRegex.Index + labelRegex.Length).Trim();
     }
 
-    private void Tokenize(string line, ref TokenLine tokenLine, int lineNumber)
+    private void Tokenize(string line, string originalLine, ref TokenLine tokenLine, int lineNumber)
     {
         var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Select(str => str.Trim(CommonDelimiters))
@@ -608,9 +638,16 @@ public partial class Assembler
                 case ".DB":
                 case ".BYTES":
                 case ".DATA":
+                {
                     tokenLine.Address = CurrentRegion?.Cursor;
-                    CurrentRegion!.AdvanceCursor(args.Length - 1);
+                    // Reparse args from the original (mixed-case) line so that:
+                    //   1. Quoted string literals are kept as a single token.
+                    //   2. Case inside strings is preserved for AsciiToGlyphIndex.
+                    tokenLine.Args = ParseDbArgs(originalLine, lineNumber);
+                    var byteCount = CountDbBytes(originalLine, lineNumber);
+                    CurrentRegion!.AdvanceCursor(byteCount);
                     break;
+                }
 
                 case ".DW":
                     tokenLine.Address = CurrentRegion?.Cursor;
@@ -656,7 +693,7 @@ public partial class Assembler
                 SourceLine = lineNumber,
                 Address = CurrentRegion?.Cursor,
             };
-            Tokenize(remainingLine, ref nextToken, lineNumber);
+            Tokenize(remainingLine, remainingLine, ref nextToken, lineNumber);
             AddToken(nextToken);
             return;
         }
@@ -676,6 +713,133 @@ public partial class Assembler
         CurrentRegion!.AdvanceCursor(InstructionSet.GetOpcodeLength(tokenLine.Opcode));
     }
 
+    /// <summary>
+    /// Parses the argument list of a .DB / .BYTES / .DATA directive from the original
+    /// (mixed-case, pre-ToUpper) line.  Quoted string literals are returned as single
+    /// tokens (including their surrounding quotes) so the compiler can handle them as
+    /// strings.  All other tokens are upper-cased to match the rest of the assembler.
+    /// </summary>
+    private static string[] ParseDbArgs(string originalLine, int lineNumber)
+    {
+        // Skip past the directive keyword.
+        var keywordEnd = originalLine.IndexOf(' ');
+        if (keywordEnd < 0)
+            return Array.Empty<string>();
+
+        var afterKeyword = originalLine.Substring(keywordEnd).Trim();
+        var result = new List<string>();
+
+        var i = 0;
+        while (i < afterKeyword.Length)
+        {
+            var ch = afterKeyword[i];
+
+            if (ch == ' ' || ch == ',')
+            {
+                i++;
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                // Quoted string literal — scan forward honouring \" escapes.
+                var sb = new System.Text.StringBuilder();
+                var j = i + 1;
+                while (j < afterKeyword.Length && afterKeyword[j] != '"')
+                {
+                    if (afterKeyword[j] == '\\' && j + 1 < afterKeyword.Length && afterKeyword[j + 1] == '"')
+                    {
+                        sb.Append('"'); // escaped quote → literal "
+                        j += 2;
+                    }
+                    else
+                    {
+                        sb.Append(afterKeyword[j]);
+                        j++;
+                    }
+                }
+                if (j >= afterKeyword.Length)
+                    throw new AssemblySyntaxException(
+                        "Unterminated string literal in .DB directive",
+                        lineNumber
+                    );
+                // Reconstruct as a quoted token the compiler can recognise.
+                result.Add('"' + sb.ToString() + '"');
+                i = j + 1; // skip past closing quote
+            }
+            else
+            {
+                // Plain token — upper-case it for symbol/number matching.
+                var start = i;
+                while (i < afterKeyword.Length && afterKeyword[i] != ',' && afterKeyword[i] != ' ')
+                    i++;
+                result.Add(afterKeyword.Substring(start, i - start).ToUpperInvariant());
+            }
+        }
+
+        return result.ToArray();
+    }
+
+    /// <summary>
+    /// Counts how many bytes a .DB / .BYTES / .DATA directive will emit.
+    /// Each quoted string literal expands to one byte per character;
+    /// all other comma/space-separated tokens contribute one byte each.
+    /// </summary>
+    private static int CountDbBytes(string originalLine, int lineNumber)
+    {
+        // Find the directive keyword in the original line, then look at everything after it.
+        var keywordEnd = originalLine.IndexOf(' ');
+        if (keywordEnd < 0)
+            return 0; // directive with no args
+
+        var afterKeyword = originalLine.Substring(keywordEnd).Trim();
+
+        // Walk through the argument list, counting:
+        //   - string literals  → length of the string
+        //   - everything else  → 1 byte each
+        var total = 0;
+        var i = 0;
+        while (i < afterKeyword.Length)
+        {
+            var ch = afterKeyword[i];
+            if (ch == '"')
+            {
+                // Scan forward honouring \" escapes; each logical char = one byte.
+                var j = i + 1;
+                while (j < afterKeyword.Length && afterKeyword[j] != '"')
+                {
+                    if (afterKeyword[j] == '\\' && j + 1 < afterKeyword.Length && afterKeyword[j + 1] == '"')
+                        j += 2; // escaped quote counts as one char
+                    else
+                        j++;
+                    total++;
+                }
+                if (j >= afterKeyword.Length)
+                    throw new AssemblySyntaxException(
+                        "Unterminated string literal in .DB directive",
+                        lineNumber
+                    );
+                i = j + 1; // skip past closing quote
+            }
+            else if (ch == ' ' || ch == ',')
+            {
+                i++;
+            }
+            else
+            {
+                // Non-string token: skip to next delimiter and count 1 byte.
+                var next = i;
+                while (next < afterKeyword.Length && afterKeyword[next] != ',' && afterKeyword[next] != ' ')
+                    next++;
+                if (next > i)
+                    total++;
+                i = next;
+            }
+        }
+
+        return total;
+    }
+
     private List<string> PreProcess(IEnumerable<string> lines, string currentDir)
     {
         var expandedLines = new List<string>();
@@ -687,12 +851,12 @@ public partial class Assembler
             var trimmed = line.Trim();
             if (trimmed.StartsWith(".INCLUDE", StringComparison.OrdinalIgnoreCase))
             {
-                int firstQuote = line.IndexOf('"');
-                int lastQuote = line.LastIndexOf('"');
+                var firstQuote = line.IndexOf('"');
+                var lastQuote = line.LastIndexOf('"');
 
                 if (firstQuote != -1 && lastQuote > firstQuote)
                 {
-                    string includeFileName = line.Substring(
+                    var includeFileName = line.Substring(
                         firstQuote + 1,
                         lastQuote - firstQuote - 1
                     );
@@ -703,7 +867,7 @@ public partial class Assembler
                             lineNum
                         );
 
-                    string fullPath = Path.Combine(currentDir, includeFileName);
+                    var fullPath = Path.Combine(currentDir, includeFileName);
 
                     if (File.Exists(fullPath))
                     {

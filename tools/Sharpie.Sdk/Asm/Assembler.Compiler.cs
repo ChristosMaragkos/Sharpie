@@ -97,9 +97,29 @@ public partial class Assembler
                     case ".DB":
                     case ".BYTES":
                     case ".DATA":
+                    {
+                        int offset = 0;
                         for (int i = 0; i < token.Args.Length; i++)
-                            WriteToRom(ParseByte(token.Args[i], lineNum), buffer, i);
+                        {
+                            var arg = token.Args[i];
+                            if (arg.StartsWith('"') && arg.EndsWith('"') && arg.Length >= 2)
+                            {
+                                // Quoted ASCII string literal — expand each char to a glyph index.
+                                var str = arg.Substring(1, arg.Length - 2);
+                                foreach (char c in str)
+                                {
+                                    WriteToRom(TextHelper.AsciiToGlyphIndex(c), buffer, offset);
+                                    offset++;
+                                }
+                            }
+                            else
+                            {
+                                WriteToRom(ParseByte(arg, lineNum), buffer, offset);
+                                offset++;
+                            }
+                        }
                         break;
+                    }
 
                     case ".DW":
                     case ".WORDS":

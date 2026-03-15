@@ -15,9 +15,9 @@ public partial class Assembler
         { "SYS_MEM_COPY", 64140 },
         { "SYS_PAL_RESET", 64164 },
         { "SYS_ALLOC_STACKFRAME", 64182 },
-        { "SYS_FREE_STACKFRAME", 64206 },
-        { "SYS_MEM_SET", 64225 },
-        { "SYS_MEM_CMP", 64242 },
+        { "SYS_FREE_STACKFRAME", 64204 },
+        { "SYS_MEM_SET", 64221 },
+        { "SYS_MEM_CMP", 64238 },
     };
 
     private ScopeLevel GetCurrentScope() =>
