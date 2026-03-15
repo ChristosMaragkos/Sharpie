@@ -1,5 +1,6 @@
 namespace Sharpie.Core.Hardware;
 
+// TODO: SETSP rX?
 internal partial class Cpu
 {
     private partial void Execute_MOV(byte opcode, ref ushort pcDelta)
