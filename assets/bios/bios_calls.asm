@@ -12,7 +12,6 @@
 ;
 ; The CPU calculates (stride × index), adds it to the starting address,
 ; and reads (stride) consecutive bytes starting from the resulting address.
-; Then, the results are saved to work RAM starting at $E805 and ending at $E805 + (stride - 1).
 ;
 ; Parameters:
 ; R1 - Start: The memory address of the first element of the LUT. 2 bytes.
@@ -171,7 +170,6 @@ LutWrite:
 ; saves it to memory. Similar to SYS_IDX_READ_VAL but with reference type semantics.
 ;
 ; The CPU calculates (stride × index) and adds it to the starting address of the LUT.
-; Then, the memory address is saved to work RAM, overwriting $E805-$E806
 ;
 ; Parameters:
 ; R1 - Start: The memory address of the first element of the LUT. 2 bytes.
