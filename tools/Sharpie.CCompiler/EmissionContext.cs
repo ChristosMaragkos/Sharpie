@@ -51,6 +51,8 @@ public sealed partial class SharpieEmitter
         public bool IsMain { get; set; }
         public string ReturnInstruction => IsMain ? "HALT" : "RET";
 
+        public int HiddenRetPtrReg { get; set; } = -1; // which register is tracking the hidden return pointer (so struct returns can become void(struct Struct *ptr))
+
         public EmissionContext(HashSet<string> escapedVariables)
         {
             EscapedVariables = escapedVariables;
@@ -90,6 +92,8 @@ public sealed partial class SharpieEmitter
             {
                 yield return $"PUSH r{reg}";
             }
+
+            yield return "PUSH r15";
 
             if (TotalStackBytes > 0)
             {
@@ -142,11 +146,15 @@ public sealed partial class SharpieEmitter
 
         public IEnumerable<string> GetEpilogue()
         {
+            yield return "SETSP r15";
+
             if (TotalStackBytes > 0)
             {
                 yield return $"LDI r1, {TotalStackBytes}";
                 yield return "CALL SYS_FREE_STACKFRAME";
             }
+
+            yield return "POP r15";
 
             // Restore preserved registers (in REVERSE order)
             for (int i = UsedPreservedRegisters.Count - 1; i >= 0; i--)

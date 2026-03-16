@@ -737,7 +737,7 @@ public partial class SharpieEmitter
                     $"Cannot take address of register-allocated '{name}'"
                 );
 
-            context.Emit($"GETSP r{targetReg}");
+            context.Emit($"MOV r{targetReg}, r15");
             AccumulateOffset(targetReg, loc.Value, context);
         }
         // pointer

@@ -2,6 +2,8 @@
 Main:
     PUSH r8
     PUSH r9
+    PUSH r15
+    GETSP r15
     LDI r1, 5
     MOV r8, r1
     LDI r1, 3
@@ -32,6 +34,8 @@ Main:
     MOV r8, r1
     MOV r0, r8
     NEG r0
+    SETSP r15
+    POP r15
     POP r9
     POP r8
     HALT

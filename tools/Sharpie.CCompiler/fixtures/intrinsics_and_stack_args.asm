@@ -6,6 +6,8 @@ add_six_numbers:
     PUSH r11
     PUSH r12
     PUSH r13
+    PUSH r15
+    GETSP r15
     LDI r6, 14
     LDS r7, r6
     MOV r12, r7
@@ -32,6 +34,8 @@ add_six_numbers:
     MOV r2, r13
     ADD r1, r2
     MOV r0, r1
+    SETSP r15
+    POP r15
     POP r13
     POP r12
     POP r11
@@ -41,6 +45,8 @@ add_six_numbers:
     RET
 test_memory:
     PUSH r8
+    PUSH r15
+    GETSP r15
     PUSH r1
     LDI r2, 20
     MOV r1, r2
@@ -53,10 +59,14 @@ test_memory:
     LDI r3, 20
     CALL SYS_MEM_SET
     LDI r0, 1
+    SETSP r15
+    POP r15
     POP r8
     RET
 Main:
     PUSH r8
+    PUSH r15
+    GETSP r15
     PUSH r1
     LDI r2, 6
     PUSH r2
@@ -84,6 +94,8 @@ Main:
     LDI r4, 529
     DRAW r1, r2, r3, r4
     MOV r0, r8
+    SETSP r15
+    POP r15
     POP r8
     HALT
 .ENDREGION

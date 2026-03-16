@@ -6,6 +6,8 @@ Main:
     PUSH r11
     PUSH r12
     PUSH r13
+    PUSH r15
+    GETSP r15
     LDI r1, 0
     MOV r8, r1
     LDI r1, 0
