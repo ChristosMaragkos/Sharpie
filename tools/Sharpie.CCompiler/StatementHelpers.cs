@@ -127,9 +127,12 @@ public partial class SharpieEmitter
         }
         else
         {
-            using var offsetReg = context.AcquireTempRegister();
-            context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
-            context.Emit($"STS r{valReg.Value}, r{offsetReg.Value}");
+            using var addrReg = context.AcquireTempRegister();
+            context.Emit($"MOV r{addrReg.Value}, r15");
+            AccumulateOffset(addrReg.Value, space.Value, context);
+
+            string altPrefix = (sizeBytes == 1) ? "ALT " : "";
+            context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
         }
     }
 
@@ -180,8 +183,9 @@ public partial class SharpieEmitter
         }
         else
         {
+            var prefix = (assignSize == 1) ? "ALT " : "";
             // Standard Word Assignment
-            context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
+            context.Emit($"{prefix}STA r{valReg.Value}, r{addrReg.Value}");
         }
     }
 
@@ -304,11 +308,14 @@ public partial class SharpieEmitter
                 // Only load from the stack if someone is actually asking for the value
                 if (targetReg >= 0)
                 {
+                    var isByte = node.Type.SizeOf == 1;
+                    var prefix = isByte ? "ALT " : "";
+
                     if (allocatedSpace.Type == StorageType.Stack)
                     {
                         using var offsetReg = context.AcquireTempRegister();
                         context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
-                        context.Emit($"LDS r{targetReg}, r{offsetReg.Value}");
+                        context.Emit($"{prefix}LDS r{targetReg}, r{offsetReg.Value}");
                     }
                     else
                     {
@@ -329,9 +336,12 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_MemberRefExpr:
                 if (targetReg >= 0)
                 {
+                    var isByte = node.Type.SizeOf == 1;
+                    var prefix = isByte ? "ALT " : "";
+
                     using var addrReg = context.AcquireTempRegister();
                     EmitLValueAddress(node, addrReg.Value, context);
-                    context.Emit($"LDP r{targetReg}, r{addrReg.Value}");
+                    context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
                 }
                 return;
         }

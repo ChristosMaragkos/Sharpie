@@ -106,7 +106,7 @@ public sealed partial class SharpieEmitter
             foreach (var pending in PendingStackArguments)
             {
                 int argOffset =
-                    TotalStackBytes + (UsedPreservedRegisters.Count * 2) + 2 + pending.CallerOffset;
+                    TotalStackBytes + (UsedPreservedRegisters.Count * 2) + 4 + pending.CallerOffset;
 
                 if (pending.Slots == 1)
                 {
