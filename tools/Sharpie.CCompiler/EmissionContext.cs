@@ -97,6 +97,8 @@ public sealed partial class SharpieEmitter
                 yield return "CALL SYS_ALLOC_STACKFRAME";
             }
 
+            yield return "GETSP r15"; // cache frame pointer
+
             foreach (var pending in PendingStackArguments)
             {
                 int argOffset =

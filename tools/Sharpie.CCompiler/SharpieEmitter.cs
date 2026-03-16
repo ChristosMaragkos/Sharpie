@@ -10,7 +10,9 @@ public sealed partial class SharpieEmitter
     private const int TempRegisterStart = 1;
     private const int TempRegisterEnd = 7;
     private const int LocalRegisterStart = 8;
-    private const int LocalRegisterEnd = 15;
+    private const int LocalRegisterEnd = 14;
+
+    private const int FramePointer = 15;
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
     {
