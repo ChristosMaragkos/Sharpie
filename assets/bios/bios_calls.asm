@@ -81,11 +81,11 @@ Stackalloc:
     POP r4 ; Avoid burying the return address
 
     Loop:
-        ALT LDP r1, r0 ; Load value from [r0]
-        ALT PUSH r1
+        ALT LDP r0, r1 ; Load value from [r0]
+        ALT PUSH r0
 
-        DEC r0
-        CMP r0, r2
+        DEC r1
+        CMP r1, r3
         JGE Loop
 
     PUSH r4
