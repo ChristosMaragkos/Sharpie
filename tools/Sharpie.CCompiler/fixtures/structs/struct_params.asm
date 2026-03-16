@@ -34,7 +34,7 @@ test_stack:
     LDI r1, 4
     CALL SYS_ALLOC_STACKFRAME
     GETSP r15
-    LDI r6, 12
+    LDI r6, 14
     LDI r5, 0
     LDS r7, r6
     STS r7, r5
