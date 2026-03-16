@@ -160,16 +160,29 @@ public partial class SharpieEmitter
             }
         }
 
-        // Standard Path: Memory Assignment (Stack variables, pointers, or struct members)
-        // Evaluate the RHS value first
+        // Standard Path: Memory Assignment
         using var valReg = context.AcquireTempRegister();
         EmitExpression(rhs, valReg.Value, context);
 
-        // Calculate the exact memory address of the LHS
         using var addrReg = context.AcquireTempRegister();
         EmitLValueAddress(lhs, addrReg.Value, context);
 
-        context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
+        var assignSize = lhs.Type.SizeOf;
+        if (assignSize > 2)
+        {
+            // Delegate to BIOS memcpy
+            // PUSH and POP to prevent overlapping register mapping bugs (e.g., if valReg=1 and addrReg=2)
+            context.Emit($"PUSH r{valReg.Value}");
+            context.Emit($"MOV r1, r{addrReg.Value}"); // Dest
+            context.Emit("POP r2"); // Source
+            context.Emit($"LDI r3, {assignSize}");
+            context.Emit("CALL SYS_MEM_COPY");
+        }
+        else
+        {
+            // Standard Word Assignment
+            context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
+        }
     }
 
     private static void EmitCompoundAssignment(
@@ -236,8 +249,28 @@ public partial class SharpieEmitter
     private static void EmitReturn(CXCursor returnStmt, EmissionContext context)
     {
         var expr = GetChildren(returnStmt).FirstOrDefault();
+
         if (expr.Kind != CXCursorKind.CXCursor_NoDeclFound)
-            EmitExpression(expr, 0, context);
+        {
+            long retSizeBytes = expr.Type.SizeOf;
+
+            // If returning a struct, mutate the hidden pointer copy
+            if (retSizeBytes > 2 && context.HiddenRetPtrReg >= 0)
+            {
+                using var srcReg = context.AcquireTempRegister();
+                EmitLValueAddress(expr, srcReg.Value, context);
+
+                context.Emit($"PUSH r{srcReg.Value}"); // Save the struct's address safely to the stack
+                context.Emit($"MOV r1, r{context.HiddenRetPtrReg}"); // Overwrite r1 with the Hidden Pointer
+                context.Emit("POP r2"); // Retrieve the struct's address securely into r2
+                context.Emit($"LDI r3, {retSizeBytes}"); // Byte count
+                context.Emit("CALL SYS_MEM_COPY");
+            }
+            else // Normal 16-bit return
+            {
+                EmitExpression(expr, 0, context);
+            }
+        }
 
         foreach (var line in context.GetEpilogue())
             context.Emit(line);
@@ -602,6 +635,22 @@ public partial class SharpieEmitter
         var children = GetChildren(callExpr);
         var funcName = children[0].Spelling.ToString();
 
+        // --- NEW: Hidden Pointer Setup ---
+        long retSize = callExpr.Type.SizeOf;
+        bool hasHiddenPtr = retSize > 2;
+        StorageLocation tempRetSpace = default;
+
+        if (hasHiddenPtr)
+        {
+            // Allocate a temporary local variable to hold the returned struct!
+            // Because we stitch the Prologue at the end, TotalStackBytes will cleanly account for this.
+            tempRetSpace = context.AllocateStorage(
+                EmissionContext.GenerateLabel("tmp_ret"),
+                true,
+                (int)retSize
+            );
+        }
+
         var tempsToProtect = context.GetActiveTempRegisters();
         foreach (var reg in tempsToProtect)
             context.Emit($"PUSH r{reg}");
@@ -609,7 +658,9 @@ public partial class SharpieEmitter
         var regArgs = new List<(CXCursor Expr, int Slots)>();
         var stackArgs = new List<(CXCursor Expr, int Slots)>();
 
-        int currentReg = 1;
+        // Shift starting register if we have a hidden pointer since it becomes the first argument
+        int currentReg = hasHiddenPtr ? 2 : 1;
+
         for (int i = 1; i < children.Count; i++)
         {
             var arg = children[i];
@@ -641,19 +692,13 @@ public partial class SharpieEmitter
             }
             else
             {
-                // Lower by-value argument passing for structs into SYS_STACKALLOC to avoid having to synthesize a loop every time
                 using var addrReg = context.AcquireTempRegister();
                 EmitLValueAddress(arg, addrReg.Value, context);
 
                 if (addrReg.Value == 2)
-                {
                     context.Emit("MOV r1, r2");
-                }
-                else
-                {
-                    if (addrReg.Value != 1)
-                        context.Emit($"MOV r1, r{addrReg.Value}");
-                }
+                else if (addrReg.Value != 1)
+                    context.Emit($"MOV r1, r{addrReg.Value}");
 
                 context.Emit($"LDI r2, {slots * 2}");
                 context.Emit("CALL SYS_STACKALLOC");
@@ -664,7 +709,8 @@ public partial class SharpieEmitter
         var activeLeases = new List<EmissionContext.TempLease>();
         var regAssignments = new List<(int TargetReg, int SourceTempReg)>();
 
-        int abiReg = 1;
+        int abiReg = hasHiddenPtr ? 2 : 1;
+
         foreach (var (arg, slots) in regArgs)
         {
             if (slots == 1)
@@ -701,6 +747,12 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r{assignment.TargetReg}, r{assignment.SourceTempReg}");
         }
 
+        if (hasHiddenPtr)
+        {
+            context.Emit("MOV r1, r15");
+            AccumulateOffset(1, tempRetSpace.Value, context);
+        }
+
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
             context.Emit($"CALL {funcName}");
@@ -716,7 +768,18 @@ public partial class SharpieEmitter
             context.Emit($"POP r{tempsToProtect[i]}");
 
         if (targetReg > 0)
-            context.Emit($"MOV r{targetReg}, r0");
+        {
+            // Yield the address of the struct, not r0
+            if (hasHiddenPtr)
+            {
+                context.Emit($"MOV r{targetReg}, r15");
+                AccumulateOffset(targetReg, tempRetSpace.Value, context);
+            }
+            else
+            {
+                context.Emit($"MOV r{targetReg}, r0");
+            }
+        }
 
         foreach (var lease in activeLeases)
             lease.Dispose();
@@ -772,6 +835,11 @@ public partial class SharpieEmitter
             // Clang gives us the offset in bits, so we divide by 8 to get bytes
             long offsetBytes = offsetBits / 8;
             AccumulateOffset(targetReg, (int)offsetBytes, context);
+        }
+        // struct-returning function
+        else if (peeled.Kind == CXCursorKind.CXCursor_CallExpr)
+        {
+            EmitCallExpression(peeled, targetReg, context);
         }
         else
         {

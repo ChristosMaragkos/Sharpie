@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: structs, unions, function pointers, jump tables, booleans, chars, arrays, frame pointer for alloca/stackalloc
+// TODO: unions, function pointers, jump tables, booleans, chars, arrays, frame pointer for alloca/stackalloc
 // In no particular order.
 public sealed partial class SharpieEmitter
 {
@@ -59,6 +59,16 @@ public sealed partial class SharpieEmitter
             int currentReg = 1;
             int currentStackArgOffset = 0;
 
+            var retSizeBytes = func.ResultType.SizeOf;
+            if (retSizeBytes > 2)
+            {
+                var hiddenReturn = context.AllocateStorage("__hidden_ret", false, 2);
+                context.HiddenRetPtrReg = hiddenReturn.Value;
+                context.Emit($"MOV r{hiddenReturn.Value}, r1");
+
+                currentReg = 2;
+            }
+
             for (var i = 0; i < parameters.Count; i++)
             {
                 var paramDecl = parameters[i];
@@ -66,11 +76,11 @@ public sealed partial class SharpieEmitter
 
                 var typeKind = paramDecl.Type.CanonicalType.kind;
                 bool isRecord = typeKind == CXTypeKind.CXType_Record;
-                long sizeBytes = paramDecl.Type.SizeOf;
+                var sizeBytes = paramDecl.Type.SizeOf;
 
                 if (sizeBytes <= 0)
                     sizeBytes = 2; // Fallback for void*/unresolved
-                int slotsNeeded = GetRegistersNeededForVariable(paramDecl.Type);
+                var slotsNeeded = GetRegistersNeededForVariable(paramDecl.Type);
 
                 var needsStack = isRecord || context.EscapedVariables.Contains(paramName);
                 var space = context.AllocateStorage(paramName, needsStack, (int)sizeBytes);
