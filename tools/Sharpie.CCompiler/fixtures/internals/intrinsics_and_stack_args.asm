@@ -8,10 +8,10 @@ add_six_numbers:
     PUSH r13
     PUSH r15
     GETSP r15
-    LDI r6, 14
+    LDI r6, 16
     LDS r7, r6
     MOV r12, r7
-    LDI r6, 16
+    LDI r6, 18
     LDS r7, r6
     MOV r13, r7
     MOV r8, r1

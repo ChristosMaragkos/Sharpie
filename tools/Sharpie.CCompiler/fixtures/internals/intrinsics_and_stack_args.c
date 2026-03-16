@@ -1,4 +1,4 @@
-#include "headers/sharpie.h"
+#include "../headers/sharpie.h"
 
 int add_six_numbers(int a, int b, int c, int d, int e, int f) {
   return a + b + c + d + e + f;
