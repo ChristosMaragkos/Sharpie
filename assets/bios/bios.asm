@@ -418,8 +418,12 @@ SyscallPrint:
         ICMP r2, 0
         JNE PrintLoop
 
+LDI r0, 0
 Done:
-    HALT
+    INPUT r0, r1
+    ICMP r1, 0b11000000
+    JNE Done
+    JMP Reset
 
 NameTable:
     .DB "IDX-READ:", 0
