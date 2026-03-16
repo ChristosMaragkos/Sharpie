@@ -230,4 +230,13 @@ public partial class SharpieEmitter
         }
         return escaped;
     }
+
+    private static int GetRegistersNeededForVariable(CXType type)
+    {
+        var sizeBytes = type.SizeOf;
+        if (sizeBytes < 0)
+            return 1;
+
+        return (int)((sizeBytes + 1) / 2);
+    }
 }

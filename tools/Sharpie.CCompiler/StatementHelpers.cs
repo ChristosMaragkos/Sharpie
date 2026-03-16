@@ -602,47 +602,112 @@ public partial class SharpieEmitter
         var children = GetChildren(callExpr);
         var funcName = children[0].Spelling.ToString();
 
-        // identify which temporary registers are in use to protect them
         var tempsToProtect = context.GetActiveTempRegisters();
         foreach (var reg in tempsToProtect)
             context.Emit($"PUSH r{reg}");
 
-        // if we have 5+ args push to the stack
-        for (int i = children.Count - 1; i >= 5; i--)
+        var regArgs = new List<(CXCursor Expr, int Slots)>();
+        var stackArgs = new List<(CXCursor Expr, int Slots)>();
+
+        int currentReg = 1;
+        for (int i = 1; i < children.Count; i++)
         {
-            using (var argLease = context.AcquireTempRegister())
+            var arg = children[i];
+            int slots = GetRegistersNeededForVariable(arg.Type);
+
+            if (currentReg + slots - 1 <= 4)
             {
-                EmitExpression(children[i], argLease.Value, context);
-                context.Emit($"PUSH r{argLease.Value}");
-            } // Leases are disposed at this boundary, r1 is free for the next argument
+                regArgs.Add((arg, slots));
+                currentReg += slots;
+            }
+            else
+            {
+                stackArgs.Add((arg, slots));
+            }
         }
 
-        var regArgLeases = new List<EmissionContext.TempLease>();
-        int numRegArgs = Math.Min(children.Count - 1, 4);
-
-        for (int i = 1; i <= numRegArgs; i++)
+        // process stack arguments right to left
+        int totalStackBytesToFree = 0;
+        for (int i = stackArgs.Count - 1; i >= 0; i--)
         {
-            var lease = context.AcquireTempRegister();
-            EmitExpression(children[i], lease.Value, context);
-            regArgLeases.Add(lease);
+            var (arg, slots) = stackArgs[i];
+            totalStackBytesToFree += slots * 2;
+
+            if (slots == 1)
+            {
+                using var lease = context.AcquireTempRegister();
+                EmitExpression(arg, lease.Value, context);
+                context.Emit($"PUSH r{lease.Value}");
+            }
+            else
+            {
+                // Lower by-value argument passing for structs into SYS_STACKALLOC to avoid having to synthesize a loop every time
+                using var addrReg = context.AcquireTempRegister();
+                EmitLValueAddress(arg, addrReg.Value, context);
+
+                if (addrReg.Value == 2)
+                {
+                    context.Emit("MOV r1, r2");
+                }
+                else
+                {
+                    if (addrReg.Value != 1)
+                        context.Emit($"MOV r1, r{addrReg.Value}");
+                }
+
+                context.Emit($"LDI r2, {slots * 2}");
+                context.Emit("CALL SYS_STACKALLOC");
+            }
         }
 
-        for (int i = 0; i < regArgLeases.Count; i++)
+        // process register arguments left to right
+        var activeLeases = new List<EmissionContext.TempLease>();
+        var regAssignments = new List<(int TargetReg, int SourceTempReg)>();
+
+        int abiReg = 1;
+        foreach (var (arg, slots) in regArgs)
         {
-            int targetRegIdx = i + 1;
-            if (targetRegIdx != regArgLeases[i].Value)
-                context.Emit($"MOV r{targetRegIdx}, r{regArgLeases[i].Value}");
+            if (slots == 1)
+            {
+                var lease = context.AcquireTempRegister();
+                activeLeases.Add(lease);
+                EmitExpression(arg, lease.Value, context);
+                regAssignments.Add((abiReg, lease.Value));
+                abiReg++;
+            }
+            else
+            {
+                using var addrReg = context.AcquireTempRegister();
+                EmitLValueAddress(arg, addrReg.Value, context);
+
+                for (int s = 0; s < slots; s++)
+                {
+                    var lease = context.AcquireTempRegister();
+                    activeLeases.Add(lease);
+
+                    context.Emit($"LDP r{lease.Value}, r{addrReg.Value}");
+                    if (s < slots - 1)
+                        context.Emit($"IADD r{addrReg.Value}, 2");
+
+                    regAssignments.Add((abiReg, lease.Value));
+                    abiReg++;
+                }
+            }
+        }
+
+        foreach (var assignment in regAssignments)
+        {
+            if (assignment.TargetReg != assignment.SourceTempReg)
+                context.Emit($"MOV r{assignment.TargetReg}, r{assignment.SourceTempReg}");
         }
 
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
             context.Emit($"CALL {funcName}");
 
-            // Cleanup the stack if we pushed excess args. TODO: Merge this with SYS_FREE_STACKFRAME of callee
-            int excessArgs = (children.Count - 1) - 4;
-            if (excessArgs > 0)
+            if (totalStackBytesToFree > 0)
             {
-                context.Emit($"LDI r1, {excessArgs * 2}");
+                context.Emit($"LDI r1, {totalStackBytesToFree}");
                 context.Emit("CALL SYS_FREE_STACKFRAME");
             }
         }
@@ -653,7 +718,7 @@ public partial class SharpieEmitter
         if (targetReg > 0)
             context.Emit($"MOV r{targetReg}, r0");
 
-        foreach (var lease in regArgLeases)
+        foreach (var lease in activeLeases)
             lease.Dispose();
     }
 

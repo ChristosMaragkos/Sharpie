@@ -25,7 +25,11 @@ public sealed partial class SharpieEmitter
     {
         private readonly bool[] _tempInUse = new bool[TempRegisterEnd - TempRegisterStart + 1];
 
-        public List<(int ArgIndex, StorageLocation Target)> PendingStackArguments { get; } = new();
+        public List<(
+            int CallerOffset,
+            StorageLocation Target,
+            int Slots
+        )> PendingStackArguments { get; } = new();
 
         public int TotalStackBytes { get; private set; }
         private int _currentStackOffset = 0;
@@ -95,26 +99,41 @@ public sealed partial class SharpieEmitter
 
             foreach (var pending in PendingStackArguments)
             {
-                // Calculate absolute offset of the argument relative to current SP
-                // Offset = Locals Size + Preserved Regs Size + Return Addr(2) + Argument Position
                 int argOffset =
-                    TotalStackBytes
-                    + (UsedPreservedRegisters.Count * 2)
-                    + 2
-                    + ((pending.ArgIndex - 4) * 2);
+                    TotalStackBytes + (UsedPreservedRegisters.Count * 2) + 2 + pending.CallerOffset;
 
-                yield return $"LDI r6, {argOffset}";
-                yield return "LDS r7, r6";
-
-                // Store it into its permanent local home
-                if (pending.Target.Type == StorageType.Register)
+                if (pending.Slots == 1)
                 {
-                    yield return $"MOV r{pending.Target.Value}, r7";
+                    yield return $"LDI r6, {argOffset}";
+                    yield return "LDS r7, r6"; // Fetch from Caller's Stack into r7
+
+                    if (pending.Target.Type == StorageType.Register)
+                    {
+                        yield return $"MOV r{pending.Target.Value}, r7";
+                    }
+                    else
+                    {
+                        yield return $"LDI r6, {pending.Target.Value}";
+                        yield return $"STS r7, r6";
+                    }
                 }
                 else
                 {
-                    yield return $"LDI r6, {pending.Target.Value}";
-                    yield return $"STS r7, r6";
+                    // Multi word struct: Copy (slots) words from caller's stack to local stack
+                    yield return $"LDI r6, {argOffset}"; // Source caller stack offset
+                    yield return $"LDI r5, {pending.Target.Value}"; // Dest local stack offset
+
+                    for (int s = 0; s < pending.Slots; s++)
+                    {
+                        yield return "LDS r7, r6";
+                        yield return "STS r7, r5";
+
+                        if (s < pending.Slots - 1)
+                        {
+                            yield return "IADD r6, 2";
+                            yield return "IADD r5, 2";
+                        }
+                    }
                 }
             }
         }

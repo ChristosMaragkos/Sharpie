@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: structs, unions, function pointers, jump tables, booleans, chars, arrays.
+// TODO: structs, unions, function pointers, jump tables, booleans, chars, arrays, frame pointer for alloca/stackalloc
 // In no particular order.
 public sealed partial class SharpieEmitter
 {
@@ -53,6 +53,10 @@ public sealed partial class SharpieEmitter
             var parameters = GetChildren(func)
                 .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)
                 .ToList();
+
+            int currentReg = 1;
+            int currentStackArgOffset = 0;
+
             for (var i = 0; i < parameters.Count; i++)
             {
                 var paramDecl = parameters[i];
@@ -62,30 +66,50 @@ public sealed partial class SharpieEmitter
                 bool isRecord = typeKind == CXTypeKind.CXType_Record;
                 long sizeBytes = paramDecl.Type.SizeOf;
 
-                if (sizeBytes < 0)
+                if (sizeBytes <= 0)
                     sizeBytes = 2; // Fallback for void*/unresolved
+                int slotsNeeded = GetRegistersNeededForVariable(paramDecl.Type);
 
                 var needsStack = isRecord || context.EscapedVariables.Contains(paramName);
                 var space = context.AllocateStorage(paramName, needsStack, (int)sizeBytes);
-                if (i < 4)
+
+                if (currentReg + slotsNeeded - 1 <= 4)
                 {
-                    if (space.Type == StorageType.Register)
+                    // It fits in r1-r4
+                    if (slotsNeeded == 1)
                     {
-                        context.Emit($"MOV r{space.Value}, r{i + 1}");
+                        if (space.Type == StorageType.Register)
+                        {
+                            context.Emit($"MOV r{space.Value}, r{currentReg}");
+                        }
+                        else
+                        {
+                            context.Emit($"LDI r6, {space.Value}");
+                            context.Emit($"STS r{currentReg}, r6");
+                        }
                     }
                     else
                     {
-                        using var offsetReg = context.AcquireTempRegister();
-                        context.Emit($"LDI r{offsetReg.Value}, {space.Value}");
-                        context.Emit($"STS r{i + 1}, r{offsetReg.Value}");
+                        // A multi-word struct was passed in registers
+                        // We must reconstruct it in its local stack home
+                        context.Emit($"LDI r6, {space.Value}");
+
+                        for (int s = 0; s < slotsNeeded; s++)
+                        {
+                            context.Emit($"STS r{currentReg + s}, r6");
+                            if (s < slotsNeeded - 1)
+                                context.Emit($"IADD r6, 2");
+                        }
                     }
+                    currentReg += slotsNeeded;
                 }
                 else
                 {
-                    context.PendingStackArguments.Add((i, space));
+                    // It was pushed to the stack so we record its byte offset and slot count
+                    context.PendingStackArguments.Add((currentStackArgOffset, space, slotsNeeded));
+                    currentStackArgOffset += slotsNeeded * 2;
                 }
             }
-
             EmitFunctionBody(body, context);
 
             // If the function reached the end without a return,
