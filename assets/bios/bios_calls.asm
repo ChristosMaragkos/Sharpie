@@ -201,8 +201,8 @@ LutGetPtr:
 ; This overwrites everything from (end) to (end + byteAmount - 1).
 ;
 ; Parameters:
-; R1 - Copy start: The address of the first byte to copy.
-; R2 - Paste start: The address to start copying to.
+; R1 - Paste start: The address of the first byte to copy.
+; R2 - Copy start: The address to start copying to.
 ; R3 - Byte amount: The amount of bytes to copy.
 ;
 ; This subroutine overwrites these registers:
@@ -216,13 +216,13 @@ MemCopy:
     ICMP r3, 0
     JEQ Return
 
-    CMP r1, r2
+    CMP r2, r1
     JEQ Return
 
     Loop:
-        ALT STP r1, r2
-        INC r1
+        ALT STP r2, r1
         INC r2
+        INC r1
 
         DEC r3
         JNE Loop
