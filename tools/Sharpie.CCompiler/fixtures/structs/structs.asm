@@ -5,6 +5,7 @@ Main:
     LDI r1, 4
     CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r1, r15
     LDI r1, 10
     MOV r2, r15
     STA r1, r2

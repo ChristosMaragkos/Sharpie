@@ -85,6 +85,7 @@ Main:
     LDI r1, 8
     CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r1, r15
     LDI r1, 10
     MOV r2, r15
     STA r1, r2
@@ -105,6 +106,8 @@ Main:
     POP r1
     MOV r1, r0
     MOV r8, r1
+    MOV r1, r15
+    IADD r1, 4
     LDI r1, 100
     MOV r2, r15
     IADD r2, 4

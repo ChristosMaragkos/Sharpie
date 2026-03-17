@@ -88,14 +88,78 @@ public partial class SharpieEmitter
             throw new InvalidOperationException($"Duplicate local variable `{variableName}`.");
 
         var typeKind = varDecl.Type.CanonicalType.kind;
-        bool isRecord = typeKind == CXTypeKind.CXType_Record; // CanonicalType safely resolves typedefs
+        bool isRecord = typeKind == CXTypeKind.CXType_Record;
+        bool isArray =
+            typeKind == CXTypeKind.CXType_ConstantArray
+            || typeKind == CXTypeKind.CXType_IncompleteArray;
         long sizeBytes = varDecl.Type.SizeOf;
 
         if (sizeBytes < 0)
             throw new InvalidOperationException($"Cannot determine size for `{varDecl.Spelling}`.");
 
-        var needsStack = isRecord || context.EscapedVariables.Contains(variableName);
+        var needsStack = isRecord || isArray || context.EscapedVariables.Contains(variableName);
         var space = context.AllocateStorage(variableName, needsStack, (int)sizeBytes);
+
+        // Identify actual inline initialization for arrays/structs
+        var initList = GetChildren(varDecl)
+            .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
+
+        if (isRecord || isArray)
+        {
+            if (initList.Kind != CXCursorKind.CXCursor_NoDeclFound)
+            {
+                var initVals = GetChildren(initList);
+
+                // Get the base address of the array/struct
+                using var baseReg = context.AcquireTempRegister();
+                context.Emit($"MOV r{baseReg.Value}, r15");
+                AccumulateOffset(baseReg.Value, space.Value, context);
+
+                if (isArray)
+                {
+                    long stride = clang.getElementType(varDecl.Type).SizeOf;
+                    if (stride <= 0)
+                        stride = 2; // Fallback
+
+                    for (int i = 0; i < initVals.Count; i++)
+                    {
+                        using var valReg = context.AcquireTempRegister();
+                        EmitExpression(initVals[i], valReg.Value, context);
+
+                        using var addrReg = context.AcquireTempRegister();
+                        context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+                        AccumulateOffset(addrReg.Value, (int)(i * stride), context);
+
+                        string altPrefix = (stride == 1) ? "ALT " : "";
+                        context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                    }
+                }
+                else // Structs
+                {
+                    var decl = clang.getTypeDeclaration(varDecl.Type);
+                    var fields = GetChildren(decl)
+                        .Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl)
+                        .ToList();
+
+                    for (int i = 0; i < initVals.Count && i < fields.Count; i++)
+                    {
+                        long offsetBytes = clang.Cursor_getOffsetOfField(fields[i]) / 8;
+                        long fieldSize = fields[i].Type.SizeOf;
+
+                        using var valReg = context.AcquireTempRegister();
+                        EmitExpression(initVals[i], valReg.Value, context);
+
+                        using var addrReg = context.AcquireTempRegister();
+                        context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+                        AccumulateOffset(addrReg.Value, (int)offsetBytes, context);
+
+                        string altPrefix = (fieldSize == 1) ? "ALT " : "";
+                        context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                    }
+                }
+            }
+            return; // done initializing
+        }
 
         var initExprs = GetChildren(varDecl)
             .Where(c =>
@@ -103,27 +167,17 @@ public partial class SharpieEmitter
                 && c.Kind <= CXCursorKind.CXCursor_LastExpr
             )
             .ToList();
-        // If it's a struct, we don't support inline initialization like {1, 2} yet.
-        // The memory is already allocated on the stack, so we just return
-        if (isRecord)
-        {
-            if (initExprs.Count > 0)
-                throw new InvalidOperationException(
-                    "Inline struct initialization is not supported in this MVP."
-                );
-            return;
-        }
 
-        using var valReg = context.AcquireTempRegister();
+        using var valRegPrimitive = context.AcquireTempRegister();
 
         if (initExprs.Count == 0)
-            context.Emit($"LDI r{valReg.Value}, 0");
+            context.Emit($"LDI r{valRegPrimitive.Value}, 0");
         else
-            EmitExpression(initExprs[0], valReg.Value, context);
+            EmitExpression(initExprs.Last(), valRegPrimitive.Value, context);
 
         if (space.Type == StorageType.Register)
         {
-            context.Emit($"MOV r{space.Value}, r{valReg.Value}");
+            context.Emit($"MOV r{space.Value}, r{valRegPrimitive.Value}");
         }
         else
         {
@@ -132,7 +186,7 @@ public partial class SharpieEmitter
             AccumulateOffset(addrReg.Value, space.Value, context);
 
             string altPrefix = (sizeBytes == 1) ? "ALT " : "";
-            context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+            context.Emit($"{altPrefix}STA r{valRegPrimitive.Value}, r{addrReg.Value}");
         }
     }
 
@@ -308,6 +362,13 @@ public partial class SharpieEmitter
                 // Only load from the stack if someone is actually asking for the value
                 if (targetReg >= 0)
                 {
+                    if (node.Type.CanonicalType.kind is CXTypeKind.CXType_ConstantArray)
+                    {
+                        context.Emit($"MOV R{targetReg}, r15");
+                        AccumulateOffset(targetReg, allocatedSpace.Value, context);
+                        return;
+                    }
+
                     var isByte = node.Type.SizeOf == 1;
                     var prefix = isByte ? "ALT " : "";
 
@@ -334,6 +395,7 @@ public partial class SharpieEmitter
                 return;
 
             case CXCursorKind.CXCursor_MemberRefExpr:
+            case CXCursorKind.CXCursor_ArraySubscriptExpr:
                 if (targetReg >= 0)
                 {
                     var isByte = node.Type.SizeOf == 1;
@@ -850,6 +912,31 @@ public partial class SharpieEmitter
         else if (peeled.Kind == CXCursorKind.CXCursor_CallExpr)
         {
             EmitCallExpression(peeled, targetReg, context);
+        }
+        // array access
+        else if (peeled.Kind == CXCursorKind.CXCursor_ArraySubscriptExpr)
+        {
+            var children = GetChildren(peeled);
+            var baseExpr = PeelExpression(children[0]);
+            var indexExpr = PeelExpression(children[1]);
+
+            if (baseExpr.Type.CanonicalType.kind == CXTypeKind.CXType_Pointer)
+                EmitExpression(baseExpr, targetReg, context);
+            else
+                EmitLValueAddress(baseExpr, targetReg, context);
+
+            using var indexReg = context.AcquireTempRegister();
+            EmitExpression(indexExpr, indexReg.Value, context);
+
+            var stride = peeled.Type.SizeOf;
+            if (stride > 1)
+            {
+                using var strideReg = context.AcquireTempRegister();
+                context.Emit($"LDI r{strideReg.Value}, {stride}");
+                context.Emit($"MUL r{indexReg.Value}, r{strideReg.Value}");
+            }
+
+            context.Emit($"ADD r{targetReg}, r{indexReg.Value}");
         }
         else
         {

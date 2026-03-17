@@ -10,6 +10,7 @@ Main:
     MOV r1, r8
     IADD r1, 1
     MOV r8, r1
+    MOV r1, r15
     MOV r1, r8
     MOV r2, r15
     ALT STA r1, r2

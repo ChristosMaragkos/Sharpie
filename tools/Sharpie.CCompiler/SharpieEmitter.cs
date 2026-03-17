@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: function pointers, jump tables, arrays, inline assembly
+// TODO: function pointers, jump tables, inline assembly
 // In no particular order.
 public sealed partial class SharpieEmitter
 {

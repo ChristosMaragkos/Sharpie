@@ -10,6 +10,7 @@ make_point:
     MOV r8, r1
     MOV r9, r2
     MOV r10, r3
+    MOV r1, r15
     MOV r1, r9
     MOV r2, r15
     STA r1, r2
@@ -37,6 +38,7 @@ Main:
     LDI r1, 12
     CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r1, r15
     PUSH r1
     LDI r2, 10
     LDI r3, 20
