@@ -1,5 +1,5 @@
 .REGION FIXED
-square:
+_func_square:
     PUSH r8
     PUSH r15
     GETSP r15
@@ -22,7 +22,7 @@ Main:
     PUSH r1
     MOV r2, r8
     MOV r1, r2
-    CALL square
+    CALL _func_square
     POP r1
     MOV r1, r0
     MOV r9, r1

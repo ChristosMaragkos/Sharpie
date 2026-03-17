@@ -1,5 +1,5 @@
 .REGION FIXED
-add_six_numbers:
+_func_add_six_numbers:
     PUSH r8
     PUSH r9
     PUSH r10
@@ -39,7 +39,7 @@ add_six_numbers:
     POP r9
     POP r8
     RET
-test_memory:
+_func_test_memory:
     PUSH r8
     PUSH r15
     GETSP r15
@@ -76,7 +76,7 @@ Main:
     MOV r2, r3
     MOV r3, r4
     MOV r4, r5
-    CALL add_six_numbers
+    CALL _func_add_six_numbers
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
     POP r1

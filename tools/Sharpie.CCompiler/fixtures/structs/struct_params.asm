@@ -1,5 +1,5 @@
 .REGION FIXED
-test_registers:
+_func_test_registers:
     PUSH r8
     PUSH r15
     LDI r1, 4
@@ -25,7 +25,7 @@ test_registers:
     POP r15
     POP r8
     RET
-test_stack:
+_func_test_stack:
     PUSH r8
     PUSH r9
     PUSH r10
@@ -65,7 +65,7 @@ test_stack:
     POP r9
     POP r8
     RET
-test_pointer:
+_func_test_pointer:
     PUSH r8
     PUSH r15
     GETSP r15
@@ -98,7 +98,7 @@ Main:
     MOV r1, r2
     MOV r2, r4
     MOV r3, r5
-    CALL test_registers
+    CALL _func_test_registers
     POP r1
     MOV r1, r0
     MOV r8, r1
@@ -125,7 +125,7 @@ Main:
     MOV r1, r2
     MOV r2, r3
     MOV r3, r4
-    CALL test_stack
+    CALL _func_test_stack
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
     POP r1
@@ -133,7 +133,7 @@ Main:
     MOV r9, r1
     MOV r1, r15
     IADD r1, 4
-    CALL test_pointer
+    CALL _func_test_pointer
     MOV r1, r8
     MOV r2, r9
     ADD r1, r2

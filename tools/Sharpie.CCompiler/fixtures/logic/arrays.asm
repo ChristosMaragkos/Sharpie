@@ -1,5 +1,5 @@
 .REGION FIXED
-fill_array:
+_func_fill_array:
     PUSH r8
     PUSH r9
     PUSH r10
@@ -34,7 +34,7 @@ Main:
     MOV r1, r15
     MOV R1, r15
     LDI r2, 3
-    CALL fill_array
+    CALL _func_fill_array
     MOV r1, r15
     LDI r2, 2
     LDI r3, 2

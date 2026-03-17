@@ -1,5 +1,5 @@
 .REGION FIXED
-factorial:
+_func_factorial:
     PUSH r8
     PUSH r15
     GETSP r15
@@ -19,7 +19,7 @@ factorial:
     MOV r3, r8
     ISUB r3, 1
     MOV r1, r3
-    CALL factorial
+    CALL _func_factorial
     POP r2
     POP r1
     MOV r2, r0
@@ -34,7 +34,7 @@ Main:
     PUSH r15
     GETSP r15
     LDI r1, 5
-    CALL factorial
+    CALL _func_factorial
     SETSP r15
     POP r15
     HALT

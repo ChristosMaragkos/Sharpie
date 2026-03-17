@@ -1,5 +1,5 @@
 .REGION FIXED
-helper:
+_func_helper:
     PUSH r15
     GETSP r15
     LDI r0, 42

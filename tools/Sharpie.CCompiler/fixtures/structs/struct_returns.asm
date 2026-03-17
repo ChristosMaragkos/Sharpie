@@ -1,5 +1,5 @@
 .REGION FIXED
-make_point:
+_func_make_point:
     PUSH r8
     PUSH r9
     PUSH r10
@@ -44,7 +44,7 @@ Main:
     LDI r3, 20
     MOV r1, r15
     IADD r1, 4
-    CALL make_point
+    CALL _func_make_point
     POP r1
     MOV r1, r15
     IADD r1, 4
@@ -62,7 +62,7 @@ Main:
     MOV r3, r4
     MOV r1, r15
     IADD r1, 8
-    CALL make_point
+    CALL _func_make_point
     POP r2
     POP r1
     MOV r2, r15

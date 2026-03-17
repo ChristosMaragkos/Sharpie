@@ -50,7 +50,7 @@ public sealed partial class SharpieEmitter
             var context = new EmissionContext(escapedVars);
             context.IsMain = (funcName == "main");
 
-            asm.AppendLine($"{(context.IsMain ? "Main" : funcName)}:");
+            asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
 
             var parameters = GetChildren(func)
                 .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)

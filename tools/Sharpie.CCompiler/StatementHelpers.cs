@@ -361,7 +361,7 @@ public partial class SharpieEmitter
                 if (referenced.Kind == CXCursorKind.CXCursor_FunctionDecl)
                 {
                     if (targetReg >= 0)
-                        context.Emit($"LDI r{targetReg}, {name}");
+                        context.Emit($"LDI r{targetReg}, _func_{name}");
 
                     return;
                 }
@@ -863,7 +863,7 @@ public partial class SharpieEmitter
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
             if (isDirectCall)
-                context.Emit($"CALL {funcName}");
+                context.Emit($"CALL _func_{funcName}");
             else
             {
                 context.Emit("POP r0");
