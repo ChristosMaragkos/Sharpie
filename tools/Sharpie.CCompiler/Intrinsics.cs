@@ -59,6 +59,9 @@ public partial class SharpieEmitter
             case "__sharpie_set_oam":
                 context.Emit("SETOAM r1");
                 return true;
+            case "__sharpie_random":
+                context.Emit("ALT RND r0, r1");
+                return true;
 
             // --- Audio ---
             case "__sharpie_play_note":

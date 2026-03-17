@@ -53,6 +53,7 @@ void __sharpie_bank(int bank);
 void __sharpie_save(void);
 void __sharpie_append_save(void);
 void __sharpie_halt(void);
+int __sharpie_random(int maxExclusive);
 
 // --- Standard C Aliases ---
 #define alloca(size) __sharpie_alloca(size)
@@ -75,3 +76,4 @@ void __sharpie_halt(void);
 #define play_note(ch, note, i) __sharpie_play_note(ch, note, i)
 #define play_song(addr) __sharpie_play_song(addr)
 #define halt() __sharpie_halt()
+#define random(maxExclusive) __sharpie_random(maxExclusive)
