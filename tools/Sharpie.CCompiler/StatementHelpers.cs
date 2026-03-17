@@ -70,7 +70,7 @@ public partial class SharpieEmitter
 
             case CXCursorKind.CXCursor_CaseStmt:
                 // A CaseStmt has two children: The constant value, and the statement to execute.
-                // We will rely on EmitSwitchStmt to have generated the label for us, so we just emit the body!
+                // We will rely on EmitSwitchStmt to have generated the label for us, so we just emit the body
                 var caseBody = GetChildren(stmt).Last();
                 EmitStatement(caseBody, context);
                 break;
