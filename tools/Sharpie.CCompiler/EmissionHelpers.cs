@@ -10,7 +10,7 @@ public partial class SharpieEmitter
         var body = children[0];
         var condition = children[1];
 
-        var labelStart = EmissionContext.GenerateLabel("do-start");
+        var labelStart = EmissionContext.GenerateLabel("do_start");
         context.Emit($"{labelStart}:");
         SharpieEmitter.EmitStatement(body, context);
         SharpieEmitter.EmitCondition(condition, labelStart, true, context);
@@ -20,8 +20,8 @@ public partial class SharpieEmitter
     {
         var children = SharpieEmitter.GetChildren(forStatement);
 
-        var labelStart = EmissionContext.GenerateLabel("for-start");
-        var labelEnd = EmissionContext.GenerateLabel("for-end");
+        var labelStart = EmissionContext.GenerateLabel("for_start");
+        var labelEnd = EmissionContext.GenerateLabel("for_end");
 
         var init = children[0];
         if (init.Kind != CXCursorKind.CXCursor_NoDeclFound)
@@ -51,8 +51,8 @@ public partial class SharpieEmitter
         var condition = children[0];
         var body = children[1];
 
-        var labelStart = EmissionContext.GenerateLabel("while-start");
-        var labelEnd = EmissionContext.GenerateLabel("while-end");
+        var labelStart = EmissionContext.GenerateLabel("while_start");
+        var labelEnd = EmissionContext.GenerateLabel("while_end");
 
         context.Emit($"{labelStart}:");
         SharpieEmitter.EmitCondition(condition, labelEnd, false, context);
