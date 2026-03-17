@@ -69,7 +69,7 @@
 
     { "hex": "0xA0", "name": "SONG",   "len": 1, "logic": null , "family": true, "words": 1 , "pattern": "R", "desc": "Family. Start music from address in Rn.", "alt": "" },
     { "hex": "0xC0", "name": "SETCRS", "len": 3, "logic": null , "words": 2 , "pattern": "BB", "desc": "Set text cursor to (X, Y).", "alt": "Relative Move cursor by (X, Y)." },
-    { "hex": "0xC1", "name": "CRSPOS", "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Set text cursor to (RX, RY).", "alt": "Relative Move cursor by (RX, RY)." },
+    { "hex": "0xC3", "name": "CRSPOS", "len": 2, "logic": null , "words": 2 , "pattern": "RR", "desc": "Set text cursor to (RX, RY).", "alt": "Relative Move cursor by (RX, RY)." },
     { "hex": "0xD0", "name": "DRAW",   "len": 3, "logic": null , "family": true, "words": 4 , "pattern": "RRRR", "desc": "Family. Draw sprite: X, Y, ID, Attr. & Type (Low byte -> attr, high byte -> type)", "alt": ""},
     { "hex": "0xE0", "name": "INSTR",  "len": 3, "logic": null , "family": true, "words": 3 , "pattern": "RBB", "desc": "Family. Define ADSR for instrument Rn.", "alt": "" },
 

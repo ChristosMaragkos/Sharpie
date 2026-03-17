@@ -318,7 +318,7 @@ internal partial class Cpu {
                 Execute_SETCRS(opcode, ref pcDelta);
                 break;
 
-            case 0xC1: //CRSPOS
+            case 0xC3: //CRSPOS
                 pcDelta = 2;
                 Execute_CRSPOS(opcode, ref pcDelta);
                 break;
