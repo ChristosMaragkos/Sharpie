@@ -582,10 +582,20 @@ public partial class SharpieEmitter
         var lhs = PeelExpression(operands[0]);
         var rhs = PeelExpression(operands[1]);
 
-        using var lhsScratch = context.AcquireTempRegister();
-        EmitExpression(lhs, lhsScratch.Value, context);
+        // if the caller already leased a temp register (r1-r7) evaluate the LHS directly inside it.
+        bool needsFallback = targetReg < TempRegisterStart || targetReg > TempRegisterEnd;
+        EmissionContext.TempLease fallbackLease = default;
+        var lhsReg = targetReg;
 
-        if (!TryEmitImmediateMath(kind, lhsScratch.Value, rhs, context))
+        if (needsFallback)
+        {
+            fallbackLease = context.AcquireTempRegister();
+            lhsReg = fallbackLease.Value;
+        }
+
+        EmitExpression(lhs, lhsReg, context);
+
+        if (!TryEmitImmediateMath(kind, lhsReg, rhs, context))
         {
             using var rhsScratch = context.AcquireTempRegister();
             EmitExpression(rhs, rhsScratch.Value, context);
@@ -605,11 +615,14 @@ public partial class SharpieEmitter
                 _ => throw new InvalidOperationException($"Unsupported binary operator: {kind}"),
             };
 
-            context.Emit($"{op} r{lhsScratch.Value}, r{rhsScratch.Value}");
+            context.Emit($"{op} r{lhsReg}, r{rhsScratch.Value}");
         }
 
-        if (targetReg >= 0 && targetReg != lhsScratch.Value)
-            context.Emit($"MOV r{targetReg}, r{lhsScratch.Value}");
+        if (targetReg >= 0 && targetReg != lhsReg)
+            context.Emit($"MOV r{targetReg}, r{lhsReg}");
+
+        if (needsFallback)
+            fallbackLease.Dispose();
     }
 
     private static void EmitIfStatement(CXCursor ifStatement, EmissionContext context)
