@@ -136,7 +136,7 @@ public partial class SharpieEmitter
                 }
                 else // Structs
                 {
-                    var decl = clang.getTypeDeclaration(varDecl.Type);
+                    var decl = clang.getTypeDeclaration(varDecl.Type.CanonicalType);
                     var fields = GetChildren(decl)
                         .Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl)
                         .ToList();
