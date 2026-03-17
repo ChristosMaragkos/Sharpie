@@ -62,6 +62,12 @@ public partial class SharpieEmitter
             case "__sharpie_random":
                 context.Emit("ALT RND r0, r1");
                 return true;
+            case "__sharpie_set_cursor":
+                context.Emit("CRSPOS r0, r1");
+                return true;
+            case "__sharpie_move_cursor":
+                context.Emit("ALT CRSPOS r0, r1");
+                return true;
 
             // --- Audio ---
             case "__sharpie_play_note":

@@ -54,6 +54,8 @@ void __sharpie_save(void);
 void __sharpie_append_save(void);
 void __sharpie_halt(void);
 int __sharpie_random(int maxExclusive);
+void __sharpie_set_cursor(int x, int y);
+void __sharpie_move_cursor(int x, int y);
 
 // --- Standard C Aliases ---
 #define alloca(size) __sharpie_alloca(size)
@@ -77,3 +79,5 @@ int __sharpie_random(int maxExclusive);
 #define play_song(addr) __sharpie_play_song(addr)
 #define halt() __sharpie_halt()
 #define random(maxExclusive) __sharpie_random(maxExclusive)
+#define set_cursor(x, y) __sharpie_set_cursor(x, y)
+#define move_cursor(x, y) __sharpie_move_cursor(x, y)
