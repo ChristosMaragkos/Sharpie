@@ -54,6 +54,31 @@ public partial class SharpieEmitter
                 EmitExpression(stmt, -1, context);
                 break;
 
+            case CXCursorKind.CXCursor_BreakStmt:
+                if (context.BreakLabels.Count == 0)
+                    throw new InvalidOperationException(
+                        "Break statement outside of a loop or switch."
+                    );
+                context.Emit($"JMP {context.BreakLabels.Peek()}");
+                break;
+
+            case CXCursorKind.CXCursor_CaseStmt:
+                // A CaseStmt has two children: The constant value, and the statement to execute.
+                // We will rely on EmitSwitchStmt to have generated the label for us, so we just emit the body!
+                var caseBody = GetChildren(stmt).Last();
+                EmitStatement(caseBody, context);
+                break;
+
+            case CXCursorKind.CXCursor_DefaultStmt:
+                // Same as CaseStmt
+                var defaultBody = GetChildren(stmt).First();
+                EmitStatement(defaultBody, context);
+                break;
+
+            case CXCursorKind.CXCursor_SwitchStmt:
+                EmitSwitchStatement(stmt, context);
+                break;
+
             default:
                 throw new InvalidOperationException(
                     $"Unsupported statement kind in `main`: {stmt.Kind}"

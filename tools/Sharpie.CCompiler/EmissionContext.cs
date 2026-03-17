@@ -45,7 +45,8 @@ public sealed partial class SharpieEmitter
         // track callee saved registers (r8-r15)
         public List<int> UsedPreservedRegisters { get; } = new();
 
-        public List<string> Instructions { get; } = [];
+        public List<string> Instructions { get; } = new();
+        public Stack<string> BreakLabels { get; } = new();
         public bool HasReturn { get; set; }
 
         public bool IsMain { get; set; }

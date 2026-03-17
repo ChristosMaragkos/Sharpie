@@ -62,6 +62,72 @@ public partial class SharpieEmitter
         context.Emit($"{labelEnd}:");
     }
 
+    private static void EmitSwitchStatement(CXCursor switchStmt, EmissionContext context)
+    {
+        var children = GetChildren(switchStmt);
+        var condition = children[0];
+        var body = children[1]; // Usually a CompoundStmt
+
+        var labelEnd = EmissionContext.GenerateLabel("switch_end");
+        context.BreakLabels.Push(labelEnd);
+
+        using var condReg = context.AcquireTempRegister();
+        EmitExpression(condition, condReg.Value, context);
+
+        var bodyStmts = GetChildren(body);
+        var cases = new List<(long Value, string Label)>();
+        string? defaultLabel = null;
+
+        foreach (var stmt in bodyStmts)
+        {
+            if (stmt.Kind == CXCursorKind.CXCursor_CaseStmt)
+            {
+                var valExpr = PeelExpression(GetChildren(stmt).First());
+                long val = GetLiteralValue(valExpr);
+                var caseLabel = EmissionContext.GenerateLabel($"case_{val}");
+                cases.Add((val, caseLabel));
+            }
+            else if (stmt.Kind == CXCursorKind.CXCursor_DefaultStmt)
+            {
+                defaultLabel = EmissionContext.GenerateLabel("default");
+            }
+        }
+
+        foreach (var (val, label) in cases)
+        {
+            context.Emit($"ICMP r{condReg.Value}, {val}");
+            context.Emit($"JEQ {label}");
+        }
+
+        if (defaultLabel != null)
+            context.Emit($"JMP {defaultLabel}");
+        else
+            context.Emit($"JMP {labelEnd}"); // No default? Skip the switch entirely
+
+        int caseIdx = 0;
+        foreach (var stmt in bodyStmts)
+        {
+            if (stmt.Kind == CXCursorKind.CXCursor_CaseStmt)
+            {
+                context.Emit($"{cases[caseIdx].Label}:");
+                EmitStatement(stmt, context);
+                caseIdx++;
+            }
+            else if (stmt.Kind == CXCursorKind.CXCursor_DefaultStmt)
+            {
+                context.Emit($"{defaultLabel}:");
+                EmitStatement(stmt, context);
+            }
+            else
+            {
+                EmitStatement(stmt, context);
+            }
+        }
+
+        context.Emit($"{labelEnd}:");
+        context.BreakLabels.Pop();
+    }
+
     private static bool TryEmitImmediateMath(
         CXBinaryOperatorKind kind,
         int targetReg,
