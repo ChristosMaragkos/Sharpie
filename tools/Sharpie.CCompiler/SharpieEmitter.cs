@@ -17,6 +17,8 @@ public sealed partial class SharpieEmitter
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
     {
         var asm = new StringBuilder();
+        var roData = new List<string>();
+        var stringPool = new Dictionary<string, string>();
         asm.AppendLine(".REGION FIXED");
 
         var functions = GetChildren(translationUnitCursor)
@@ -47,7 +49,7 @@ public sealed partial class SharpieEmitter
             // we're just gonna have to emit the body, scan for variables that need to be spilled,
             // then stitch the prologue and epilogue after the fact.
             var escapedVars = DetectEscapingVariables(func);
-            var context = new EmissionContext(escapedVars);
+            var context = new EmissionContext(escapedVars, roData, stringPool);
             context.IsMain = (funcName == "main");
 
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
@@ -140,6 +142,13 @@ public sealed partial class SharpieEmitter
                 asm.AppendLine($"    {line}");
 
             // EmitReturn is responsible for the epilogue
+        }
+
+        if (roData.Count > 0)
+        {
+            asm.AppendLine("; Readonly Data");
+            foreach (var dataLine in roData)
+                asm.AppendLine(dataLine);
         }
 
         asm.AppendLine(".ENDREGION");

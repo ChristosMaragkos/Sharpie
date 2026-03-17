@@ -422,6 +422,40 @@ public partial class SharpieEmitter
 
         switch (node.Kind)
         {
+            case CXCursorKind.CXCursor_StringLiteral:
+                if (targetReg >= 0)
+                {
+                    var strLabel = EmissionContext.GenerateLabel("str");
+
+                    unsafe
+                    {
+                        var range = clang.getCursorExtent(node);
+                        var tu = clang.Cursor_getTranslationUnit(node);
+                        uint numTokens = 0;
+                        CXToken* tokens = null;
+
+                        clang.tokenize(tu, range, &tokens, &numTokens);
+                        if (numTokens > 0)
+                        {
+                            var cxString = clang.getTokenSpelling(tu, tokens[0]);
+                            var rawString = cxString.ToString();
+                            clang.disposeString(cxString);
+
+                            if (!context.StringPool.TryGetValue(rawString, out var existingLabel))
+                            {
+                                existingLabel = EmissionContext.GenerateLabel("str");
+                                context.StringPool[rawString] = existingLabel;
+
+                                context.ReadOnlyData.Add($"{strLabel}:");
+                                context.ReadOnlyData.Add($"    .DB {rawString}, 0");
+                            }
+                            context.Emit($"LDI r{targetReg}, {existingLabel}");
+                        }
+                        clang.disposeTokens(tu, tokens, numTokens);
+                    }
+                }
+                return;
+
             case CXCursorKind.CXCursor_ConditionalOperator:
                 if (targetReg >= 0)
                 {

@@ -50,6 +50,9 @@ public sealed partial class SharpieEmitter
         public Stack<string> BreakLabels { get; } = new();
         public Stack<string> ContinueLabels { get; } = new();
 
+        public List<string> ReadOnlyData { get; }
+        public Dictionary<string, string> StringPool { get; }
+
         public bool HasReturn { get; set; }
 
         public bool IsMain { get; set; }
@@ -57,9 +60,15 @@ public sealed partial class SharpieEmitter
 
         public int HiddenRetPtrReg { get; set; } = -1; // which register is tracking the hidden return pointer (so struct returns can become void(struct Struct *ptr))
 
-        public EmissionContext(HashSet<string> escapedVariables)
+        public EmissionContext(
+            HashSet<string> escapedVariables,
+            List<string> readOnlyData,
+            Dictionary<string, string> stringPool
+        )
         {
             EscapedVariables = escapedVariables;
+            ReadOnlyData = readOnlyData;
+            StringPool = stringPool;
         }
 
         public void Emit(string asm)
