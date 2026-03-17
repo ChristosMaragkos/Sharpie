@@ -16,9 +16,8 @@ factorial:
     MOV r1, r8
     PUSH r1
     PUSH r2
-    MOV r4, r8
-    ISUB r4, 1
-    MOV r3, r4
+    MOV r3, r8
+    ISUB r3, 1
     MOV r1, r3
     CALL factorial
     POP r2

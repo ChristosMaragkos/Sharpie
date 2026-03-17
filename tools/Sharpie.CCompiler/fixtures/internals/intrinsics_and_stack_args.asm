@@ -18,19 +18,15 @@ add_six_numbers:
     MOV r9, r2
     MOV r10, r3
     MOV r11, r4
-    MOV r5, r8
-    MOV r6, r9
-    ADD r5, r6
-    MOV r4, r5
-    MOV r5, r10
-    ADD r4, r5
-    MOV r3, r4
-    MOV r4, r11
-    ADD r3, r4
-    MOV r2, r3
-    MOV r3, r12
-    ADD r2, r3
-    MOV r1, r2
+    MOV r1, r8
+    MOV r2, r9
+    ADD r1, r2
+    MOV r2, r10
+    ADD r1, r2
+    MOV r2, r11
+    ADD r1, r2
+    MOV r2, r12
+    ADD r1, r2
     MOV r2, r13
     ADD r1, r2
     MOV r0, r1

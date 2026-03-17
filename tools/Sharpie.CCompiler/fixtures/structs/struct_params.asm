@@ -10,11 +10,10 @@ test_registers:
     STS r2, r6
     IADD r6, 2
     STS r3, r6
-    MOV r2, r8
-    MOV r4, r15
-    LDP r3, r4
-    ADD r2, r3
-    MOV r1, r2
+    MOV r1, r8
+    MOV r3, r15
+    LDP r2, r3
+    ADD r1, r2
     MOV r3, r15
     IADD r3, 2
     LDP r2, r3
@@ -45,17 +44,14 @@ test_stack:
     MOV r8, r1
     MOV r9, r2
     MOV r10, r3
-    MOV r4, r8
-    MOV r5, r9
-    ADD r4, r5
-    MOV r3, r4
-    MOV r4, r10
-    ADD r3, r4
-    MOV r2, r3
-    MOV r4, r15
-    LDP r3, r4
-    ADD r2, r3
-    MOV r1, r2
+    MOV r1, r8
+    MOV r2, r9
+    ADD r1, r2
+    MOV r2, r10
+    ADD r1, r2
+    MOV r3, r15
+    LDP r2, r3
+    ADD r1, r2
     MOV r3, r15
     IADD r3, 2
     LDP r2, r3
@@ -138,10 +134,9 @@ Main:
     MOV r1, r15
     IADD r1, 4
     CALL test_pointer
-    MOV r2, r8
-    MOV r3, r9
-    ADD r2, r3
-    MOV r1, r2
+    MOV r1, r8
+    MOV r2, r9
+    ADD r1, r2
     MOV r3, r15
     IADD r3, 4
     LDP r2, r3

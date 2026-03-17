@@ -14,9 +14,8 @@ fill_array:
     MOV r2, r9
     CMP r1, r2
     JGE while_end_L1
-    MOV r2, r10
-    IMUL r2, 10
-    MOV r1, r2
+    MOV r1, r10
+    IMUL r1, 10
     MOV r2, r8
     MOV r3, r10
     LDI r4, 2

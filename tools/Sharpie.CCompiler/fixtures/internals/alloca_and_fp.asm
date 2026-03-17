@@ -19,10 +19,9 @@ Main:
     STA r1, r2
     LDI r1, 20
     MOV r10, r1
-    MOV r2, r8
-    MOV r3, r10
-    ADD r2, r3
-    MOV r1, r2
+    MOV r1, r8
+    MOV r2, r10
+    ADD r1, r2
     MOV r2, r9
     LDP r2, r2
     ADD r1, r2
