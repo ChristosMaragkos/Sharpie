@@ -318,6 +318,11 @@ internal partial class Cpu {
                 Execute_SETCRS(opcode, ref pcDelta);
                 break;
 
+            case 0xC1: //CRSPOS
+                pcDelta = 2;
+                Execute_CRSPOS(opcode, ref pcDelta);
+                break;
+
             case >= 0xD0 and <= 0xDF:
                 pcDelta = 3;
                 Execute_DRAW(opcode, ref pcDelta);
@@ -478,6 +483,7 @@ internal partial class Cpu {
     private partial void Execute_SETSEQ(byte opcode, ref ushort pcDelta);
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta);
     private partial void Execute_SETCRS(byte opcode, ref ushort pcDelta);
+    private partial void Execute_CRSPOS(byte opcode, ref ushort pcDelta);
     private partial void Execute_DRAW(byte opcode, ref ushort pcDelta);
     private partial void Execute_INSTR(byte opcode, ref ushort pcDelta);
     private partial void Execute_OAMPOS(byte opcode, ref ushort pcDelta);

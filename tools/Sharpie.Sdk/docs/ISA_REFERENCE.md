@@ -63,6 +63,7 @@
 | `0x95` | **SETSEQ** | `R` | 2 | Sets the value of the Sequencer cursor to the value in rX. Does not start playing. |  |
 | `0xA0n` | **SONG** | `R` | 1 | Family. Start music from address in Rn. |  |
 | `0xC0` | **SETCRS** | `B, B` | 3 | Set text cursor to (X, Y). | Relative Move cursor by (X, Y). |
+| `0xC1` | **CRSPOS** | `R, R` | 2 | Set text cursor to (RX, RY). | Relative Move cursor by (RX, RY). |
 | `0xD0n` | **DRAW** | `R, R, R, R` | 3 | Family. Draw sprite: X, Y, ID, Attr. & Type (Low byte -> attr, high byte -> type) |  |
 | `0xE0n` | **INSTR** | `R, B, B` | 3 | Family. Define ADSR for instrument Rn. |  |
 | `0xC1` | **OAMPOS** | `R, R, R` | 3 | Set R2, R3 to the (X, Y) coordinates of the tile at OAM`[R1]` |  |

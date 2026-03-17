@@ -751,6 +751,14 @@ internal partial class Cpu
         CursorPosY = y;
     }
 
+    private partial void Execute_CRSPOS(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+
+        CursorPosX = GetRegister(x);
+        CursorPosY = GetRegister(y);
+    }
+
     private partial void Execute_SAVE(byte opcode, ref ushort pcDelta)
     {
         _mobo.InvokeSave();

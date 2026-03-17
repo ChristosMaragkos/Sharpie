@@ -90,6 +90,19 @@ internal partial class Cpu
                 break;
             }
 
+            case 0xC1: // CRSPOS
+            {
+                pcDelta = 2;
+                var (x, y) = ReadRegisterArgs();
+
+                var xDelta = GetRegister(x);
+                var yDelta = GetRegister(y);
+
+                CursorPosX += xDelta;
+                CursorPosY += yDelta;
+                break;
+            }
+
             case 0x60: // IADD
             {
                 pcDelta = 3;

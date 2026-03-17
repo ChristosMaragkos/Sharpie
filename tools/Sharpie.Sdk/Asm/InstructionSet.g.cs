@@ -69,6 +69,7 @@ public static class InstructionSet
         { "SETSEQ", (2, 149, 2, false, "R") },
         { "SONG", (1, 160, 1, true, "R") },
         { "SETCRS", (3, 192, 2, false, "BB") },
+        { "CRSPOS", (2, 193, 2, false, "RR") },
         { "DRAW", (3, 208, 4, true, "RRRR") },
         { "INSTR", (3, 224, 3, true, "RBB") },
         { "OAMPOS", (3, 193, 3, false, "RRR") },
