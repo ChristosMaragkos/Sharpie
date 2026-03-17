@@ -368,3 +368,19 @@ MemCmp:
     Return:
         RET
 .ENDSCOPE
+
+; SYS_PRINT
+; Prints the null(zero)-terminated string starting at (R1) beginning in the grid coordinates at (R2, R3).
+Print:
+.SCOPE
+    CRSPOS r2, r3
+    Loop:
+        ALT LDP r4, r1
+        ICMP r4, 0
+        JEQ Return
+        PRNT r4
+        JMP Loop
+
+    Return:
+        RET
+.ENDSCOPE

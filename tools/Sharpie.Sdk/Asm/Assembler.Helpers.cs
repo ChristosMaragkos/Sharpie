@@ -18,6 +18,7 @@ public partial class Assembler
         { "SYS_FREE_STACKFRAME", 64204 },
         { "SYS_MEM_SET", 64221 },
         { "SYS_MEM_CMP", 64238 },
+        { "SYS_PRINT", 64275 },
     };
 
     private ScopeLevel GetCurrentScope() =>

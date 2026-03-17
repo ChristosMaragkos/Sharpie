@@ -437,6 +437,7 @@ NameTable:
     .DB "DEALLOCA:", 0
     .DB "MEMSET:", 0
     .DB "MEMCMP:", 0
+    .DB "PRINT:", 0
 
     .DB 0
 
@@ -452,3 +453,4 @@ AddrTable:
     .DW FreeFrame
     .DW MemSet
     .DW MemCmp
+    .DW Print
