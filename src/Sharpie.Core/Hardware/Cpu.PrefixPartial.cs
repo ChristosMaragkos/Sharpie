@@ -344,6 +344,15 @@ internal partial class Cpu
                 break;
             }
 
+            case >= 0x80
+            and <= 0x8F:
+            {
+                var x = IndexFromOpcode(opcode);
+                var max = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F);
+                GetRegister(x) = (ushort)_rng.Next(max);
+                break;
+            }
+
             case 0xC2: // SAVE
             {
                 _mobo.InvokeSave(true);
