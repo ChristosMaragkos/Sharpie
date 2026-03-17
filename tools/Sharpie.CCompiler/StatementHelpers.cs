@@ -355,7 +355,17 @@ public partial class SharpieEmitter
                 return;
 
             case CXCursorKind.CXCursor_DeclRefExpr:
+                var referenced = clang.getCursorReferenced(node);
                 var name = node.Spelling.ToString();
+
+                if (referenced.Kind == CXCursorKind.CXCursor_FunctionDecl)
+                {
+                    if (targetReg >= 0)
+                        context.Emit($"LDI r{targetReg}, {name}");
+
+                    return;
+                }
+
                 if (!context.Locals.TryGetValue(name, out var allocatedSpace))
                     throw new InvalidOperationException($"Unknown local variable `{name}`.");
 
@@ -718,22 +728,35 @@ public partial class SharpieEmitter
     )
     {
         var children = GetChildren(callExpr);
-        var funcName = children[0].Spelling.ToString();
+        var callee = PeelExpression(children[0]);
 
-        // --- NEW: Hidden Pointer Setup ---
+        var referenced = clang.getCursorReferenced(callee);
+        bool isDirectCall = referenced.Kind == CXCursorKind.CXCursor_FunctionDecl;
+
+        var funcName = isDirectCall ? children[0].Spelling.ToString() : "";
+
         long retSize = callExpr.Type.SizeOf;
         bool hasHiddenPtr = retSize > 2;
         StorageLocation tempRetSpace = default;
 
         if (hasHiddenPtr)
         {
-            // Allocate a temporary local variable to hold the returned struct!
+            // Allocate a temporary local variable to hold the returned struct
             // Because we stitch the Prologue at the end, TotalStackBytes will cleanly account for this.
             tempRetSpace = context.AllocateStorage(
                 EmissionContext.GenerateLabel("tmp_ret"),
                 true,
                 (int)retSize
             );
+        }
+
+        var activeLeases = new List<EmissionContext.TempLease>();
+
+        if (!isDirectCall)
+        {
+            using var calleeRegLease = context.AcquireTempRegister();
+            EmitExpression(callee, calleeRegLease.Value, context);
+            context.Emit($"PUSH r{calleeRegLease.Value}");
         }
 
         var tempsToProtect = context.GetActiveTempRegisters();
@@ -791,7 +814,6 @@ public partial class SharpieEmitter
         }
 
         // process register arguments left to right
-        var activeLeases = new List<EmissionContext.TempLease>();
         var regAssignments = new List<(int TargetReg, int SourceTempReg)>();
 
         int abiReg = hasHiddenPtr ? 2 : 1;
@@ -840,7 +862,13 @@ public partial class SharpieEmitter
 
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
-            context.Emit($"CALL {funcName}");
+            if (isDirectCall)
+                context.Emit($"CALL {funcName}");
+            else
+            {
+                context.Emit("POP r0");
+                context.Emit("ALT CALL r0");
+            }
 
             if (totalStackBytesToFree > 0)
             {
