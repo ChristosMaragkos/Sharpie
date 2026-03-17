@@ -350,6 +350,28 @@ public partial class SharpieEmitter
 
         switch (node.Kind)
         {
+            case CXCursorKind.CXCursor_ConditionalOperator:
+                if (targetReg >= 0)
+                {
+                    var condChildren = GetChildren(node);
+                    var condExpr = PeelExpression(condChildren[0]);
+                    var trueExpr = PeelExpression(condChildren[1]);
+                    var falseExpr = PeelExpression(condChildren[2]);
+
+                    var falseLabel = EmissionContext.GenerateLabel("ternary_false");
+                    var endLabel = EmissionContext.GenerateLabel("ternary_end");
+
+                    EmitCondition(condExpr, falseLabel, false, context);
+
+                    EmitExpression(trueExpr, targetReg, context);
+                    context.Emit($"JMP {endLabel}");
+
+                    context.Emit($"{falseLabel}:");
+                    EmitExpression(falseExpr, targetReg, context);
+
+                    context.Emit($"{endLabel}:");
+                }
+                return;
             case CXCursorKind.CXCursor_CallExpr:
                 EmitCallExpression(node, targetReg, context);
                 return;
