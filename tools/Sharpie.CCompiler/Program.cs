@@ -62,7 +62,7 @@ static void CompileFile(string inputPath, string outputPath)
     using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
         index,
         inputPath,
-        new[] { "-std=c99", "-target", "msp430" }, // HACK: I'm passing some random 16-bit assembly to the frontend. I don't really like it.
+        new[] { "-std=gnu11", "-target", "msp430" }, // HACK: I'm passing some random 16-bit assembly to the frontend. I don't really like it.
         Array.Empty<ClangSharp.Interop.CXUnsavedFile>(),
         ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
     );
