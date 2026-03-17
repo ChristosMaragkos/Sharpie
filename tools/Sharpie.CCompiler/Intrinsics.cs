@@ -13,6 +13,7 @@ public partial class SharpieEmitter
             { "__sharpie_memset", "SYS_MEM_SET" },
             { "__sharpie_memcmp", "SYS_MEM_CMP" },
             { "__sharpie_pal_reset", "SYS_PAL_RESET" },
+            { "__sharpie_print", "SYS_PRINT" },
         };
 
         if (biosAliases.TryGetValue(funcName, out var syscall))
