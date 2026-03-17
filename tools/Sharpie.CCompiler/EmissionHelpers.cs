@@ -6,39 +6,57 @@ public partial class SharpieEmitter
 {
     private static void EmitDoStatement(CXCursor doStatement, EmissionContext context)
     {
-        var children = SharpieEmitter.GetChildren(doStatement);
+        var children = GetChildren(doStatement);
         var body = children[0];
         var condition = children[1];
 
         var labelStart = EmissionContext.GenerateLabel("do_start");
+        var labelCond = EmissionContext.GenerateLabel("do_cond");
+        var labelEnd = EmissionContext.GenerateLabel("do_end");
+
         context.Emit($"{labelStart}:");
-        SharpieEmitter.EmitStatement(body, context);
-        SharpieEmitter.EmitCondition(condition, labelStart, true, context);
+
+        context.BreakLabels.Push(labelEnd);
+        context.ContinueLabels.Push(labelCond);
+        EmitStatement(body, context);
+        context.ContinueLabels.Pop();
+        context.BreakLabels.Pop();
+
+        context.Emit($"{labelCond}:"); // Continue jumps here
+        EmitCondition(condition, labelStart, true, context);
+        context.Emit($"{labelEnd}:"); // Break jumps here
     }
 
     private static void EmitForStatement(CXCursor forStatement, EmissionContext context)
     {
-        var children = SharpieEmitter.GetChildren(forStatement);
+        var children = GetChildren(forStatement);
 
         var labelStart = EmissionContext.GenerateLabel("for_start");
+        var labelInc = EmissionContext.GenerateLabel("for_inc"); // NEW: For 'continue'
         var labelEnd = EmissionContext.GenerateLabel("for_end");
 
         var init = children[0];
         if (init.Kind != CXCursorKind.CXCursor_NoDeclFound)
-            SharpieEmitter.EmitStatement(init, context);
+            EmitStatement(init, context);
 
         context.Emit($"{labelStart}:");
 
         var condition = children[1];
         if (condition.Kind != CXCursorKind.CXCursor_NoDeclFound)
-            SharpieEmitter.EmitCondition(condition, labelEnd, false, context);
-        SharpieEmitter.EmitStatement(children[3], context); // emit the body and THEN the increment
+            EmitCondition(condition, labelEnd, false, context);
 
+        context.BreakLabels.Push(labelEnd);
+        context.ContinueLabels.Push(labelInc);
+        EmitStatement(children[3], context);
+        context.ContinueLabels.Pop();
+        context.BreakLabels.Pop();
+
+        context.Emit($"{labelInc}:"); // Continue jumps here
         var inc = children[2];
         if (inc.Kind != CXCursorKind.CXCursor_NoDeclFound)
         {
             using var dummy = context.AcquireTempRegister();
-            SharpieEmitter.EmitExpression(inc, dummy.Value, context);
+            EmitExpression(inc, dummy.Value, context);
         }
 
         context.Emit($"JMP {labelStart}");
@@ -55,8 +73,13 @@ public partial class SharpieEmitter
         var labelEnd = EmissionContext.GenerateLabel("while_end");
 
         context.Emit($"{labelStart}:");
-        SharpieEmitter.EmitCondition(condition, labelEnd, false, context);
-        SharpieEmitter.EmitStatement(body, context);
+        EmitCondition(condition, labelEnd, false, context);
+
+        context.BreakLabels.Push(labelEnd);
+        context.ContinueLabels.Push(labelStart);
+        EmitStatement(body, context);
+        context.ContinueLabels.Pop();
+        context.BreakLabels.Pop();
 
         context.Emit($"JMP {labelStart}");
         context.Emit($"{labelEnd}:");

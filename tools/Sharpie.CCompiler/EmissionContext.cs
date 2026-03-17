@@ -46,7 +46,10 @@ public sealed partial class SharpieEmitter
         public List<int> UsedPreservedRegisters { get; } = new();
 
         public List<string> Instructions { get; } = new();
+
         public Stack<string> BreakLabels { get; } = new();
+        public Stack<string> ContinueLabels { get; } = new();
+
         public bool HasReturn { get; set; }
 
         public bool IsMain { get; set; }

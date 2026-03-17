@@ -54,6 +54,12 @@ public partial class SharpieEmitter
                 EmitExpression(stmt, -1, context);
                 break;
 
+            case CXCursorKind.CXCursor_ContinueStmt:
+                if (context.ContinueLabels.Count == 0)
+                    throw new InvalidOperationException("Unexpected 'continue' outside of loop");
+                context.Emit($"JMP {context.ContinueLabels.Peek()}");
+                break;
+
             case CXCursorKind.CXCursor_BreakStmt:
                 if (context.BreakLabels.Count == 0)
                     throw new InvalidOperationException(
