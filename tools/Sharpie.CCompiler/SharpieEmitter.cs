@@ -3,7 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: jump tables, string literal caching, bank switching impl
+// TODO: jump tables, bank switching impl
 // In no particular order.
 public sealed partial class SharpieEmitter
 {
