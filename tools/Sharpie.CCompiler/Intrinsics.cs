@@ -10,6 +10,7 @@ public partial class SharpieEmitter
             { "__sharpie_stackalloc", "SYS_STACKALLOC" },
             { "__sharpie_delay", "SYS_FRAME_DELAY" },
             { "__sharpie_memcpy", "SYS_MEM_COPY" },
+            { "__sharpie_memmove", "SYS_MEM_MOVE" },
             { "__sharpie_memset", "SYS_MEM_SET" },
             { "__sharpie_memcmp", "SYS_MEM_CMP" },
             { "__sharpie_pal_reset", "SYS_PAL_RESET" },

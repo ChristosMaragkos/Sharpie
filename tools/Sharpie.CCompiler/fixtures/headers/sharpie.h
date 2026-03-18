@@ -39,6 +39,7 @@ void *__sharpie_stackalloc(void *src, size_t byteAmount);
 void __sharpie_delay(int frames);
 void __sharpie_memcpy(void *dst, const void *src, size_t length);
 void __sharpie_memset(void *dst, int value, size_t length);
+void __sharpie_memmove(void *dst, const void *src, size_t length);
 int __sharpie_memcmp(const void *ptr1, const void *ptr2, size_t length);
 void __sharpie_pal_reset(void);
 void __sharpie_print(const char *str, int grid_x, int grid_y);
@@ -75,6 +76,7 @@ void __sharpie_move_cursor(int x, int y);
 #define memcpy(dst, src, len) __sharpie_memcpy(dst, src, len)
 #define memset(dst, val, len) __sharpie_memset(dst, val, len)
 #define memcmp(p1, p2, len) __sharpie_memcmp(p1, p2, len)
+#define memmove(dst, src, len) __sharpie_memmove(dst, src, len)
 
 // --- Sharpie Macros & Aliases ---
 // Automatically packs Attr (Low Byte) and Type (High Byte)
