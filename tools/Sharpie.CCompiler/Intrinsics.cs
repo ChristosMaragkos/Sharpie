@@ -86,6 +86,9 @@ public partial class SharpieEmitter
             case "__sharpie_hard_mute":
                 context.Emit("ALT MUTE");
                 return true;
+            case "__sharpie_crash":
+                context.Emit("ALT HALT");
+                return true;
 
             // --- System ---
             case "__sharpie_vblnk":
