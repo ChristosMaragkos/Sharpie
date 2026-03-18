@@ -6,13 +6,13 @@ Main:
     PUSH r11
     PUSH r15
     GETSP r15
-    LDI r1, str_L1
+    LDI r1, str_L0
     MOV r8, r1
-    LDI r1, str_L3
-    MOV r9, r1
     LDI r1, str_L1
+    MOV r9, r1
+    LDI r1, str_L0
     MOV r10, r1
-    LDI r1, str_L6
+    LDI r1, str_L2
     LDI r2, 0
     LDI r3, 0
     CALL SYS_PRINT
@@ -48,8 +48,8 @@ Main:
 ; Readonly Data
 str_L0:
     .DB "Hello from Sharpie", 0
-str_L2:
+str_L1:
     .DB "This is a compiler test", 0
-str_L5:
+str_L2:
     .DB "Something in the way", 0
 .ENDREGION

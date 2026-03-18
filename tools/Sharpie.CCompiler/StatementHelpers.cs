@@ -425,8 +425,6 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_StringLiteral:
                 if (targetReg >= 0)
                 {
-                    var strLabel = EmissionContext.GenerateLabel("str");
-
                     unsafe
                     {
                         var range = clang.getCursorExtent(node);
@@ -446,7 +444,7 @@ public partial class SharpieEmitter
                                 existingLabel = EmissionContext.GenerateLabel("str");
                                 context.StringPool[rawString] = existingLabel;
 
-                                context.ReadOnlyData.Add($"{strLabel}:");
+                                context.ReadOnlyData.Add($"{existingLabel}:");
                                 context.ReadOnlyData.Add($"    .DB {rawString}, 0");
                             }
                             context.Emit($"LDI r{targetReg}, {existingLabel}");
