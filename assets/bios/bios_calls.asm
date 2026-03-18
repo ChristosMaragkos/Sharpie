@@ -384,3 +384,36 @@ Print:
     Return:
         RET
 .ENDSCOPE
+
+; SYS_MEM_MOVE
+; Safely copies the region beginning in R2 into the region beginning in R1 with a size of R3 bytes.
+MemMove:
+.SCOPE
+    CMP r1, r2
+    JEQ Return
+    JGT Backward
+
+    Forward:
+        CALL MemCopy
+        RET
+
+    Backward:
+        MOV r4, r1
+        ADD r1, r3
+        ADD r2, r3
+
+        DEC r2 ; zero-based index
+        DEC r3
+
+        Loop:
+            ALT STP r2, r1
+
+            DEC r1
+            DEC r2
+
+            CMP r1, r4
+            JGE Loop
+
+    Return:
+        RET
+.ENDSCOPE

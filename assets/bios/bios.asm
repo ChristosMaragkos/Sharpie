@@ -435,6 +435,7 @@ NameTable:
     .DB "MEMSET:", 0
     .DB "MEMCMP:", 0
     .DB "PRINT:", 0
+    .DB "MEMMOVE:", 0
 
     .DB 0
 
@@ -451,3 +452,4 @@ AddrTable:
     .DW MemSet
     .DW MemCmp
     .DW Print
+    .DW MemMove
