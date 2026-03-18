@@ -340,31 +340,20 @@ BlueScreen:
     .STR 8, 4 "RUNTIME ERROR"
     .STR 1, 8 "ERROR CODE: ", r0
 
-    ICMP r0, Errors::OamOOB
-    JEQ OamOOBErrorCode
-
-    ICMP r0, Errors::IllegalWrite
-    JEQ IllegalWriteErrorCode
-
-    ICMP r0, Errors::StackUnderflow
-    JEQ StackUnderflowErrorCode
-
-    ICMP r0, Errors::Manual
+    ICMP r0, 0xFF
     JEQ ManualTriggerErrorCode
 
-    .STR 1, 10 "Unknown Error"
-    HALT
+    ; Preload cursor pos
+    LDI r2, 1
+    LDI r3, 10
 
-OamOOBErrorCode:
-    .STR 1, 10 "ERR-OAM-CRSR-OOB"
-    JMP Crash
+    ; Load the correct string
+    DEC r0
+    IMUL r0, 2
+    LDI r1, ErrorMessages
+    ADD r1, r0
 
-IllegalWriteErrorCode:
-    .STR 1, 10 "ERR-ILLEGAL-WRITE"
-    JMP Crash
-
-StackUnderflowErrorCode:
-    .STR 1, 10 "ERR-STACK-UNDERFLOW"
+    CALL Print
     JMP Crash
 
 ManualTriggerErrorCode:
@@ -373,6 +362,12 @@ ManualTriggerErrorCode:
 Crash:
     .STR 1, 12 "Please restart"
     HALT
+
+ErrorMessages:
+    .DB "ERR-OAM-CRSR-OOB", 0
+    .DB "ERR-ILLEGAL-WRITE", 0
+    .DB "ERR-STACK-UNDERFLOW", 0
+    .DB "ERR-STACK-OVERFLOW", 0
 
 SyscallPrint:
     SETCRS 0, 0
