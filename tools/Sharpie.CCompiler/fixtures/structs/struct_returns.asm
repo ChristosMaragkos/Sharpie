@@ -23,7 +23,7 @@ _func_make_point:
     MOV r1, r8
     POP r2
     LDI r3, 4
-    CALL SYS_MEM_COPY
+    CALL SYS_MEM_MOVE
     SETSP r15
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
@@ -53,7 +53,7 @@ Main:
     MOV r1, r2
     POP r2
     LDI r3, 4
-    CALL SYS_MEM_COPY
+    CALL SYS_MEM_MOVE
     PUSH r1
     PUSH r2
     LDI r3, 100

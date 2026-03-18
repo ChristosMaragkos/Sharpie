@@ -305,7 +305,7 @@ public partial class SharpieEmitter
             context.Emit($"MOV r1, r{addrReg.Value}"); // Dest
             context.Emit("POP r2"); // Source
             context.Emit($"LDI r3, {assignSize}");
-            context.Emit("CALL SYS_MEM_COPY");
+            context.Emit("CALL SYS_MEM_MOVE");
         }
         else
         {
@@ -394,7 +394,7 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r1, r{context.HiddenRetPtrReg}"); // Overwrite r1 with the Hidden Pointer
                 context.Emit("POP r2"); // Retrieve the struct's address securely into r2
                 context.Emit($"LDI r3, {retSizeBytes}"); // Byte count
-                context.Emit("CALL SYS_MEM_COPY");
+                context.Emit("CALL SYS_MEM_MOVE");
             }
             else // Normal 16-bit return
             {
