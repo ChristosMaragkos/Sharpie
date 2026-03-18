@@ -5,7 +5,7 @@ int main(void) {
   char *b = "This is a compiler test";
   char *c = "Hello from Sharpie";
 
-  __sharpie_print("Something in the way", 0, 0);
+  print("Something in the way", 0, 0);
 
   char *allocated = alloca(20);
   allocated[0] = 'a';
