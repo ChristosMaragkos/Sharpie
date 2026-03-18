@@ -322,10 +322,12 @@ ErrorSound:
     OamOOB = 0x01
     IllegalWrite = 0x02
     StackUnderflow = 0x03
+    StackOverflow = 0x04
     Manual = 0xFF
 .ENDENUM
 
 BlueScreen:
+    CALL ResetPalette
     LDI r0, ErrorSound
     SONG r0
 
