@@ -50,13 +50,17 @@ public sealed partial class SharpieEmitter
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
             .ToList();
 
-        var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main");
-        if (mainFunctions.Count() > 1)
+        var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main").ToList();
+        if (mainFunctions.Count > 1)
             throw new InvalidOperationException(
                 "Ambiguous entrypoint: more than one 'main' function found."
             );
 
-        foreach (var func in functions)
+        var orderedFunctions = new List<CXCursor>();
+        orderedFunctions.Add(mainFunctions[0]);
+        orderedFunctions.AddRange(functions.Where(func => func.Spelling.ToString() != "main"));
+
+        foreach (var func in orderedFunctions)
         {
             var hasBody = GetChildren(func).Any(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
             if (!hasBody)
