@@ -8,10 +8,12 @@ _func_add_six_numbers:
     PUSH r13
     PUSH r15
     GETSP r15
-    LDI r6, 16
+    MOV r6, r15
+    IADD r6, 16
     LDS r7, r6
     MOV r12, r7
-    LDI r6, 18
+    MOV r6, r15
+    IADD r6, 18
     LDS r7, r6
     MOV r13, r7
     MOV r8, r1
@@ -43,11 +45,20 @@ _func_test_memory:
     PUSH r8
     PUSH r15
     GETSP r15
-    PUSH r1
+    MOV r6, r15
+    LDI r7, 2
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
+    MOV r0, r15
+    STA r1, r0
     LDI r2, 20
     MOV r1, r2
     CALL SYS_ALLOC_STACKFRAME
-    POP r1
+    PUSH r0
+    MOV r0, r15
+    LDP r1, r0
+    POP r0
     MOV r1, r0
     MOV r8, r1
     MOV r1, r8
@@ -56,6 +67,10 @@ _func_test_memory:
     CALL SYS_MEM_SET
     LDI r0, 1
     SETSP r15
+    MOV r6, r15
+    LDI r7, 2
+    ADD r6, r7
+    SETSP r6
     POP r15
     POP r8
     RET
@@ -63,7 +78,13 @@ Main:
     PUSH r8
     PUSH r15
     GETSP r15
-    PUSH r1
+    MOV r6, r15
+    LDI r7, 2
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
+    MOV r0, r15
+    STA r1, r0
     LDI r2, 6
     PUSH r2
     LDI r2, 5
@@ -79,7 +100,10 @@ Main:
     CALL _func_add_six_numbers
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
-    POP r1
+    PUSH r0
+    MOV r0, r15
+    LDP r1, r0
+    POP r0
     MOV r1, r0
     MOV r8, r1
     LDI r1, 0
@@ -91,6 +115,10 @@ Main:
     DRAW r1, r2, r3, r4
     MOV r0, r8
     SETSP r15
+    MOV r6, r15
+    LDI r7, 2
+    ADD r6, r7
+    SETSP r6
     POP r15
     POP r8
     HALT

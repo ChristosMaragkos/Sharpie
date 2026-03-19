@@ -56,9 +56,12 @@ Main:
     PUSH r8
     PUSH r9
     PUSH r15
-    LDI r1, 4
-    CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r6, r15
+    LDI r7, 6
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
     MOV r1, r15
     LDI r1, _func_add
     MOV r2, r15
@@ -74,7 +77,9 @@ Main:
     MUL r3, r4
     ADD r2, r3
     STA r1, r2
-    PUSH r1
+    MOV r0, r15
+    IADD r0, 4
+    STA r1, r0
     LDI r2, _func_add
     LDI r3, 10
     LDI r4, 5
@@ -82,10 +87,16 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    POP r1
+    PUSH r0
+    MOV r0, r15
+    IADD r0, 4
+    LDP r1, r0
+    POP r0
     MOV r1, r0
     MOV r8, r1
-    PUSH r1
+    MOV r0, r15
+    IADD r0, 4
+    STA r1, r0
     MOV r3, r15
     LDI r4, 1
     LDI r5, 2
@@ -98,7 +109,11 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    POP r1
+    PUSH r0
+    MOV r0, r15
+    IADD r0, 4
+    LDP r1, r0
+    POP r0
     MOV r1, r0
     MOV r9, r1
     MOV r1, r8
@@ -106,8 +121,10 @@ Main:
     ADD r1, r2
     MOV r0, r1
     SETSP r15
-    LDI r1, 4
-    CALL SYS_FREE_STACKFRAME
+    MOV r6, r15
+    LDI r7, 6
+    ADD r6, r7
+    SETSP r6
     POP r15
     POP r9
     POP r8

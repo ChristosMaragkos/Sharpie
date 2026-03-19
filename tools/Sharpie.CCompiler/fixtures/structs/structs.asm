@@ -2,9 +2,12 @@
 Main:
     PUSH r8
     PUSH r15
-    LDI r1, 4
-    CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r6, r15
+    LDI r7, 4
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
     MOV r1, r15
     LDI r1, 10
     MOV r2, r15
@@ -26,8 +29,10 @@ Main:
     ADD r1, r2
     MOV r0, r1
     SETSP r15
-    LDI r1, 4
-    CALL SYS_FREE_STACKFRAME
+    MOV r6, r15
+    LDI r7, 4
+    ADD r6, r7
+    SETSP r6
     POP r15
     POP r8
     HALT

@@ -28,11 +28,14 @@ _func_fill_array:
     RET
 Main:
     PUSH r15
-    LDI r1, 6
-    CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r6, r15
+    LDI r7, 6
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
     MOV r1, r15
-    MOV R1, r15
+    MOV r1, r15
     LDI r2, 3
     CALL _func_fill_array
     MOV r1, r15
@@ -42,8 +45,10 @@ Main:
     ADD r1, r2
     LDP r0, r1
     SETSP r15
-    LDI r1, 6
-    CALL SYS_FREE_STACKFRAME
+    MOV r6, r15
+    LDI r7, 6
+    ADD r6, r7
+    SETSP r6
     POP r15
     HALT
 .ENDREGION

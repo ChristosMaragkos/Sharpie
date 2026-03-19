@@ -1,9 +1,12 @@
 .REGION FIXED
 Main:
     PUSH r15
-    LDI r1, 10
-    CALL SYS_ALLOC_STACKFRAME
     GETSP r15
+    MOV r6, r15
+    LDI r7, 10
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
     MOV r1, r15
     LDI r2, 30
     MOV r3, r1
@@ -58,8 +61,10 @@ Main:
     ADD r1, r2
     MOV r0, r1
     SETSP r15
-    LDI r1, 10
-    CALL SYS_FREE_STACKFRAME
+    MOV r6, r15
+    LDI r7, 10
+    ADD r6, r7
+    SETSP r6
     POP r15
     HALT
 .ENDREGION
