@@ -1,9 +1,9 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: bank switching impl, global variables going into fixed region, static functions not getting .GLOBAL
 public sealed partial class SharpieEmitter
 {
     private const int TempRegisterStart = 1;
@@ -18,7 +18,25 @@ public sealed partial class SharpieEmitter
         var asm = new StringBuilder();
         var roData = new List<string>();
         var stringPool = new Dictionary<string, string>();
-        asm.AppendLine(".REGION FIXED");
+
+        var regionName = "FIXED";
+
+        unsafe
+        {
+            var tuCursor = clang.Cursor_getTranslationUnit(translationUnitCursor);
+            var tuSpelling = clang.getTranslationUnitSpelling(tuCursor).ToString();
+
+            if (File.Exists(tuSpelling))
+            {
+                var srcText = File.ReadAllText(tuSpelling);
+                var match = Regex.Match(srcText, @"#pragma\s+bank\s+(\d+)");
+                if (match.Success)
+                {
+                    regionName = $"BANK_{match.Groups[1].Value}";
+                }
+            }
+            asm.AppendLine($".REGION {regionName}");
+        }
 
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
@@ -35,6 +53,11 @@ public sealed partial class SharpieEmitter
             var hasBody = GetChildren(func).Any(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
             if (!hasBody)
                 continue; // skip prototypes entirely
+
+            var linkage = clang.getCursorLinkage(func);
+            var isStatic = linkage == CXLinkageKind.CXLinkage_Internal; // static methods in C are file-scoped so we just don't emit .GLOBAL
+            if (!isStatic)
+                asm.AppendLine(".GLOBAL");
 
             var funcName = func.Spelling.ToString();
             if (funcName.StartsWith("__sharpie_"))
@@ -143,6 +166,8 @@ public sealed partial class SharpieEmitter
                 asm.AppendLine($"    {line}");
 
             // EmitReturn is responsible for the epilogue
+            if (!isStatic)
+                asm.AppendLine(".ENDGLOBAL");
         }
 
         if (roData.Count > 0)

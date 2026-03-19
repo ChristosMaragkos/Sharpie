@@ -877,23 +877,20 @@ public partial class SharpieEmitter
         }
 
         var activeLeases = new List<EmissionContext.TempLease>();
+        int indirectTargetSpillOffset = -1;
 
         if (!isDirectCall)
         {
-            int indirectTargetSpillOffset = -1;
-            if (!isDirectCall)
-            {
-                using var calleeRegLease = context.AcquireTempRegister();
-                EmitExpression(callee, calleeRegLease.Value, context);
+            using var calleeRegLease = context.AcquireTempRegister();
+            EmitExpression(callee, calleeRegLease.Value, context);
 
-                // Securely allocate 2 bytes on the local stack to hold the pointer
-                var loc = context.AllocateStorage("__hidden_indirect", true, 2);
-                context.Emit("MOV r6, r15");
-                AccumulateOffset(6, loc.Value, context);
-                context.Emit($"STA r{calleeRegLease.Value}, r6");
+            // Securely allocate 2 bytes on the local stack to hold the pointer
+            var loc = context.AllocateStorage("__hidden_indirect", true, 2);
+            context.Emit("MOV r6, r15");
+            AccumulateOffset(6, loc.Value, context);
+            context.Emit($"STA r{calleeRegLease.Value}, r6");
 
-                indirectTargetSpillOffset = loc.Value;
-            }
+            indirectTargetSpillOffset = loc.Value;
         }
 
         var tempsToProtect = context.GetActiveTempRegisters();
@@ -1004,23 +1001,70 @@ public partial class SharpieEmitter
 
         if (!TryEmitIntrinsic(funcName, targetReg, context))
         {
-            if (isDirectCall)
-                context.Emit($"CALL _func_{funcName}");
-            else
+            // HACK: Cross bank calls:
+            // To call a method in another bank, you need to annotate it like so:
+            // __attribute__((annotate("bank_2"))) void foo(void);
+
+            string? targetBank = null;
+
+            unsafe
             {
-                context.Emit("POP r0");
-                context.Emit("ALT CALL r0");
+                referenced.VisitChildren(
+                    (child, _, _) =>
+                    {
+                        if (child.Kind == CXCursorKind.CXCursor_AnnotateAttr)
+                        {
+                            var annotation = child.Spelling.ToString();
+                            if (annotation.StartsWith("bank_"))
+                                targetBank = annotation.Substring(5);
+                        }
+                        return CXChildVisitResult.CXChildVisit_Continue;
+                    },
+                    new CXClientData(IntPtr.Zero)
+                );
             }
 
+            if (targetBank != null)
+            {
+                context.Emit("PUSH r13");
+                context.Emit("PUSH r14");
+                context.Emit($"LDI r14, {targetBank}");
+
+                if (isDirectCall)
+                {
+                    context.Emit($"LDI r13, _func_{funcName}");
+                }
+                else
+                {
+                    context.Emit("MOV r6, r15");
+                    AccumulateOffset(6, indirectTargetSpillOffset, context);
+                    context.Emit("LDP r13, r6");
+                }
+
+                context.Emit("CALL SYS_FAR_CALL"); // the BIOS calls are always mapped so we can rugpull safely
+                context.Emit("POP r14");
+                context.Emit("POP r13");
+            }
+            else
+            {
+                if (isDirectCall)
+                {
+                    context.Emit($"CALL _func_{funcName}");
+                }
+                else
+                {
+                    context.Emit("MOV r6, r15");
+                    AccumulateOffset(6, indirectTargetSpillOffset, context);
+                    context.Emit("LDP r0, r6");
+                    context.Emit("ALT CALL r0");
+                }
+            }
             if (totalStackBytesToFree > 0)
             {
                 context.Emit($"LDI r1, {totalStackBytesToFree}");
                 context.Emit("CALL SYS_FREE_STACKFRAME");
             }
         }
-
-        // for (int i = tempsToProtect.Count - 1; i >= 0; i--)
-        //     context.Emit($"POP r{tempsToProtect[i]}");
 
         if (tempsToProtect.Count > 0)
         {
