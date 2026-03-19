@@ -417,3 +417,30 @@ MemMove:
     Return:
         RET
 .ENDSCOPE
+
+; SYS_FAR_CALL
+; Executes a function in another bank without clobbering any registers.
+; Mostly used by the C compiler, but feel free to use it in assembly.
+;
+; Because it's impossible to call functions in another bank while already in the
+; switchable region safely (and someone is bound to try it),
+; this is simply an entrypoint to the function from a region that is always mapped.
+;
+; Arguments:
+; - r13 = Function address
+; - r14 = Target Bank ID
+FarCall:
+.SCOPE
+    PUSH r12
+    ALT BANK r12
+    PUSH r12
+
+    BANK r14
+    ALT CALL r13
+
+    POP r12
+    BANK r12
+    POP r12
+
+    RET
+.ENDSCOPE

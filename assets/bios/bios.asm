@@ -436,7 +436,7 @@ NameTable:
     .DB "MEMCMP:", 0
     .DB "PRINT:", 0
     .DB "MEMMOVE:", 0
-
+    .DB "FAR-CALL:", 0
     .DB 0
 
 AddrTable:
@@ -453,3 +453,4 @@ AddrTable:
     .DW MemCmp
     .DW Print
     .DW MemMove
+    .DW FarCall

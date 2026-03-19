@@ -20,6 +20,7 @@ public partial class Assembler
         { "SYS_MEM_CMP", 64238 },
         { "SYS_PRINT", 64275 },
         { "SYS_MEM_MOVE", 64292 },
+        { "SYS_FAR_CALL", 64292 },
     };
 
     private ScopeLevel GetCurrentScope() =>
