@@ -3,8 +3,7 @@ using ClangSharp.Interop;
 
 namespace Sharpie.CCompiler;
 
-// TODO: jump tables, bank switching impl
-// In no particular order.
+// TODO: bank switching impl, global variables going into fixed region, static functions not getting .GLOBAL
 public sealed partial class SharpieEmitter
 {
     private const int TempRegisterStart = 1;

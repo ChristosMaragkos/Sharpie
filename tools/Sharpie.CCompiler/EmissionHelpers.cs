@@ -116,16 +116,60 @@ public partial class SharpieEmitter
             }
         }
 
-        foreach (var (val, label) in cases)
-        {
-            context.Emit($"ICMP r{condReg.Value}, {val}");
-            context.Emit($"JEQ {label}");
-        }
+        long minVal = cases.Count > 0 ? cases.Min(c => c.Value) : 0;
+        long maxVal = cases.Count > 0 ? cases.Max(c => c.Value) : 0;
+        long range = maxVal - minVal;
 
-        if (defaultLabel != null)
-            context.Emit($"JMP {defaultLabel}");
+        // Only use a jump table if the range is 64 or less
+        if (cases.Count > 0 && range <= 64)
+        {
+            var jtLabel = EmissionContext.GenerateLabel("jt");
+            string safeDefault = defaultLabel ?? labelEnd;
+
+            // bounds checking (if it's out of bounds, jump to default)
+            context.Emit($"ICMP r{condReg.Value}, {minVal}");
+            context.Emit($"JLT {safeDefault}");
+            context.Emit($"ICMP r{condReg.Value}, {maxVal}");
+            context.Emit($"JGT {safeDefault}");
+
+            // normalize index: offset = (condition - min) * 2 bytes
+            if (minVal != 0)
+                context.Emit($"ISUB r{condReg.Value}, {minVal}");
+            context.Emit($"IMUL r{condReg.Value}, 2");
+
+            // add base address of the jump table
+            using var baseReg = context.AcquireTempRegister();
+            context.Emit($"LDI r{baseReg.Value}, {jtLabel}");
+            context.Emit($"ADD r{condReg.Value}, r{baseReg.Value}");
+
+            // Dereference pointer to get the actual case label address
+            context.Emit($"LDP r{condReg.Value}, r{condReg.Value}");
+
+            context.Emit($"ALT JMP r{condReg.Value}");
+
+            context.ReadOnlyData.Add($"{jtLabel}:");
+            for (long i = minVal; i <= maxVal; i++)
+            {
+                var match = cases.FirstOrDefault(c => c.Value == i);
+                if (match.Label != null)
+                    context.ReadOnlyData.Add($"    .DW {match.Label}");
+                else
+                    context.ReadOnlyData.Add($"    .DW {safeDefault}"); // Fill missing gaps with default
+            }
+        }
         else
-            context.Emit($"JMP {labelEnd}"); // No default? Skip the switch entirely
+        {
+            // sparse switches
+            foreach (var (val, label) in cases)
+            {
+                context.Emit($"ICMP r{condReg.Value}, {val}");
+                context.Emit($"JEQ {label}");
+            }
+            if (defaultLabel != null)
+                context.Emit($"JMP {defaultLabel}");
+            else
+                context.Emit($"JMP {labelEnd}");
+        }
 
         int caseIdx = 0;
         foreach (var stmt in bodyStmts)
