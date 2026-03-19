@@ -880,9 +880,20 @@ public partial class SharpieEmitter
 
         if (!isDirectCall)
         {
-            using var calleeRegLease = context.AcquireTempRegister();
-            EmitExpression(callee, calleeRegLease.Value, context);
-            context.Emit($"PUSH r{calleeRegLease.Value}");
+            int indirectTargetSpillOffset = -1;
+            if (!isDirectCall)
+            {
+                using var calleeRegLease = context.AcquireTempRegister();
+                EmitExpression(callee, calleeRegLease.Value, context);
+
+                // Securely allocate 2 bytes on the local stack to hold the pointer
+                var loc = context.AllocateStorage("__hidden_indirect", true, 2);
+                context.Emit("MOV r6, r15");
+                AccumulateOffset(6, loc.Value, context);
+                context.Emit($"STA r{calleeRegLease.Value}, r6");
+
+                indirectTargetSpillOffset = loc.Value;
+            }
         }
 
         var tempsToProtect = context.GetActiveTempRegisters();
