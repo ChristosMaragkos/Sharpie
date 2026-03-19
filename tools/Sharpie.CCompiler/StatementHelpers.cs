@@ -271,25 +271,45 @@ public partial class SharpieEmitter
         var lhs = PeelExpression(children[0]);
         var rhs = PeelExpression(children[1]);
 
-        // Fast Path: Direct local variable in a register (r8-r15)
+        // NEW: Intercept ALL compound assignments immediately, regardless of what they are targeting!
+        if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
+        {
+            EmitCompoundAssignment(assignmentCursor, lhs, rhs, context);
+            return;
+        }
+
+        // Fast Path: Direct local variable in a register (r8-r15) or global variable
         if (lhs.Kind == CXCursorKind.CXCursor_DeclRefExpr)
         {
             var variableName = lhs.Spelling.ToString();
+
+            // register
             if (
                 context.Locals.TryGetValue(variableName, out var loc)
                 && loc.Type == StorageType.Register
             )
             {
-                if (assignmentCursor.Kind == CXCursorKind.CXCursor_CompoundAssignOperator)
-                    EmitCompoundAssignment(assignmentCursor, loc, rhs, context);
-                else
-                    EmitExpression(rhs, loc.Value, context);
-
+                EmitExpression(rhs, loc.Value, context);
                 return;
+            }
+            // global
+            else if (context.Globals.Contains(variableName))
+            {
+                var globalSize = lhs.Type.SizeOf;
+                if (globalSize <= 2)
+                {
+                    using var valueReg = context.AcquireTempRegister();
+                    EmitExpression(rhs, valueReg.Value, context);
+
+                    var prefix = (globalSize == 1) ? "ALT " : "";
+                    // Write directly to the label
+                    context.Emit($"{prefix}STM r{valueReg.Value}, _global_{variableName}");
+                    return;
+                }
             }
         }
 
-        // Standard Path: Memory Assignment
+        // Memory assignment (for pointers, array indices, structs, or stack locals)
         using var valReg = context.AcquireTempRegister();
         EmitExpression(rhs, valReg.Value, context);
 
@@ -310,38 +330,24 @@ public partial class SharpieEmitter
         else
         {
             var prefix = (assignSize == 1) ? "ALT " : "";
-            // Standard Word Assignment
             context.Emit($"{prefix}STA r{valReg.Value}, r{addrReg.Value}");
         }
     }
 
     private static void EmitCompoundAssignment(
         CXCursor assignmentCursor,
-        StorageLocation lhsLoc,
+        CXCursor lhs,
         CXCursor rhs,
         EmissionContext context
     )
     {
         var kind = GetBinaryOperatorKind(assignmentCursor);
 
-        int mathReg;
-        EmissionContext.TempLease valRegLease = default;
-        EmissionContext.TempLease offsetRegLease = default;
+        using var mathRegLease = context.AcquireTempRegister();
+        int mathReg = mathRegLease.Value;
+        EmitExpression(lhs, mathReg, context);
 
-        if (lhsLoc.Type == StorageType.Register)
-        {
-            mathReg = lhsLoc.Value;
-        }
-        else
-        {
-            valRegLease = context.AcquireTempRegister();
-            offsetRegLease = context.AcquireTempRegister();
-            mathReg = valRegLease.Value;
-
-            context.Emit($"LDI r{offsetRegLease.Value}, {lhsLoc.Value}");
-            context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
-        }
-
+        // 2. Perform the math
         if (!TryEmitImmediateMath(kind, mathReg, rhs, context))
         {
             using var scratch = context.AcquireTempRegister();
@@ -367,13 +373,32 @@ public partial class SharpieEmitter
             context.Emit($"{op} r{mathReg}, r{scratch.Value}");
         }
 
-        // write back (only if it lives on the stack)
-        if (lhsLoc.Type == StorageType.Stack)
+        if (lhs.Kind == CXCursorKind.CXCursor_DeclRefExpr)
         {
-            context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
-            valRegLease.Dispose();
-            offsetRegLease.Dispose();
+            var name = lhs.Spelling.ToString();
+
+            if (context.Locals.TryGetValue(name, out var loc) && loc.Type == StorageType.Register)
+            {
+                if (mathReg != loc.Value)
+                    context.Emit($"MOV r{loc.Value}, r{mathReg}");
+                return;
+            }
+            else if (context.Globals.Contains(name))
+            {
+                var isByte = lhs.Type.SizeOf == 1;
+                var prefix = isByte ? "ALT " : "";
+                context.Emit($"{prefix}STM r{mathReg}, _global_{name}");
+                return;
+            }
         }
+
+        // write back to stack (for locals, pointers, array indices, and struct members)
+        using var addrReg = context.AcquireTempRegister();
+        EmitLValueAddress(lhs, addrReg.Value, context);
+
+        var isByteFallback = lhs.Type.SizeOf == 1;
+        var prefixFallback = isByteFallback ? "ALT " : "";
+        context.Emit($"{prefixFallback}STA r{mathReg}, r{addrReg.Value}");
     }
 
     private static void EmitReturn(CXCursor returnStmt, EmissionContext context)
@@ -492,35 +517,65 @@ public partial class SharpieEmitter
                     return;
                 }
 
-                if (!context.Locals.TryGetValue(name, out var allocatedSpace))
-                    throw new InvalidOperationException($"Unknown local variable `{name}`.");
-
-                // Only load from the stack if someone is actually asking for the value
-                if (targetReg >= 0)
+                if (context.Locals.TryGetValue(name, out var allocatedSpace))
                 {
-                    if (node.Type.CanonicalType.kind is CXTypeKind.CXType_ConstantArray)
+                    // Only load from the stack if someone is actually asking for the value
+                    if (targetReg >= 0)
                     {
-                        context.Emit($"MOV r{targetReg}, r15");
-                        AccumulateOffset(targetReg, allocatedSpace.Value, context);
-                        return;
-                    }
+                        if (
+                            node.Type.CanonicalType.kind
+                            is CXTypeKind.CXType_ConstantArray
+                                or CXTypeKind.CXType_Record
+                        )
+                        {
+                            context.Emit($"MOV r{targetReg}, r15");
+                            AccumulateOffset(targetReg, allocatedSpace.Value, context);
+                            return;
+                        }
 
-                    var isByte = node.Type.SizeOf == 1;
-                    var prefix = isByte ? "ALT " : "";
+                        var isByte = node.Type.SizeOf == 1;
+                        var prefix = isByte ? "ALT " : "";
 
-                    if (allocatedSpace.Type == StorageType.Stack)
-                    {
-                        using var offsetReg = context.AcquireTempRegister();
-                        context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
-                        context.Emit($"{prefix}LDS r{targetReg}, r{offsetReg.Value}");
+                        if (allocatedSpace.Type == StorageType.Stack)
+                        {
+                            using var offsetReg = context.AcquireTempRegister();
+                            context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
+                            context.Emit($"{prefix}LDS r{targetReg}, r{offsetReg.Value}");
+                        }
+                        else
+                        {
+                            if (targetReg != allocatedSpace.Value)
+                                context.Emit($"MOV r{targetReg}, r{allocatedSpace.Value}");
+                        }
                     }
-                    else
-                    {
-                        if (targetReg != allocatedSpace.Value)
-                            context.Emit($"MOV r{targetReg}, r{allocatedSpace.Value}");
-                    }
+                    return;
                 }
-                return;
+                else if (context.Globals.Contains(name))
+                {
+                    if (targetReg >= 0)
+                    {
+                        if (
+                            node.Type.CanonicalType.kind
+                            is CXTypeKind.CXType_ConstantArray
+                                or CXTypeKind.CXType_Record
+                        )
+                        {
+                            // Arrays still decay to pointers, so we must return a pointer to the first element
+                            // Structs must also yield their address when evaluated as an expression so struct assignment can work like this:
+                            // obj1 = obj2;
+                            context.Emit($"LDI r{targetReg}, _global_{name}");
+                            return;
+                        }
+
+                        // directly read from memory
+                        var isByte = node.Type.SizeOf == 1;
+                        var prefix = isByte ? "ALT " : "";
+                        context.Emit($"{prefix}LDM r{targetReg}, _global_{name}");
+                    }
+                    return;
+                }
+
+                throw new InvalidOperationException($"Unknown local variable `{name}`.");
 
             case CXCursorKind.CXCursor_UnaryOperator:
                 EmitUnaryExpression(node, targetReg, context);
@@ -1107,15 +1162,18 @@ public partial class SharpieEmitter
         if (peeled.Kind == CXCursorKind.CXCursor_DeclRefExpr)
         {
             var name = peeled.Spelling.ToString();
-            var loc = context.Locals[name];
 
-            if (loc.Type == StorageType.Register)
-                throw new InvalidOperationException(
-                    $"Cannot take address of register-allocated '{name}'"
-                );
-
-            context.Emit($"MOV r{targetReg}, r15");
-            AccumulateOffset(targetReg, loc.Value, context);
+            if (context.Locals.TryGetValue(name, out var loc))
+            {
+                context.Emit($"MOV r{targetReg}, r15");
+                AccumulateOffset(targetReg, loc.Value, context);
+            }
+            else if (context.Globals.Contains(name))
+            {
+                context.Emit($"LDI r{targetReg}, _global_{name}");
+            }
+            else
+                throw new InvalidOperationException($"Unknown variable '{name}'");
         }
         // pointer
         else if (

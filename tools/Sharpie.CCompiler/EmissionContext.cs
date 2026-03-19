@@ -74,15 +74,19 @@ public sealed partial class SharpieEmitter
 
         public int HiddenRetPtrReg { get; set; } = -1; // which register is tracking the hidden return pointer (so struct returns can become void(struct Struct *ptr))
 
+        public HashSet<string> Globals { get; }
+
         public EmissionContext(
             HashSet<string> escapedVariables,
             List<string> readOnlyData,
-            Dictionary<string, string> stringPool
+            Dictionary<string, string> stringPool,
+            HashSet<string> globals
         )
         {
             EscapedVariables = escapedVariables;
             ReadOnlyData = readOnlyData;
             StringPool = stringPool;
+            Globals = globals;
         }
 
         public void Emit(string asm)

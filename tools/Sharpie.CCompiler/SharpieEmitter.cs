@@ -38,6 +38,14 @@ public sealed partial class SharpieEmitter
             asm.AppendLine($".REGION {regionName}");
         }
 
+        var globalNames = new HashSet<string>(StringComparer.Ordinal);
+
+        var globalVars = GetChildren(translationUnitCursor)
+            .Where(c => c.Kind == CXCursorKind.CXCursor_VarDecl)
+            .ToList();
+
+        HandleGlobals(asm, globalNames, globalVars);
+
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
             .ToList();
@@ -71,7 +79,7 @@ public sealed partial class SharpieEmitter
             // we're just gonna have to emit the body, scan for variables that need to be spilled,
             // then stitch the prologue and epilogue after the fact.
             var escapedVars = DetectEscapingVariables(func);
-            var context = new EmissionContext(escapedVars, roData, stringPool);
+            var context = new EmissionContext(escapedVars, roData, stringPool, globalNames);
             context.IsMain = (funcName == "main");
 
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
@@ -179,6 +187,113 @@ public sealed partial class SharpieEmitter
 
         asm.AppendLine(".ENDREGION");
         return asm.ToString();
+    }
+
+    private static void HandleGlobals(
+        StringBuilder asm,
+        HashSet<string> globalNames,
+        List<CXCursor> globalVars
+    )
+    {
+        if (globalVars.Count > 0)
+        {
+            asm.AppendLine("; Global Variables");
+            foreach (var global in globalVars)
+            {
+                var name = global.Spelling.ToString();
+                globalNames.Add(name);
+
+                var linkage = clang.getCursorLinkage(global);
+                bool isStatic = linkage == CXLinkageKind.CXLinkage_Internal;
+                long sizeBytes = global.Type.SizeOf <= 0 ? 2 : global.Type.SizeOf;
+
+                if (!isStatic)
+                    asm.AppendLine($".GLOBAL");
+                asm.AppendLine($"_global_{name}:");
+
+                var children = GetChildren(global);
+
+                // grab lists, not defaults
+                var initListExprs = children
+                    .Where(c => c.Kind == CXCursorKind.CXCursor_InitListExpr)
+                    .ToList();
+
+                var normalExprs = children
+                    .Where(c =>
+                        c.Kind >= CXCursorKind.CXCursor_FirstExpr
+                        && c.Kind <= CXCursorKind.CXCursor_LastExpr
+                        && c.Kind != CXCursorKind.CXCursor_InitListExpr
+                    )
+                    .ToList();
+
+                long bytesWritten = 0;
+
+                // Handle arrays and structs
+                if (initListExprs.Count > 0)
+                {
+                    var initVals = GetChildren(initListExprs.Last());
+                    var typeKind = global.Type.CanonicalType.kind;
+
+                    if (
+                        typeKind == CXTypeKind.CXType_ConstantArray
+                        || typeKind == CXTypeKind.CXType_IncompleteArray
+                    )
+                    {
+                        long stride =
+                            clang.getElementType(global.Type).SizeOf <= 0
+                                ? 2
+                                : clang.getElementType(global.Type).SizeOf;
+
+                        foreach (var val in initVals)
+                        {
+                            long v = PeelExpression(val).Evaluate.AsLongLong;
+                            asm.AppendLine(stride == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                            bytesWritten += stride;
+                        }
+                    }
+                    else // Structs
+                    {
+                        var decl = clang.getTypeDeclaration(global.Type.CanonicalType);
+                        var fields = GetChildren(decl)
+                            .Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl)
+                            .ToList();
+
+                        for (int i = 0; i < initVals.Count && i < fields.Count; i++)
+                        {
+                            long fieldSize = fields[i].Type.SizeOf;
+                            long v = PeelExpression(initVals[i]).Evaluate.AsLongLong;
+                            asm.AppendLine(fieldSize == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                            bytesWritten += fieldSize;
+                        }
+                    }
+                }
+                // Handle primitives safely
+                else if (normalExprs.Count > 0)
+                {
+                    long v = PeelExpression(normalExprs.Last()).Evaluate.AsLongLong;
+                    asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                    bytesWritten += sizeBytes;
+                }
+
+                // Zero-pad any uninitialized space (e.g. `int x;` or partially filled arrays)
+                while (bytesWritten < sizeBytes)
+                {
+                    if (sizeBytes - bytesWritten == 1)
+                    {
+                        asm.AppendLine("    .DB 0");
+                        bytesWritten += 1;
+                    }
+                    else
+                    {
+                        asm.AppendLine("    .DW 0");
+                        bytesWritten += 2;
+                    }
+                }
+
+                if (!isStatic)
+                    asm.AppendLine(".ENDGLOBAL");
+            }
+        }
     }
 
     private static void EmitFunctionBody(CXCursor compoundStmt, EmissionContext context)
