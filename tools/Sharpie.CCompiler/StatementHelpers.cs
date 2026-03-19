@@ -761,6 +761,17 @@ public partial class SharpieEmitter
     )
     {
         var kind = GetBinaryOperatorKind(binaryExpr);
+
+        if (
+            kind
+            is CXBinaryOperatorKind.CXBinaryOperator_LAnd
+                or CXBinaryOperatorKind.CXBinaryOperator_LOr
+        )
+        {
+            EmitLogicalOperator(binaryExpr, kind, targetReg, context);
+            return;
+        }
+
         if (kind == CXBinaryOperatorKind.CXBinaryOperator_Assign)
             throw new InvalidOperationException("Assignment is only supported as a statement.");
 
@@ -773,20 +784,63 @@ public partial class SharpieEmitter
         var lhs = PeelExpression(operands[0]);
         var rhs = PeelExpression(operands[1]);
 
-        // if the caller already leased a temp register (r1-r7) evaluate the LHS directly inside it.
         bool needsFallback = targetReg < TempRegisterStart || targetReg > TempRegisterEnd;
         EmissionContext.TempLease fallbackLease = default;
-        var lhsReg = targetReg;
+        var outReg = targetReg;
 
         if (needsFallback)
         {
             fallbackLease = context.AcquireTempRegister();
-            lhsReg = fallbackLease.Value;
+            outReg = fallbackLease.Value;
         }
 
-        EmitExpression(lhs, lhsReg, context);
+        // NEW: Evaluate Relational Operators into a Boolean 1 or 0
+        if (
+            kind
+            is CXBinaryOperatorKind.CXBinaryOperator_EQ
+                or CXBinaryOperatorKind.CXBinaryOperator_NE
+                or CXBinaryOperatorKind.CXBinaryOperator_LT
+                or CXBinaryOperatorKind.CXBinaryOperator_GT
+                or CXBinaryOperatorKind.CXBinaryOperator_LE
+                or CXBinaryOperatorKind.CXBinaryOperator_GE
+        )
+        {
+            var trueLabel = EmissionContext.GenerateLabel("rel_true");
+            var endLabel = EmissionContext.GenerateLabel("rel_end");
 
-        if (!TryEmitImmediateMath(kind, lhsReg, rhs, context))
+            using var leftReg = context.AcquireTempRegister();
+            EmitExpression(lhs, leftReg.Value, context);
+
+            if (TryGetByteLiteral(rhs, out var immValue))
+                context.Emit($"ICMP r{leftReg.Value}, {immValue}");
+            else
+            {
+                using var rightReg = context.AcquireTempRegister();
+                EmitExpression(rhs, rightReg.Value, context);
+                context.Emit($"CMP r{leftReg.Value}, r{rightReg.Value}");
+            }
+
+            var jumpMnemonic = GetJumpMnemonic(kind, true);
+            context.Emit($"{jumpMnemonic} {trueLabel}");
+            context.Emit($"LDI r{outReg}, 0"); // False
+            context.Emit($"JMP {endLabel}");
+            context.Emit($"{trueLabel}:");
+            context.Emit($"LDI r{outReg}, 1"); // True
+            context.Emit($"{endLabel}:");
+
+            if (targetReg >= 0 && targetReg != outReg)
+                context.Emit($"MOV r{targetReg}, r{outReg}");
+
+            if (needsFallback)
+                fallbackLease.Dispose();
+
+            return;
+        }
+
+        // Standard Math Operators
+        EmitExpression(lhs, outReg, context);
+
+        if (!TryEmitImmediateMath(kind, outReg, rhs, context))
         {
             using var rhsScratch = context.AcquireTempRegister();
             EmitExpression(rhs, rhsScratch.Value, context);
@@ -806,11 +860,78 @@ public partial class SharpieEmitter
                 _ => throw new InvalidOperationException($"Unsupported binary operator: {kind}"),
             };
 
-            context.Emit($"{op} r{lhsReg}, r{rhsScratch.Value}");
+            context.Emit($"{op} r{outReg}, r{rhsScratch.Value}");
         }
 
-        if (targetReg >= 0 && targetReg != lhsReg)
-            context.Emit($"MOV r{targetReg}, r{lhsReg}");
+        if (targetReg >= 0 && targetReg != outReg)
+            context.Emit($"MOV r{targetReg}, r{outReg}");
+
+        if (needsFallback)
+            fallbackLease.Dispose();
+    }
+
+    private static void EmitLogicalOperator(
+        CXCursor binaryExpr,
+        CXBinaryOperatorKind kind,
+        int targetReg,
+        EmissionContext context
+    )
+    {
+        var operands = GetChildren(binaryExpr);
+        var lhs = PeelExpression(operands[0]);
+        var rhs = PeelExpression(operands[1]);
+
+        bool needsFallback = targetReg < TempRegisterStart || targetReg > TempRegisterEnd;
+        EmissionContext.TempLease fallbackLease = default;
+        var outReg = targetReg;
+
+        if (needsFallback)
+        {
+            fallbackLease = context.AcquireTempRegister();
+            outReg = fallbackLease.Value;
+        }
+
+        var trueLabel = EmissionContext.GenerateLabel("logical_true");
+        var falseLabel = EmissionContext.GenerateLabel("logical_false");
+        var endLabel = EmissionContext.GenerateLabel("logical_end");
+
+        if (kind == CXBinaryOperatorKind.CXBinaryOperator_LAnd) // &&
+        {
+            EmitExpression(lhs, outReg, context);
+            context.Emit($"ICMP r{outReg}, 0");
+            context.Emit($"JEQ {falseLabel}"); // Left is 0? Short-circuit to false!
+
+            EmitExpression(rhs, outReg, context);
+            context.Emit($"ICMP r{outReg}, 0");
+            context.Emit($"JEQ {falseLabel}"); // Right is 0? Fail to false.
+
+            context.Emit($"LDI r{outReg}, 1"); // Both are true
+            context.Emit($"JMP {endLabel}");
+
+            context.Emit($"{falseLabel}:");
+            context.Emit($"LDI r{outReg}, 0");
+            context.Emit($"{endLabel}:");
+        }
+        else // ||
+        {
+            EmitExpression(lhs, outReg, context);
+            context.Emit($"ICMP r{outReg}, 0");
+            context.Emit($"JNE {trueLabel}"); // Left is 1? Short-circuit to true!
+
+            EmitExpression(rhs, outReg, context);
+            context.Emit($"ICMP r{outReg}, 0");
+            context.Emit($"JNE {trueLabel}"); // Right is 1? Succeed to true.
+
+            context.Emit($"LDI r{outReg}, 0"); // Both are false
+            context.Emit($"JMP {endLabel}");
+
+            context.Emit($"{trueLabel}:");
+            context.Emit($"LDI r{outReg}, 1");
+            context.Emit($"{endLabel}:");
+        }
+
+        if (targetReg >= 0 && targetReg != outReg)
+            context.Emit($"MOV r{targetReg}, r{outReg}");
 
         if (needsFallback)
             fallbackLease.Dispose();
@@ -856,27 +977,39 @@ public partial class SharpieEmitter
         if (node.Kind == CXCursorKind.CXCursor_BinaryOperator)
         {
             var kind = GetBinaryOperatorKind(node);
-            var operands = GetChildren(node);
-            var lhs = PeelExpression(operands[0]);
-            var rhs = PeelExpression(operands[1]);
 
-            using var leftReg = context.AcquireTempRegister();
-            EmitExpression(lhs, leftReg.Value, context);
-
-            if (TryGetByteLiteral(rhs, out var immValue))
-                context.Emit($"ICMP r{leftReg.Value}, {immValue}");
-            else
+            // Let && and || fall through to the short-circuiting logic in EmitExpression
+            if (
+                kind
+                is not (
+                    CXBinaryOperatorKind.CXBinaryOperator_LAnd
+                    or CXBinaryOperatorKind.CXBinaryOperator_LOr
+                )
+            )
             {
-                using var rightReg = context.AcquireTempRegister();
-                EmitExpression(rhs, rightReg.Value, context);
-                context.Emit($"CMP r{leftReg.Value}, r{rightReg.Value}");
-            }
+                var operands = GetChildren(node);
+                var lhs = PeelExpression(operands[0]);
+                var rhs = PeelExpression(operands[1]);
 
-            var jumpMnemonic = GetJumpMnemonic(kind, jumpIfTrue);
-            context.Emit($"{jumpMnemonic} {targetLabel}");
-            return;
+                using var leftReg = context.AcquireTempRegister();
+                EmitExpression(lhs, leftReg.Value, context);
+
+                if (TryGetByteLiteral(rhs, out var immValue))
+                    context.Emit($"ICMP r{leftReg.Value}, {immValue}");
+                else
+                {
+                    using var rightReg = context.AcquireTempRegister();
+                    EmitExpression(rhs, rightReg.Value, context);
+                    context.Emit($"CMP r{leftReg.Value}, r{rightReg.Value}");
+                }
+
+                var jumpMnemonic = GetJumpMnemonic(kind, jumpIfTrue);
+                context.Emit($"{jumpMnemonic} {targetLabel}");
+                return;
+            }
         }
 
+        // variables, function calls, and logical operators (&&, ||)
         using var reg = context.AcquireTempRegister();
         EmitExpression(node, reg.Value, context);
         context.Emit($"ICMP r{reg.Value}, 0");
