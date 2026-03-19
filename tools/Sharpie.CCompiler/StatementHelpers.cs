@@ -500,7 +500,7 @@ public partial class SharpieEmitter
                 {
                     if (node.Type.CanonicalType.kind is CXTypeKind.CXType_ConstantArray)
                     {
-                        context.Emit($"MOV R{targetReg}, r15");
+                        context.Emit($"MOV r{targetReg}, r15");
                         AccumulateOffset(targetReg, allocatedSpace.Value, context);
                         return;
                     }
