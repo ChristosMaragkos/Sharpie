@@ -34,7 +34,10 @@ The SDK now has a dedicated GUI and the CLI mode got a major overhaul: You now u
 
 You can also edit those fields manually from the GUI.
 
-Keep in mind the GUI is very brittle and I'm planning to create a new version from scratch in Godot.
+As of 0.3, you can also write games in C and compile them to Sharpie Assembly using the bundled `sharpiecc` and `sharpie.h`, but you must install LLVM like so:
+
+- Windows: `winget install LLVM`
+- Linux: `<your-package-manager> install llvm`
 
 ## Support
 If you encounter any issues with the Runner or the SDK or have any suggestions, please open an issue over at [the GitHub repository](https://github.com/ChristosMaragkos/Sharpie).
