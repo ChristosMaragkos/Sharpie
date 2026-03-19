@@ -61,11 +61,14 @@ jobs:
 
           Get-ChildItem "${{ github.workspace }}/src/Sharpie.Runner/RaylibCs/libs/win-arm64/native/"
 
-      - name: Publish Runner & SDK
+      - name: Publish Runner, SDK & Compiler
         run: |
           dotnet publish ./src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj -c Release -r ${{ matrix.rid }} -o ./pub-runner -p:SelfContained=true -p:UseAppHost=true
 
           dotnet publish ./tools/Sharpie.Sdk/Sharpie.Sdk.csproj -c Release -r ${{ matrix.rid }} -o ./pub-sdk -p:SelfContained=true -p:UseAppHost=true
+
+          # NEW: Publish the C Compiler!
+          dotnet publish ./tools/Sharpie.CCompiler/Sharpie.CCompiler.csproj -c Release -r ${{ matrix.rid }} -o ./pub-sdk -p:SelfContained=true -p:UseAppHost=true
 
       - name: Assemble Packages
         shell: bash
@@ -87,8 +90,12 @@ jobs:
           cp tools/Sharpie.Sdk/docs/ISA_REFERENCE.md ./pub-sdk/docs/
           cp tools/Sharpie.Sdk/docs/SYSCALL_REFERENCE.md ./pub-sdk/docs/
 
-          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/Sharpie-SDK$EXT
+          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/sharpie-sdk$EXT
+          mv ./pub-sdk/Sharpie.CCompiler$EXT ./pub-sdk/sharpiecc$EXT
           cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
+
+          mkdir -p ./pub-sdk/include/
+          cp tools/Sharpie.CCompiler/fixtures/headers/sharpie.h ./pub-sdk/include/
 
           if [[ "${{ matrix.rid }}" == win* ]]; then
             7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
