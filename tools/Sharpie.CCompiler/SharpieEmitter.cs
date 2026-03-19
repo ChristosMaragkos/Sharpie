@@ -97,7 +97,8 @@ public sealed partial class SharpieEmitter
                         }
                         else
                         {
-                            context.Emit($"LDI r6, {space.Value}");
+                            context.Emit($"MOV r6, r15");
+                            AccumulateOffset(6, space.Value, context);
                             context.Emit($"STS r{currentReg}, r6");
                         }
                     }
@@ -105,7 +106,8 @@ public sealed partial class SharpieEmitter
                     {
                         // A multi-word struct was passed in registers
                         // We must reconstruct it in its local stack home
-                        context.Emit($"LDI r6, {space.Value}");
+                        context.Emit($"MOV r6, r15");
+                        AccumulateOffset(6, space.Value, context);
 
                         for (int s = 0; s < slotsNeeded; s++)
                         {

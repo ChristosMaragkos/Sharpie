@@ -53,6 +53,20 @@ public sealed partial class SharpieEmitter
         public List<string> ReadOnlyData { get; }
         public Dictionary<string, string> StringPool { get; }
 
+        private readonly Dictionary<int, int> _tempSpillOfsets = new();
+
+        public int GetSpillOffset(int reg)
+        {
+            if (!_tempSpillOfsets.TryGetValue(reg, out int offset))
+            {
+                offset = _currentStackOffset;
+                _currentStackOffset += 2;
+                TotalStackBytes = _currentStackOffset;
+                _tempSpillOfsets[reg] = offset;
+            }
+            return offset;
+        }
+
         public bool HasReturn { get; set; }
 
         public bool IsMain { get; set; }
@@ -110,11 +124,17 @@ public sealed partial class SharpieEmitter
 
             if (TotalStackBytes > 0)
             {
-                yield return $"LDI r1, {TotalStackBytes}";
-                yield return "CALL SYS_ALLOC_STACKFRAME";
+                yield return "GETSP r15";
+                yield return "MOV r6, r15";
+                yield return $"LDI r7, {TotalStackBytes}";
+                yield return "SUB r6, r7"; // SiX sEvEN
+                yield return "SETSP r6";
+                yield return "MOV r15, r6";
             }
-
-            yield return "GETSP r15"; // cache frame pointer
+            else
+            {
+                yield return "GETSP r15";
+            }
 
             foreach (var pending in PendingStackArguments)
             {
@@ -123,30 +143,30 @@ public sealed partial class SharpieEmitter
 
                 if (pending.Slots == 1)
                 {
-                    yield return $"LDI r6, {argOffset}";
-                    yield return "LDS r7, r6"; // Fetch from Caller's Stack into r7
+                    yield return $"MOV r6, r15";
+                    yield return $"IADD r6, {argOffset}"; // Or use AccumulateOffset logic here
+                    yield return "LDS r7, r6";
 
                     if (pending.Target.Type == StorageType.Register)
-                    {
                         yield return $"MOV r{pending.Target.Value}, r7";
-                    }
                     else
                     {
-                        yield return $"LDI r6, {pending.Target.Value}";
+                        yield return $"MOV r6, r15";
+                        yield return $"IADD r6, {pending.Target.Value}";
                         yield return $"STS r7, r6";
                     }
                 }
                 else
                 {
-                    // Multi word struct: Copy (slots) words from caller's stack to local stack
-                    yield return $"LDI r6, {argOffset}"; // Source caller stack offset
-                    yield return $"LDI r5, {pending.Target.Value}"; // Dest local stack offset
+                    yield return $"MOV r6, r15";
+                    yield return $"IADD r6, {argOffset}";
+                    yield return $"MOV r5, r15";
+                    yield return $"IADD r5, {pending.Target.Value}";
 
                     for (int s = 0; s < pending.Slots; s++)
                     {
                         yield return "LDS r7, r6";
                         yield return "STS r7, r5";
-
                         if (s < pending.Slots - 1)
                         {
                             yield return "IADD r6, 2";
@@ -163,8 +183,10 @@ public sealed partial class SharpieEmitter
 
             if (TotalStackBytes > 0)
             {
-                yield return $"LDI r1, {TotalStackBytes}";
-                yield return "CALL SYS_FREE_STACKFRAME";
+                yield return "MOV r6, r15";
+                yield return $"LDI r7, {TotalStackBytes}";
+                yield return "ADD r6, r7";
+                yield return "SETSP r6";
             }
 
             yield return "POP r15";

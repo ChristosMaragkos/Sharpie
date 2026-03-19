@@ -887,7 +887,12 @@ public partial class SharpieEmitter
 
         var tempsToProtect = context.GetActiveTempRegisters();
         foreach (var reg in tempsToProtect)
-            context.Emit($"PUSH r{reg}");
+        {
+            int offset = context.GetSpillOffset(reg);
+            context.Emit($"MOV r0, r15");
+            AccumulateOffset(0, offset, context);
+            context.Emit($"STA r{reg}, r0");
+        }
 
         var regArgs = new List<(CXCursor Expr, int Slots)>();
         var stackArgs = new List<(CXCursor Expr, int Slots)>();
@@ -1003,8 +1008,23 @@ public partial class SharpieEmitter
             }
         }
 
-        for (int i = tempsToProtect.Count - 1; i >= 0; i--)
-            context.Emit($"POP r{tempsToProtect[i]}");
+        // for (int i = tempsToProtect.Count - 1; i >= 0; i--)
+        //     context.Emit($"POP r{tempsToProtect[i]}");
+
+        if (tempsToProtect.Count > 0)
+        {
+            context.Emit("PUSH r0");
+
+            foreach (var reg in tempsToProtect)
+            {
+                int offset = context.GetSpillOffset(reg);
+                context.Emit($"MOV r0, r15");
+                AccumulateOffset(0, offset, context);
+                context.Emit($"LDP r{reg}, r0");
+            }
+
+            context.Emit($"POP r0");
+        }
 
         if (targetReg > 0)
         {
