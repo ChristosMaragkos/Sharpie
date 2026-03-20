@@ -176,7 +176,7 @@ public sealed partial class SharpieEmitter
                 context.GetPrologue().Select(asm => Instruction.Parse(asm))
             );
 
-            // Optimizer.Optimize(context.Instructions); TODO: Implement actual optimizations
+            Optimizer.Optimize(context.Instructions);
 
             foreach (var inst in context.Instructions)
             {
