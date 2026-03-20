@@ -30,9 +30,9 @@ _func_test_logic:
     JEQ rel_true_L5
     LDI r1, 0
     JMP rel_end_L6
-    rel_true_L5:
+rel_true_L5:
     LDI r1, 1
-    rel_end_L6:
+rel_end_L6:
     ICMP r1, 0
     JNE logical_true_L2
     MOV r2, r10
@@ -41,9 +41,9 @@ _func_test_logic:
     JLT rel_true_L10
     LDI r1, 0
     JMP rel_end_L11
-    rel_true_L10:
+rel_true_L10:
     LDI r1, 1
-    rel_end_L11:
+rel_end_L11:
     ICMP r1, 0
     JEQ logical_false_L8
     LDI r1, 1
@@ -51,16 +51,16 @@ _func_test_logic:
     JEQ logical_false_L8
     LDI r1, 1
     JMP logical_end_L9
-    logical_false_L8:
+logical_false_L8:
     LDI r1, 0
-    logical_end_L9:
+logical_end_L9:
     ICMP r1, 0
     JNE logical_true_L2
     LDI r1, 0
     JMP logical_end_L4
-    logical_true_L2:
+logical_true_L2:
     LDI r1, 1
-    logical_end_L4:
+logical_end_L4:
     ICMP r1, 0
     JEQ else_L1
     LDI r0, 420
@@ -71,7 +71,7 @@ _func_test_logic:
     POP r9
     POP r8
     RET
-    else_L1:
+else_L1:
     LDI r0, 69
     SETSP r15
     POP r15
@@ -80,6 +80,6 @@ _func_test_logic:
     POP r9
     POP r8
     RET
-    if_L0:
+if_L0:
 .ENDGLOBAL
 .ENDREGION

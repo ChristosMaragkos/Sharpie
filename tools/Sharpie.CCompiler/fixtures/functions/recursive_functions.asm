@@ -28,7 +28,7 @@ _func_factorial:
     POP r15
     POP r8
     RET
-    else_L1:
+else_L1:
     MOV r1, r8
     MOV r0, r15
     STA r1, r0
@@ -57,6 +57,6 @@ _func_factorial:
     POP r15
     POP r8
     RET
-    if_L0:
+if_L0:
 .ENDGLOBAL
 .ENDREGION

@@ -29,22 +29,22 @@ _func_get_score:
     ADD r1, r2
     LDP r1, r1
     ALT JMP r1
-    case_1_L1:
+case_1_L1:
     LDI r9, 100
     JMP switch_end_L0
-    case_2_L2:
+case_2_L2:
     LDI r9, 500
     JMP switch_end_L0
-    case_3_L3:
+case_3_L3:
     LDI r9, 800
     JMP switch_end_L0
-    case_4_L4:
+case_4_L4:
     LDI r9, 1000
     JMP switch_end_L0
-    default_L5:
+default_L5:
     LDI r9, 65535
     JMP switch_end_L0
-    switch_end_L0:
+switch_end_L0:
     MOV r0, r9
     SETSP r15
     POP r15

@@ -14,12 +14,12 @@ Main:
     POP r15
     POP r8
     HALT
-    else_L1:
+else_L1:
     LDI r0, 0
     SETSP r15
     POP r15
     POP r8
     HALT
-    if_L0:
+if_L0:
 .ENDGLOBAL
 .ENDREGION

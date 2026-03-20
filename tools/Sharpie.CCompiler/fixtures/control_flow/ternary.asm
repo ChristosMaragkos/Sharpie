@@ -25,9 +25,9 @@ Main:
     JNE ternary_false_L0
     LDI r0, 69
     JMP ternary_end_L1
-    ternary_false_L0:
+ternary_false_L0:
     LDI r0, 420
-    ternary_end_L1:
+ternary_end_L1:
     SETSP r15
     MOV r6, r15
     LDI r7, 2

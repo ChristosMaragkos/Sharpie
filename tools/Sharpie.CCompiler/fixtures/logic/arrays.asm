@@ -37,7 +37,7 @@ _func_fill_array:
     MOV r9, r2
     LDI r1, 0
     MOV r10, r1
-    while_start_L0:
+while_start_L0:
     MOV r1, r10
     MOV r2, r9
     CMP r1, r2
@@ -52,7 +52,7 @@ _func_fill_array:
     STA r1, r2
     INC r10
     JMP while_start_L0
-    while_end_L1:
+while_end_L1:
     RET
 .ENDGLOBAL
 .ENDREGION

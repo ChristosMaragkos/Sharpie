@@ -6,12 +6,12 @@ namespace Sharpie.CCompiler;
 
 public sealed partial class SharpieEmitter
 {
-    private const int TempRegisterStart = 1;
-    private const int TempRegisterEnd = 7;
-    private const int LocalRegisterStart = 8;
-    private const int LocalRegisterEnd = 14;
+    public const int TempRegisterStart = 1;
+    public const int TempRegisterEnd = 7;
+    public const int LocalRegisterStart = 8;
+    public const int LocalRegisterEnd = 14;
 
-    private const int FramePointer = 15;
+    public const int FramePointer = 15;
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
     {
@@ -171,11 +171,20 @@ public sealed partial class SharpieEmitter
                 context.Emit(context.ReturnInstruction);
             }
 
-            foreach (var line in context.GetPrologue())
-                asm.AppendLine($"    {line}");
+            context.Instructions.InsertRange(
+                0,
+                context.GetPrologue().Select(asm => Instruction.Parse(asm))
+            );
 
-            foreach (var line in context.Instructions)
-                asm.AppendLine($"    {line}");
+            // Optimizer.Optimize(context.Instructions); TODO: Implement actual optimizations
+
+            foreach (var inst in context.Instructions)
+            {
+                if (inst.IsLabel || inst.IsComment)
+                    asm.AppendLine(inst.OriginalText);
+                else
+                    asm.AppendLine($"    {inst.OriginalText}");
+            }
 
             // EmitReturn is responsible for the epilogue
             if (!isStatic)
