@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO: Colors enum?
+
 typedef unsigned int size_t;
 
 typedef enum {
@@ -98,5 +100,6 @@ void __sharpie_move_cursor(int x, int y);
 #define move_cursor(x, y) __sharpie_move_cursor(x, y)
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
+#define swap_color(active, master) __sharpie_swc(active, master)
 
 #define button_down(state, btn) (((state) & (btn)))
