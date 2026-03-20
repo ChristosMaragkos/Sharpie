@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r15
     GETSP r15
@@ -67,4 +68,5 @@ Main:
     SETSP r6
     POP r15
     HALT
+.ENDGLOBAL
 .ENDREGION

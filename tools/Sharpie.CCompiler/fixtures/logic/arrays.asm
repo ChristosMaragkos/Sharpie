@@ -1,4 +1,32 @@
 .REGION FIXED
+.GLOBAL
+Main:
+    PUSH r15
+    GETSP r15
+    MOV r6, r15
+    LDI r7, 6
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
+    MOV r1, r15
+    MOV r1, r15
+    LDI r2, 3
+    CALL _func_fill_array
+    MOV r1, r15
+    LDI r2, 2
+    LDI r3, 2
+    MUL r2, r3
+    ADD r1, r2
+    LDP r0, r1
+    SETSP r15
+    MOV r6, r15
+    LDI r7, 6
+    ADD r6, r7
+    SETSP r6
+    POP r15
+    HALT
+.ENDGLOBAL
+.GLOBAL
 _func_fill_array:
     PUSH r8
     PUSH r9
@@ -26,29 +54,5 @@ _func_fill_array:
     JMP while_start_L0
     while_end_L1:
     RET
-Main:
-    PUSH r15
-    GETSP r15
-    MOV r6, r15
-    LDI r7, 6
-    SUB r6, r7
-    SETSP r6
-    MOV r15, r6
-    MOV r1, r15
-    MOV r1, r15
-    LDI r2, 3
-    CALL _func_fill_array
-    MOV r1, r15
-    LDI r2, 2
-    LDI r3, 2
-    MUL r2, r3
-    ADD r1, r2
-    LDP r0, r1
-    SETSP r15
-    MOV r6, r15
-    LDI r7, 6
-    ADD r6, r7
-    SETSP r6
-    POP r15
-    HALT
+.ENDGLOBAL
 .ENDREGION

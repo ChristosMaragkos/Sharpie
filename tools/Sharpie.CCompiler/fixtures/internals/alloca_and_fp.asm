@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r8
     PUSH r9
@@ -45,4 +46,5 @@ Main:
     POP r9
     POP r8
     HALT
+.ENDGLOBAL
 .ENDREGION

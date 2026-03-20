@@ -1,4 +1,15 @@
 .REGION FIXED
+.GLOBAL
+Main:
+    PUSH r15
+    GETSP r15
+    LDI r1, 3
+    CALL _func_get_score
+    SETSP r15
+    POP r15
+    HALT
+.ENDGLOBAL
+.GLOBAL
 _func_get_score:
     PUSH r8
     PUSH r9
@@ -40,14 +51,7 @@ _func_get_score:
     POP r9
     POP r8
     RET
-Main:
-    PUSH r15
-    GETSP r15
-    LDI r1, 3
-    CALL _func_get_score
-    SETSP r15
-    POP r15
-    HALT
+.ENDGLOBAL
 ; Readonly Data
 jt_L6:
     .DW case_1_L1

@@ -18,6 +18,7 @@ _global_g_p1:
     .DW 100
     .DB 5
     .DB 0
+.GLOBAL
 Main:
     PUSH r15
     GETSP r15
@@ -63,4 +64,5 @@ Main:
     SETSP r6
     POP r15
     HALT
+.ENDGLOBAL
 .ENDREGION

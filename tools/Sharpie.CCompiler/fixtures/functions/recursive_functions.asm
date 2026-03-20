@@ -1,4 +1,15 @@
 .REGION FIXED
+.GLOBAL
+Main:
+    PUSH r15
+    GETSP r15
+    LDI r1, 5
+    CALL _func_factorial
+    SETSP r15
+    POP r15
+    HALT
+.ENDGLOBAL
+.GLOBAL
 _func_factorial:
     PUSH r8
     PUSH r15
@@ -47,12 +58,5 @@ _func_factorial:
     POP r8
     RET
     if_L0:
-Main:
-    PUSH r15
-    GETSP r15
-    LDI r1, 5
-    CALL _func_factorial
-    SETSP r15
-    POP r15
-    HALT
+.ENDGLOBAL
 .ENDREGION

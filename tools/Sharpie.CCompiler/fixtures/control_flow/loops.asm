@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r8
     PUSH r9
@@ -30,8 +31,10 @@ Main:
     MOV r1, r11
     ICMP r1, 9
     JGE while_end_L4
-    MOV r1, r11
-    ADD r10, r1
+    MOV r1, r10
+    MOV r2, r11
+    ADD r1, r2
+    MOV r10, r1
     INC r11
     JMP while_start_L3
     while_end_L4:
@@ -40,8 +43,10 @@ Main:
     LDI r1, 0
     MOV r13, r1
     do_start_L5:
-    MOV r1, r13
-    SUB r12, r1
+    MOV r1, r12
+    MOV r2, r13
+    SUB r1, r2
+    MOV r12, r1
     INC r13
     do_cond_L6:
     MOV r1, r13
@@ -50,4 +55,5 @@ Main:
     do_end_L7:
     LDI r0, 0
     HALT
+.ENDGLOBAL
 .ENDREGION

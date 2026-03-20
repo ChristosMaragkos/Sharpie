@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r15
     GETSP r15
@@ -10,6 +11,8 @@ Main:
     SETSP r15
     POP r15
     HALT
+.ENDGLOBAL
+.GLOBAL
 _func_test_logic:
     PUSH r8
     PUSH r9
@@ -78,4 +81,5 @@ _func_test_logic:
     POP r8
     RET
     if_L0:
+.ENDGLOBAL
 .ENDREGION

@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r8
     PUSH r15
@@ -20,4 +21,5 @@ Main:
     POP r8
     HALT
     if_L0:
+.ENDGLOBAL
 .ENDREGION

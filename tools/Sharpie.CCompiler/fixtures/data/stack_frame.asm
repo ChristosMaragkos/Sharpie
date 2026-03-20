@@ -1,4 +1,52 @@
 .REGION FIXED
+.GLOBAL
+Main:
+    PUSH r15
+    GETSP r15
+    MOV r6, r15
+    LDI r7, 14
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
+    MOV r1, r15
+    LDI r2, 1
+    MOV r3, r1
+    STA r2, r3
+    LDI r2, 2
+    MOV r3, r1
+    IADD r3, 2
+    STA r2, r3
+    LDI r2, 3
+    MOV r3, r1
+    IADD r3, 4
+    STA r2, r3
+    LDI r2, 4
+    MOV r3, r1
+    IADD r3, 6
+    STA r2, r3
+    LDI r2, 5
+    MOV r3, r1
+    IADD r3, 8
+    STA r2, r3
+    LDI r2, 6
+    MOV r3, r1
+    IADD r3, 10
+    STA r2, r3
+    LDI r2, 7
+    MOV r3, r1
+    IADD r3, 12
+    STA r2, r3
+    MOV r1, r15
+    CALL _func_do_stuff
+    SETSP r15
+    MOV r6, r15
+    LDI r7, 14
+    ADD r6, r7
+    SETSP r6
+    POP r15
+    HALT
+.ENDGLOBAL
+.GLOBAL
 _func_do_stuff:
     PUSH r8
     PUSH r9
@@ -74,49 +122,5 @@ _func_do_stuff:
     POP r9
     POP r8
     RET
-Main:
-    PUSH r15
-    GETSP r15
-    MOV r6, r15
-    LDI r7, 14
-    SUB r6, r7
-    SETSP r6
-    MOV r15, r6
-    MOV r1, r15
-    LDI r2, 1
-    MOV r3, r1
-    STA r2, r3
-    LDI r2, 2
-    MOV r3, r1
-    IADD r3, 2
-    STA r2, r3
-    LDI r2, 3
-    MOV r3, r1
-    IADD r3, 4
-    STA r2, r3
-    LDI r2, 4
-    MOV r3, r1
-    IADD r3, 6
-    STA r2, r3
-    LDI r2, 5
-    MOV r3, r1
-    IADD r3, 8
-    STA r2, r3
-    LDI r2, 6
-    MOV r3, r1
-    IADD r3, 10
-    STA r2, r3
-    LDI r2, 7
-    MOV r3, r1
-    IADD r3, 12
-    STA r2, r3
-    MOV r1, r15
-    CALL _func_do_stuff
-    SETSP r15
-    MOV r6, r15
-    LDI r7, 14
-    ADD r6, r7
-    SETSP r6
-    POP r15
-    HALT
+.ENDGLOBAL
 .ENDREGION

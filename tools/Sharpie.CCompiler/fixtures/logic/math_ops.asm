@@ -1,4 +1,5 @@
 .REGION FIXED
+.GLOBAL
 Main:
     PUSH r8
     PUSH r9
@@ -8,13 +9,23 @@ Main:
     MOV r8, r1
     LDI r1, 3
     MOV r9, r1
-    MOV r1, r9
-    ADD r8, r1
-    ISUB r8, 1
-    LDI r1, 2
-    MUL r8, r1
-    IDIV r8, 3
-    IMOD r8, 4
+    MOV r1, r8
+    MOV r2, r9
+    ADD r1, r2
+    MOV r8, r1
+    MOV r1, r8
+    ISUB r1, 1
+    MOV r8, r1
+    MOV r1, r8
+    LDI r2, 2
+    MUL r1, r2
+    MOV r8, r1
+    MOV r1, r8
+    IDIV r1, 3
+    MOV r8, r1
+    MOV r1, r8
+    IMOD r1, 4
+    MOV r8, r1
     MOV r1, r8
     IAND r1, 7
     MOV r8, r1
@@ -39,4 +50,5 @@ Main:
     POP r9
     POP r8
     HALT
+.ENDGLOBAL
 .ENDREGION

@@ -1,17 +1,5 @@
 .REGION FIXED
-_func_square:
-    PUSH r8
-    PUSH r15
-    GETSP r15
-    MOV r8, r1
-    MOV r1, r8
-    MOV r2, r8
-    MUL r1, r2
-    MOV r0, r1
-    SETSP r15
-    POP r15
-    POP r8
-    RET
+.GLOBAL
 Main:
     PUSH r8
     PUSH r9
@@ -45,4 +33,20 @@ Main:
     POP r9
     POP r8
     HALT
+.ENDGLOBAL
+.GLOBAL
+_func_square:
+    PUSH r8
+    PUSH r15
+    GETSP r15
+    MOV r8, r1
+    MOV r1, r8
+    MOV r2, r8
+    MUL r1, r2
+    MOV r0, r1
+    SETSP r15
+    POP r15
+    POP r8
+    RET
+.ENDGLOBAL
 .ENDREGION
