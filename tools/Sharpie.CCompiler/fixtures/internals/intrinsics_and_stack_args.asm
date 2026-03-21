@@ -32,7 +32,7 @@ Main:
     POP r0
     MOV r1, r0
     MOV r8, r1
-    LDI r1, 0
+    XOR r1, r1
     CLS r1
     LDI r1, 10
     LDI r2, 20
@@ -105,8 +105,7 @@ _func_test_memory:
     MOV r15, r6
     MOV r0, r15
     STA r1, r0
-    LDI r2, 20
-    MOV r1, r2
+    LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     PUSH r0
     MOV r0, r15
@@ -114,7 +113,6 @@ _func_test_memory:
     POP r0
     MOV r1, r0
     MOV r8, r1
-    MOV r1, r8
     LDI r2, 255
     LDI r3, 20
     CALL SYS_MEM_SET

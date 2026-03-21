@@ -16,15 +16,15 @@ _func_get_score:
     PUSH r15
     GETSP r15
     MOV r8, r1
-    LDI r1, 0
+    XOR r1, r1
     MOV r9, r1
     MOV r1, r8
     ICMP r1, 1
     JLT default_L5
     ICMP r1, 4
     JGT default_L5
-    ISUB r1, 1
-    IMUL r1, 2
+    DEC r1
+    ADD r1, r1
     LDI r2, jt_L6
     ADD r1, r2
     LDP r1, r1
@@ -43,7 +43,6 @@ case_4_L4:
     JMP switch_end_L0
 default_L5:
     LDI r9, 65535
-    JMP switch_end_L0
 switch_end_L0:
     MOV r0, r9
     SETSP r15

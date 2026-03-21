@@ -3,8 +3,8 @@
 Main:
     PUSH r15
     GETSP r15
-    LDI r1, 0 ; This should exist in the method.
-    LDI r0, 0
+    XOR r1, r1
+    XOR r0, r0
     SETSP r15
     POP r15
     HALT

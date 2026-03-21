@@ -16,8 +16,7 @@ Main:
     STA r1, r2
     MOV r1, r15
     MOV r8, r1
-    LDI r1, 1000
-    MOV r9, r1
+    LDI r9, 1000
     LDI r1, 42
     MOV r2, r9
     STA r1, r2

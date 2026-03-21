@@ -10,7 +10,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r1, 258
     MOV r2, r15
     STA r1, r2
@@ -18,7 +17,7 @@ Main:
     ALT LDP r1, r2
     MOV r8, r1
     MOV r2, r15
-    IADD r2, 1
+    INC r2
     ALT LDP r1, r2
     MOV r9, r1
     LDI r1, 10

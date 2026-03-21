@@ -37,24 +37,20 @@ Main:
     ADD r1, r2
     MOV r3, r15
     IADD r3, 4
-    LDI r4, 0
+    XOR r4, r4
     LDI r5, 2
     MUL r4, r5
     ADD r3, r4
     LDP r2, r3
     MOV r4, r15
     IADD r4, 4
-    LDI r5, 1
-    LDI r6, 2
-    MUL r5, r6
+    LDI r5, 2
     ADD r4, r5
     LDP r3, r4
     ADD r2, r3
     MOV r4, r15
     IADD r4, 4
-    LDI r5, 2
-    LDI r6, 2
-    MUL r5, r6
+    LDI r5, 4
     ADD r4, r5
     LDP r3, r4
     ADD r2, r3

@@ -10,7 +10,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r1, 10
     MOV r2, r15
     STA r1, r2
@@ -45,8 +44,7 @@ Main:
     STA r1, r2
     LDI r1, 200
     MOV r2, r15
-    IADD r2, 6
-    IADD r2, 2
+    IADD r2, 8
     STA r1, r2
     MOV r0, r15
     IADD r0, 4
@@ -138,10 +136,8 @@ _func_test_stack:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r6, r15
     IADD r6, 14
     MOV r5, r15
-    IADD r5, 0
     LDS r7, r6
     STS r7, r5
     IADD r6, 2

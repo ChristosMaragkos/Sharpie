@@ -10,19 +10,16 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r1, _func_add
     MOV r2, r15
-    LDI r3, 0
+    XOR r3, r3
     LDI r4, 2
     MUL r3, r4
     ADD r2, r3
     STA r1, r2
     LDI r1, _func_sub
     MOV r2, r15
-    LDI r3, 1
-    LDI r4, 2
-    MUL r3, r4
+    LDI r3, 2
     ADD r2, r3
     STA r1, r2
     MOV r0, r15
@@ -46,9 +43,7 @@ Main:
     IADD r0, 4
     STA r1, r0
     MOV r3, r15
-    LDI r4, 1
-    LDI r5, 2
-    MUL r4, r5
+    LDI r4, 2
     ADD r3, r4
     LDP r2, r3
     LDI r3, 10

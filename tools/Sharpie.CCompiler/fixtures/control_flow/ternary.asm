@@ -11,8 +11,7 @@ Main:
     MOV r15, r6
     MOV r0, r15
     STA r1, r0
-    LDI r2, 2
-    MOV r1, r2
+    LDI r1, 2
     ALT RND r0, r1
     PUSH r0
     MOV r0, r15
@@ -20,7 +19,6 @@ Main:
     POP r0
     MOV r1, r0
     MOV r8, r1
-    MOV r1, r8
     ICMP r1, 0
     JNE ternary_false_L0
     LDI r0, 69

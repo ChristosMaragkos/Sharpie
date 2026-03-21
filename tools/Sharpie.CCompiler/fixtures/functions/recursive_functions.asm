@@ -20,7 +20,6 @@ _func_factorial:
     SETSP r6
     MOV r15, r6
     MOV r8, r1
-    MOV r1, r8
     ICMP r1, 1
     JNE else_L1
     LDI r0, 1
@@ -36,7 +35,7 @@ else_L1:
     IADD r0, 2
     STA r2, r0
     MOV r3, r8
-    ISUB r3, 1
+    DEC r3
     MOV r1, r3
     CALL _func_factorial
     PUSH r0

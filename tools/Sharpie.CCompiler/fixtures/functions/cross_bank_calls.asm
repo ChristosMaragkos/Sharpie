@@ -13,8 +13,7 @@ Main:
     MOV r15, r6
     MOV r0, r15
     STA r1, r0
-    LDI r2, 42
-    MOV r1, r2
+    LDI r1, 42
     PUSH r13
     PUSH r14
     LDI r14, 1
@@ -28,9 +27,7 @@ Main:
     POP r0
     MOV r1, r0
     MOV r8, r1
-    LDI r1, _func_calculate_path
-    MOV r9, r1
-    MOV r2, r9
+    LDI r2, _func_calculate_path
     MOV r6, r15
     IADD r6, 2
     STA r2, r6

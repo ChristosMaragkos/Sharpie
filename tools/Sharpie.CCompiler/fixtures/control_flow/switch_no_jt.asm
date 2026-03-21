@@ -16,7 +16,7 @@ _func_get_score:
     PUSH r15
     GETSP r15
     MOV r8, r1
-    LDI r1, 0
+    XOR r1, r1
     MOV r9, r1
     MOV r1, r8
     ICMP r1, 5
@@ -24,7 +24,7 @@ _func_get_score:
     ICMP r1, 15
     JGT default_L4
     ISUB r1, 5
-    IMUL r1, 2
+    ADD r1, r1
     LDI r2, jt_L5
     ADD r1, r2
     LDP r1, r1

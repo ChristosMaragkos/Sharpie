@@ -9,9 +9,9 @@ Main:
     PUSH r13
     PUSH r15
     GETSP r15
-    LDI r1, 0
+    XOR r1, r1
     MOV r8, r1
-    LDI r1, 0
+    XOR r1, r1
     MOV r9, r1
 for_start_L0:
     MOV r1, r9
@@ -23,9 +23,9 @@ for_inc_L1:
     INC r9
     JMP for_start_L0
 for_end_L2:
-    LDI r1, 0
+    XOR r1, r1
     MOV r10, r1
-    LDI r1, 0
+    XOR r1, r1
     MOV r11, r1
 while_start_L3:
     MOV r1, r11
@@ -38,9 +38,8 @@ while_start_L3:
     INC r11
     JMP while_start_L3
 while_end_L4:
-    LDI r1, 1000
-    MOV r12, r1
-    LDI r1, 0
+    LDI r12, 1000
+    XOR r1, r1
     MOV r13, r1
 do_start_L5:
     MOV r1, r12
@@ -53,7 +52,7 @@ do_cond_L6:
     ICMP r1, 10
     JLT do_start_L5
 do_end_L7:
-    LDI r0, 0
+    XOR r0, r0
     HALT
 .ENDGLOBAL
 .ENDREGION

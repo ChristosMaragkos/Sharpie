@@ -12,20 +12,16 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    LDI r1, str_L0
-    MOV r8, r1
-    LDI r1, str_L1
-    MOV r9, r1
-    LDI r1, str_L0
-    MOV r10, r1
+    LDI r8, str_L0
+    LDI r9, str_L1
+    LDI r10, str_L0
     LDI r1, str_L2
-    LDI r2, 0
-    LDI r3, 0
+    XOR r2, r2
+    XOR r3, r3
     CALL SYS_PRINT
     MOV r0, r15
     STA r1, r0
-    LDI r2, 20
-    MOV r1, r2
+    LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     PUSH r0
     MOV r0, r15
@@ -35,19 +31,19 @@ Main:
     MOV r11, r1
     LDI r1, 97
     MOV r2, r11
-    LDI r3, 0
+    XOR r3, r3
     ADD r2, r3
     ALT STA r1, r2
-    LDI r1, 0
+    XOR r1, r1
     MOV r2, r11
     LDI r3, 19
     ADD r2, r3
     ALT STA r1, r2
     MOV r1, r11
-    LDI r2, 0
-    LDI r3, 0
+    XOR r2, r2
+    XOR r3, r3
     CALL SYS_PRINT
-    LDI r0, 0
+    XOR r0, r0
     SETSP r15
     MOV r6, r15
     LDI r7, 2

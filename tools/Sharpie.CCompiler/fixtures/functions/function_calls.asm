@@ -10,8 +10,7 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    LDI r1, 5
-    MOV r8, r1
+    LDI r8, 5
     MOV r0, r15
     STA r1, r0
     MOV r2, r8
@@ -40,7 +39,6 @@ _func_square:
     PUSH r15
     GETSP r15
     MOV r8, r1
-    MOV r1, r8
     MOV r2, r8
     MUL r1, r2
     MOV r0, r1

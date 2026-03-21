@@ -27,11 +27,10 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r1, 50
     STM r1, _global_g_score
     LDM r1, _global_g_lives
-    IADD r1, 1
+    INC r1
     STM r1, _global_g_lives
     LDI r1, 200
     LDI r2, _global_g_p1
@@ -47,9 +46,7 @@ Main:
     LDM r2, _global_g_lives
     ADD r1, r2
     LDI r3, _global_g_map
-    LDI r4, 1
-    LDI r5, 2
-    MUL r4, r5
+    LDI r4, 2
     ADD r3, r4
     LDP r2, r3
     ADD r1, r2

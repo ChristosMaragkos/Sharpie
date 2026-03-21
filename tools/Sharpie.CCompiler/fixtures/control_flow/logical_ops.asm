@@ -24,22 +24,18 @@ _func_test_logic:
     MOV r9, r2
     MOV r10, r3
     MOV r11, r4
-    MOV r2, r8
-    MOV r3, r9
-    CMP r2, r3
+    CMP r8, r9
     JEQ rel_true_L5
-    LDI r1, 0
+    XOR r1, r1
     JMP rel_end_L6
 rel_true_L5:
     LDI r1, 1
 rel_end_L6:
     ICMP r1, 0
     JNE logical_true_L2
-    MOV r2, r10
-    MOV r3, r11
-    CMP r2, r3
+    CMP r10, r11
     JLT rel_true_L10
-    LDI r1, 0
+    XOR r1, r1
     JMP rel_end_L11
 rel_true_L10:
     LDI r1, 1
@@ -52,11 +48,11 @@ rel_end_L11:
     LDI r1, 1
     JMP logical_end_L9
 logical_false_L8:
-    LDI r1, 0
+    XOR r1, r1
 logical_end_L9:
     ICMP r1, 0
     JNE logical_true_L2
-    LDI r1, 0
+    XOR r1, r1
     JMP logical_end_L4
 logical_true_L2:
     LDI r1, 1

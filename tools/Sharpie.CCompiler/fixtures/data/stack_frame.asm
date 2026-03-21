@@ -64,7 +64,7 @@ _func_do_stuff:
     ALT STA r2, r3
     LDI r2, 10
     MOV r3, r1
-    IADD r3, 1
+    INC r3
     ALT STA r2, r3
     LDI r2, 11
     MOV r3, r1
@@ -93,8 +93,7 @@ _func_do_stuff:
     MOV r0, r15
     IADD r0, 8
     STA r1, r0
-    LDI r2, 8
-    MOV r1, r2
+    LDI r1, 8
     CALL SYS_ALLOC_STACKFRAME
     PUSH r0
     MOV r0, r15
@@ -109,7 +108,7 @@ _func_do_stuff:
     MOV r2, r8
     LDP r1, r2
     MOV r3, r15
-    IADD r3, 1
+    INC r3
     ALT LDP r2, r3
     ADD r1, r2
     MOV r0, r1

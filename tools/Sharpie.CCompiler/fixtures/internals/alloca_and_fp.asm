@@ -11,12 +11,10 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    LDI r1, 10
-    MOV r8, r1
+    LDI r8, 10
     MOV r0, r15
     STA r1, r0
-    LDI r2, 100
-    MOV r1, r2
+    LDI r1, 100
     CALL SYS_ALLOC_STACKFRAME
     PUSH r0
     MOV r0, r15
@@ -27,8 +25,7 @@ Main:
     LDI r1, 42
     MOV r2, r9
     STA r1, r2
-    LDI r1, 20
-    MOV r10, r1
+    LDI r10, 20
     MOV r1, r8
     MOV r2, r10
     ADD r1, r2

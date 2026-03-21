@@ -9,7 +9,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r1, 10
     MOV r2, r15
     STA r1, r2

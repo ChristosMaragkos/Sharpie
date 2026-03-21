@@ -13,9 +13,7 @@ Main:
     LDI r2, 3
     CALL _func_fill_array
     MOV r1, r15
-    LDI r2, 2
-    LDI r3, 2
-    MUL r2, r3
+    LDI r2, 4
     ADD r1, r2
     LDP r0, r1
     SETSP r15
@@ -35,12 +33,10 @@ _func_fill_array:
     GETSP r15
     MOV r8, r1
     MOV r9, r2
-    LDI r1, 0
+    XOR r1, r1
     MOV r10, r1
 while_start_L0:
-    MOV r1, r10
-    MOV r2, r9
-    CMP r1, r2
+    CMP r10, r9
     JGE while_end_L1
     MOV r1, r10
     IMUL r1, 10
