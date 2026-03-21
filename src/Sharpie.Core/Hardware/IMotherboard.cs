@@ -2,7 +2,7 @@ namespace Sharpie.Core.Hardware;
 
 internal interface IMotherboard
 {
-    public static readonly Version BiosVersion = new(0, 2);
+    public static readonly Version BiosVersion = new(0, 3);
     public static readonly string VersionString =
         $"{BiosVersion.Major}.{BiosVersion.Minor}.{BiosVersion.Build}";
     public static ushort VersionBinFormat =>

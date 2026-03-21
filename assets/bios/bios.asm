@@ -23,7 +23,7 @@
 
 .DEF CART_OK 1
 
-.DEF BIOS_VERSION 0x0002 ; low byte: minor, high byte: major
+.DEF BIOS_VERSION 0x0003 ; low byte: minor, high byte: major
 
 .DEF CoverLogo 8
 .DEF CopyrightSymbol 7

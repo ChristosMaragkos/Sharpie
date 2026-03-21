@@ -2,16 +2,11 @@ namespace Sharpie.Sdk.Meta;
 
 internal static class Constants
 {
-    public static readonly Version BiosVersion = new Version(0, 2);
+    public static readonly Version BiosVersion = new Version(0, 3);
     public static string VersionString =>
         $"{BiosVersion.Major}.{BiosVersion.Minor}.{BiosVersion.Build}";
     public static ushort VersionBinFormat =>
         (ushort)(((BiosVersion.Major & 0xFF) << 8) | (BiosVersion.Minor & 0xFF));
-    public const string MagicHeader = "SHRP";
-    public const int HeaderSize = 64;
-    public const int TitleLimit = 24;
-    public const int AuthorLimit = 16;
-    public const int MaxRomSize = 59392;
 
     internal static ReadOnlySpan<(byte R, byte G, byte B)> MasterPalette =>
         new (byte R, byte G, byte B)[]
