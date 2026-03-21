@@ -313,9 +313,6 @@ public sealed partial class SharpieEmitter
     {
         foreach (var stmt in GetChildren(compoundStmt))
         {
-            if (context.HasReturn)
-                throw new InvalidOperationException("Dead code is not supported in this MVP");
-
             EmitStatement(stmt, context);
         }
     }

@@ -377,6 +377,57 @@ public static class Optimizer
                         }
                     }
                 }
+
+                // Dead code (anything other than a label after a JMP or RET or HALT is functionally unreachable)
+                if (
+                    current.Mnemonic == "JMP"
+                    || current.Mnemonic == "RET"
+                    || current.Mnemonic == "HALT"
+                )
+                {
+                    if (!next.IsLabel && !next.IsDirective && !next.IsComment)
+                    {
+                        instructions.RemoveAt(i + 1);
+                        changed = true;
+                        break;
+                    }
+                }
+
+                // Folding multiple INC/DEC into one instruction
+                if (!current.IsAlt && !next.IsAlt && current.Arg1 == next.Arg1)
+                {
+                    if (
+                        (current.Mnemonic == "INC" && next.Mnemonic == "DEC")
+                        || (current.Mnemonic == "DEC" && next.Mnemonic == "INC")
+                    )
+                    {
+                        // They cancel out!
+                        instructions.RemoveAt(i);
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                    else if (current.Mnemonic == "INC" && next.Mnemonic == "INC")
+                    {
+                        // Two INCs = 4 bytes. IADD rX, 2 = 3 bytes. Fuse them!
+                        current.Mnemonic = "IADD";
+                        current.Arg2 = "2";
+                        current.RebuildText();
+                        instructions.RemoveAt(i + 1);
+                        changed = true;
+                        break;
+                    }
+                    else if (current.Mnemonic == "DEC" && next.Mnemonic == "DEC")
+                    {
+                        // Two DECs = 4 bytes. ISUB rX, 2 = 3 bytes. Fuse them!
+                        current.Mnemonic = "ISUB";
+                        current.Arg2 = "2";
+                        current.RebuildText();
+                        instructions.RemoveAt(i + 1);
+                        changed = true;
+                        break;
+                    }
+                }
             }
         }
     }
