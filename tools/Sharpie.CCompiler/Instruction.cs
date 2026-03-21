@@ -4,6 +4,7 @@ public class Instruction
 {
     public string OriginalText { get; set; } = "";
     public string Mnemonic { get; set; } = "";
+    public bool IsAlt { get; set; }
     public string Arg1 { get; set; } = "";
     public string Arg2 { get; set; } = "";
     public string Arg3 { get; set; } = "";
@@ -13,13 +14,16 @@ public class Instruction
     public bool IsDirective => Mnemonic.StartsWith(".");
     public bool IsComment => OriginalText.StartsWith(";");
 
-    // Reconstruct the instruction from its parts (useful for when the optimizer modifies it!)
     public void RebuildText()
     {
-        if (IsLabel)
+        if (IsLabel || IsDirective || IsComment)
             return;
 
-        var parts = new List<string> { Mnemonic };
+        var parts = new List<string>();
+        if (IsAlt)
+            parts.Add("ALT");
+        parts.Add(Mnemonic);
+
         if (!string.IsNullOrEmpty(Arg1))
             parts.Add(Arg1);
         if (!string.IsNullOrEmpty(Arg2))
@@ -29,7 +33,10 @@ public class Instruction
         if (!string.IsNullOrEmpty(Arg4))
             parts.Add(Arg4);
 
-        OriginalText = parts[0] + " " + string.Join(", ", parts.Skip(1));
+        var prefix = string.Join(" ", parts.Take(IsAlt ? 2 : 1));
+        var args = string.Join(", ", parts.Skip(IsAlt ? 2 : 1));
+
+        OriginalText = string.IsNullOrEmpty(args) ? prefix : $"{prefix} {args}";
     }
 
     public static Instruction Parse(string asm)
@@ -44,9 +51,11 @@ public class Instruction
             if (tokens.Length > 0)
             {
                 int argStartIndex = 1;
+
                 if (tokens[0] == "ALT" && tokens.Length > 1)
                 {
-                    inst.Mnemonic = "ALT " + tokens[1];
+                    inst.IsAlt = true;
+                    inst.Mnemonic = tokens[1];
                     argStartIndex = 2;
                 }
                 else
@@ -66,6 +75,4 @@ public class Instruction
         }
         return inst;
     }
-
-    public override string ToString() => OriginalText;
 }
