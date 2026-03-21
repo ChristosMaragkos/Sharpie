@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using ClangSharp.Interop;
+using Sharpie.CCompiler.Optimizations;
 
 namespace Sharpie.CCompiler;
 

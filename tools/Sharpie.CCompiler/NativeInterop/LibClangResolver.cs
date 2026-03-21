@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using ClangSharp.Interop;
 
-namespace Sharpie.CCompiler;
+namespace Sharpie.CCompiler.NativeInterop;
 
 internal static class LibClangResolver
 {
@@ -40,7 +40,11 @@ internal static class LibClangResolver
         }
     }
 
-    private static IntPtr ResolveLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    private static IntPtr ResolveLibrary(
+        string libraryName,
+        Assembly assembly,
+        DllImportSearchPath? searchPath
+    )
     {
         if (!IsLibClangName(libraryName))
             return IntPtr.Zero;

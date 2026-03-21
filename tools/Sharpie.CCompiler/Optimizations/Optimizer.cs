@@ -1,4 +1,4 @@
-namespace Sharpie.CCompiler;
+namespace Sharpie.CCompiler.Optimizations;
 
 public static class Optimizer
 {

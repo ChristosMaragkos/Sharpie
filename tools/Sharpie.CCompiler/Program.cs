@@ -1,7 +1,6 @@
 ﻿using Sharpie.CCompiler;
+using Sharpie.CCompiler.NativeInterop;
 
-// CRITICAL: Configure libclang resolver BEFORE any ClangSharp API calls
-// This must happen before type initialization of clang occurs
 LibClangResolver.Configure();
 
 if (args.Contains("-h") || args.Contains("--help"))
