@@ -669,49 +669,84 @@ public partial class SharpieEmitter
     {
         switch (peeled.Kind)
         {
-            // Handle Local Variable (Stack-backed)
+            // 1. Handle Variables (Locals and Globals)
             case CXCursorKind.CXCursor_DeclRefExpr:
             {
                 var name = peeled.Spelling.ToString();
-                if (!context.Locals.TryGetValue(name, out var loc))
+
+                if (context.Locals.TryGetValue(name, out var loc))
+                {
+                    // --- LOCAL VARIABLE ---
+                    int mathReg;
+                    EmissionContext.TempLease valRegLease = default;
+                    EmissionContext.TempLease offsetRegLease = default;
+
+                    if (loc.Type == StorageType.Register)
+                    {
+                        mathReg = loc.Value;
+                    }
+                    else
+                    {
+                        valRegLease = context.AcquireTempRegister();
+                        offsetRegLease = context.AcquireTempRegister();
+                        mathReg = valRegLease.Value;
+
+                        context.Emit($"LDI r{offsetRegLease.Value}, {loc.Value}");
+                        context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
+                    }
+
+                    if (isPost)
+                    {
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{mathReg}");
+                        context.Emit($"{op} r{mathReg}");
+                    }
+                    else
+                    {
+                        context.Emit($"{op} r{mathReg}");
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{mathReg}");
+                    }
+
+                    if (loc.Type == StorageType.Stack)
+                    {
+                        context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
+                        valRegLease.Dispose();
+                        offsetRegLease.Dispose();
+                    }
+                }
+                else if (context.Globals.Contains(name))
+                {
+                    // --- GLOBAL VARIABLE ---
+                    using var valRegLease = context.AcquireTempRegister();
+                    int mathReg = valRegLease.Value;
+
+                    var isByte = peeled.Type.SizeOf == 1;
+                    var prefix = isByte ? "ALT " : "";
+
+                    // Load absolute
+                    context.Emit($"{prefix}LDM r{mathReg}, _global_{name}");
+
+                    // Math
+                    if (isPost)
+                    {
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{mathReg}");
+                        context.Emit($"{op} r{mathReg}");
+                    }
+                    else
+                    {
+                        context.Emit($"{op} r{mathReg}");
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{mathReg}");
+                    }
+
+                    // Store absolute (The Peephole Optimizer will crush this sequence!)
+                    context.Emit($"{prefix}STM r{mathReg}, _global_{name}");
+                }
+                else
+                {
                     throw new InvalidOperationException($"Unknown variable {name}");
-
-                int mathReg;
-                EmissionContext.TempLease valRegLease = default;
-                EmissionContext.TempLease offsetRegLease = default;
-
-                if (loc.Type == StorageType.Register)
-                {
-                    mathReg = loc.Value;
-                }
-                else
-                {
-                    valRegLease = context.AcquireTempRegister();
-                    offsetRegLease = context.AcquireTempRegister();
-                    mathReg = valRegLease.Value;
-
-                    context.Emit($"LDI r{offsetRegLease.Value}, {loc.Value}");
-                    context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
-                }
-
-                if (isPost)
-                {
-                    if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{mathReg}");
-                    context.Emit($"{op} r{mathReg}");
-                }
-                else
-                {
-                    context.Emit($"{op} r{mathReg}");
-                    if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{mathReg}");
-                }
-
-                if (loc.Type == StorageType.Stack)
-                {
-                    context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
-                    valRegLease.Dispose();
-                    offsetRegLease.Dispose();
                 }
                 break;
             }
@@ -723,28 +758,23 @@ public partial class SharpieEmitter
                 var ptrExpr = GetChildren(peeled).First();
                 EmitExpression(ptrExpr, addrReg.Value, context);
 
-                // We must use a temp register to load the value so we don't emit "LDP r-1"
                 using var valReg = context.AcquireTempRegister();
 
-                // Load value from memory
                 context.Emit($"LDP r{valReg.Value}, r{addrReg.Value}");
 
                 if (isPost)
                 {
                     if (targetReg >= 0)
                         context.Emit($"MOV r{targetReg}, r{valReg.Value}");
-
                     context.Emit($"{op} r{valReg.Value}");
                 }
                 else
                 {
                     context.Emit($"{op} r{valReg.Value}");
-
                     if (targetReg >= 0)
                         context.Emit($"MOV r{targetReg}, r{valReg.Value}");
                 }
 
-                // Write back to memory
                 context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
                 break;
             }

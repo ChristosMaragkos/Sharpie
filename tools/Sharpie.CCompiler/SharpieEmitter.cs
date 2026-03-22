@@ -14,6 +14,13 @@ public sealed partial class SharpieEmitter
 
     public const int FramePointer = 15;
 
+    private readonly bool _optimize;
+
+    public SharpieEmitter(bool optimizationsEnabled)
+    {
+        _optimize = optimizationsEnabled;
+    }
+
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
     {
         var asm = new StringBuilder();
@@ -58,7 +65,10 @@ public sealed partial class SharpieEmitter
             );
 
         var orderedFunctions = new List<CXCursor>();
-        orderedFunctions.Add(mainFunctions[0]);
+
+        if (mainFunctions.Count == 1)
+            orderedFunctions.Add(mainFunctions[0]);
+
         orderedFunctions.AddRange(functions.Where(func => func.Spelling.ToString() != "main"));
 
         foreach (var func in orderedFunctions)
@@ -199,7 +209,10 @@ public sealed partial class SharpieEmitter
                 context.GetPrologue().Select(asm => Instruction.Parse(asm))
             );
 
-            Optimizer.Optimize(context.Instructions);
+            if (_optimize)
+            {
+                Optimizer.Optimize(context.Instructions);
+            }
 
             foreach (var inst in context.Instructions)
             {

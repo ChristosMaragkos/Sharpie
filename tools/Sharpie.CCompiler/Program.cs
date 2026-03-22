@@ -1,36 +1,80 @@
-﻿using Sharpie.CCompiler;
+﻿using System.Text;
+using Sharpie.CCompiler;
 using Sharpie.CCompiler.NativeInterop;
 
 LibClangResolver.Configure();
 
-if (args.Contains("-h") || args.Contains("--help"))
+var inputFiles = new List<string>();
+string? outputPath = null;
+bool optimize = false;
+bool emitAssembly = false;
+
+for (int i = 0; i < args.Length; i++)
 {
-    PrintHelp();
-    return;
+    if (args[i] == "-h" || args[i] == "--help")
+    {
+        PrintHelp();
+        return;
+    }
+    else if (args[i] == "-O")
+        optimize = true;
+    else if (args[i] == "-S")
+        emitAssembly = true;
+    else if (args[i] == "-o" && i + 1 < args.Length)
+    {
+        outputPath = args[++i];
+    }
+    else if (!args[i].StartsWith("-"))
+    {
+        inputFiles.Add(args[i]);
+    }
+    else
+    {
+        Console.Error.WriteLine($"Unknown argument: {args[i]}");
+        Environment.ExitCode = 1;
+        return;
+    }
 }
 
-if (args.Length < 1)
+if (inputFiles.Count == 0)
 {
-    Console.Error.WriteLine("Missing input file.");
+    Console.Error.WriteLine("Error: No input files specified.");
     PrintHelp();
     Environment.ExitCode = 1;
     return;
 }
 
-var inputPath = args[0];
-var outputPath = args.Length >= 2 ? args[1] : Path.ChangeExtension(inputPath, ".asm");
-
-if (!File.Exists(inputPath))
+if (string.IsNullOrEmpty(outputPath))
 {
-    Console.Error.WriteLine($"Input file not found: {inputPath}");
-    Environment.ExitCode = 1;
-    return;
+    var baseName = Path.GetFileNameWithoutExtension(inputFiles[0]);
+    outputPath = emitAssembly ? $"{baseName}.asm" : $"{baseName}.shr";
+}
+
+foreach (var file in inputFiles)
+{
+    if (!File.Exists(file))
+    {
+        Console.Error.WriteLine($"Error: Input file not found: {file}");
+        Environment.ExitCode = 1;
+        return;
+    }
 }
 
 try
 {
-    CompileFile(inputPath, outputPath);
-    Console.WriteLine($"Wrote Sharpie assembly to {outputPath}");
+    var finalAssembly = CompileFiles(inputFiles, optimize);
+
+    if (emitAssembly)
+    {
+        File.WriteAllText(outputPath, finalAssembly);
+        Console.WriteLine($"Wrote Sharpie assembly to {outputPath}");
+    }
+    else
+    {
+        var assembler = new Sharpie.Sdk.Asm.Assembler(false);
+        var data = assembler.LoadRawAsm(finalAssembly);
+        File.WriteAllBytes(outputPath, data);
+    }
 }
 catch (TypeInitializationException ex)
 {
@@ -51,50 +95,67 @@ catch (DllNotFoundException ex)
 }
 catch (Exception ex)
 {
-    Console.Error.WriteLine(ex.Message);
+    Console.Error.WriteLine($"Fatal Error: {ex.Message}");
     Environment.ExitCode = 1;
 }
 
-static void CompileFile(string inputPath, string outputPath)
+static string CompileFiles(List<string> inputFiles, bool optimize)
 {
+    var masterAssembly = new StringBuilder();
     using var index = ClangSharp.Interop.CXIndex.Create();
-    using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
-        index,
-        inputPath,
-        new[] { "-std=gnu11", "-target", "msp430" }, // HACK: I'm passing some random 16-bit assembly to the frontend. I don't really like it.
-        Array.Empty<ClangSharp.Interop.CXUnsavedFile>(),
-        ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
-    );
 
-    var hasErrors = PrintDiagnostics(tu);
-    if (hasErrors)
+    var clangArgs = new[] { "-std=gnu11", "-target", "msp430" };
+
+    foreach (var file in inputFiles)
     {
-        Environment.ExitCode = 1;
-        return;
+        using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
+            index,
+            file,
+            clangArgs,
+            Array.Empty<ClangSharp.Interop.CXUnsavedFile>(),
+            ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
+        );
+
+        if (PrintDiagnostics(tu, file))
+        {
+            throw new Exception("Compilation failed due to frontend errors.");
+        }
+
+        var emitter = new SharpieEmitter(optimize);
+
+        masterAssembly.AppendLine($"; ----------------------------------");
+        masterAssembly.AppendLine($"; SOURCE: {Path.GetFileName(file)}");
+        masterAssembly.AppendLine($"; ----------------------------------");
+        masterAssembly.AppendLine(emitter.EmitTranslationUnit(tu.Cursor));
     }
 
-    var emitter = new SharpieEmitter();
-    var assembly = emitter.EmitTranslationUnit(tu.Cursor);
-    File.WriteAllText(outputPath, assembly);
+    return masterAssembly.ToString();
 }
 
-static bool PrintDiagnostics(ClangSharp.Interop.CXTranslationUnit tu)
+static bool PrintDiagnostics(ClangSharp.Interop.CXTranslationUnit tu, string filename)
 {
     var hasErrors = false;
 
     for (uint i = 0; i < tu.NumDiagnostics; i++)
     {
-        var diag = tu.GetDiagnostic(i);
+        using var diag = tu.GetDiagnostic(i);
         var severity = diag.Severity;
-        var level = severity.ToString().Replace("CXDiagnostic_", string.Empty);
-        Console.Error.WriteLine($"[{level}] {diag.Spelling}");
+        var level = severity.ToString().Replace("CXDiagnostic_", string.Empty).ToUpper();
+
+        // Only print warnings and errors, ignore notes/ignored stuff to keep the console clean
+        if (severity >= ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Warning)
+        {
+            Console.Error.WriteLine($"[{level}] {filename}: {diag.Spelling}");
+        }
 
         if (
             severity
             is ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Error
                 or ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Fatal
         )
+        {
             hasErrors = true;
+        }
     }
 
     return hasErrors;
@@ -103,8 +164,11 @@ static bool PrintDiagnostics(ClangSharp.Interop.CXTranslationUnit tu)
 static void PrintHelp()
 {
     Console.WriteLine("Sharpie.CCompiler");
-    Console.WriteLine("Usage: Sharpie.CCompiler <input.c> [output.asm]");
-    Console.WriteLine(
-        "Supported MVP: int main(void) with int locals, assignments, and arithmetic return expressions."
-    );
+    Console.WriteLine("Usage: sharpie-cc <input1.c> [input2.c...] [options]");
+    Console.WriteLine();
+    Console.WriteLine("Options:");
+    Console.WriteLine("  -O             Enable peephole optimizations and parameter promotion");
+    Console.WriteLine("  -S             Emit readable .asm files instead of compiling to a .bin");
+    Console.WriteLine("  -o <file>      Specify the output file name");
+    Console.WriteLine("  -h, --help     Show this help screen");
 }
