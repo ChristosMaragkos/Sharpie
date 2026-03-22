@@ -435,7 +435,11 @@ public partial class Assembler
         var j = firstQuote + 1;
         while (j < originalLine.Length && originalLine[j] != '"')
         {
-            if (originalLine[j] == '\\' && j + 1 < originalLine.Length && originalLine[j + 1] == '"')
+            if (
+                originalLine[j] == '\\'
+                && j + 1 < originalLine.Length
+                && originalLine[j + 1] == '"'
+            )
             {
                 sb.Append('"');
                 j += 2;
@@ -530,9 +534,19 @@ public partial class Assembler
             throw new FileNotFoundException($"No file by name \"{filePath}\" was found.");
         if (!filePath.EndsWith(".asm"))
             throw new Exception($"File \"{filePath}\" is not in the \".asm\" format.");
-        Console.WriteLine("Assembler: Loading file...");
         var initialFile = File.ReadAllLines(filePath);
-        FileContents = PreProcess(initialFile, Path.GetDirectoryName(filePath)!);
+        return Assemble(PreProcess(initialFile, Path.GetDirectoryName(filePath)!));
+    }
+
+    public byte[] LoadRawAsm(string asm)
+    {
+        return Assemble(asm.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private byte[] Assemble(IEnumerable<string> asmCode)
+    {
+        FileContents = asmCode;
+        Console.WriteLine("Assembler: Loading file...");
         return ReadFile();
     }
 
@@ -795,7 +809,11 @@ public partial class Assembler
                 var j = i + 1;
                 while (j < afterKeyword.Length && afterKeyword[j] != '"')
                 {
-                    if (afterKeyword[j] == '\\' && j + 1 < afterKeyword.Length && afterKeyword[j + 1] == '"')
+                    if (
+                        afterKeyword[j] == '\\'
+                        && j + 1 < afterKeyword.Length
+                        && afterKeyword[j + 1] == '"'
+                    )
                     {
                         sb.Append('"'); // escaped quote → literal "
                         j += 2;
@@ -856,7 +874,11 @@ public partial class Assembler
                 var j = i + 1;
                 while (j < afterKeyword.Length && afterKeyword[j] != '"')
                 {
-                    if (afterKeyword[j] == '\\' && j + 1 < afterKeyword.Length && afterKeyword[j + 1] == '"')
+                    if (
+                        afterKeyword[j] == '\\'
+                        && j + 1 < afterKeyword.Length
+                        && afterKeyword[j + 1] == '"'
+                    )
                         j += 2; // escaped quote counts as one char
                     else
                         j++;
@@ -877,7 +899,11 @@ public partial class Assembler
             {
                 // Non-string token: skip to next delimiter and count 1 byte.
                 var next = i;
-                while (next < afterKeyword.Length && afterKeyword[next] != ',' && afterKeyword[next] != ' ')
+                while (
+                    next < afterKeyword.Length
+                    && afterKeyword[next] != ','
+                    && afterKeyword[next] != ' '
+                )
                     next++;
                 if (next > i)
                     total++;
