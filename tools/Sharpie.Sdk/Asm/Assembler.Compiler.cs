@@ -11,7 +11,7 @@ public partial class Assembler
         _firmwareMode = firmwareMode;
     }
 
-    public byte[] Compile()
+    private byte[] Compile()
     {
         Console.WriteLine("Assembler: Compiling file...");
         int lineNum = 0;
