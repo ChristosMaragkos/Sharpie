@@ -63,7 +63,6 @@ Main:
     MOV r2, r9
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 6
     ADD r6, r7
@@ -125,14 +124,11 @@ _func_do_math:
     MOV r9, r2
     MOV r10, r3
     MOV r1, r8
-    MOV r6, r15
-    STA r1, r6
+    STA r1, r15
     MOV r1, r9
     MOV r2, r10
-    MOV r6, r15
-    LDP r0, r6
+    LDP r0, r15
     ALT CALL r0
-    SETSP r15
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7

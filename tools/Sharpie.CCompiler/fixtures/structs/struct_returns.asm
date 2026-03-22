@@ -62,7 +62,6 @@ Main:
     MOV r2, r8
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 16
     ADD r6, r7
@@ -88,8 +87,7 @@ _func_make_point:
     MOV r10, r3
     MOV r1, r15
     MOV r1, r9
-    MOV r2, r15
-    STA r1, r2
+    STA r1, r15
     MOV r1, r10
     MOV r2, r15
     IADD r2, 2
@@ -100,7 +98,6 @@ _func_make_point:
     POP r2
     LDI r3, 4
     CALL SYS_MEM_MOVE
-    SETSP r15
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7

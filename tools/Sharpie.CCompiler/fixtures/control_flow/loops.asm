@@ -10,45 +10,45 @@ Main:
     PUSH r15
     GETSP r15
     XOR r1, r1
-    MOV r8, r1
+    MOV r11, r1
     XOR r1, r1
-    MOV r9, r1
+    MOV r10, r1
 for_start_L0:
-    MOV r1, r9
+    MOV r1, r10
     ICMP r1, 10
     JGE for_end_L2
-    INC r8
+    INC r11
 for_inc_L1:
-    MOV r1, r9
-    INC r9
+    MOV r1, r10
+    INC r10
     JMP for_start_L0
 for_end_L2:
     XOR r1, r1
-    MOV r10, r1
+    MOV r12, r1
     XOR r1, r1
-    MOV r11, r1
+    MOV r8, r1
 while_start_L3:
-    MOV r1, r11
+    MOV r1, r8
     ICMP r1, 9
     JGE while_end_L4
-    MOV r1, r10
-    MOV r2, r11
+    MOV r1, r12
+    MOV r2, r8
     ADD r1, r2
-    MOV r10, r1
-    INC r11
+    MOV r12, r1
+    INC r8
     JMP while_start_L3
 while_end_L4:
-    LDI r12, 1000
+    LDI r13, 1000
     XOR r1, r1
-    MOV r13, r1
+    MOV r9, r1
 do_start_L5:
-    MOV r1, r12
-    MOV r2, r13
-    SUB r1, r2
-    MOV r12, r1
-    INC r13
-do_cond_L6:
     MOV r1, r13
+    MOV r2, r9
+    SUB r1, r2
+    MOV r13, r1
+    INC r9
+do_cond_L6:
+    MOV r1, r9
     ICMP r1, 10
     JLT do_start_L5
 do_end_L7:

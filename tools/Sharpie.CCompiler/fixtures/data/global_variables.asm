@@ -29,12 +29,10 @@ Main:
     MOV r15, r6
     LDI r1, 50
     STM r1, _global_g_score
-    LDM r1, _global_g_lives
-    INC r1
-    STM r1, _global_g_lives
+    LDI r1, _global_g_lives
+    DINC r1
     LDI r1, 200
-    LDI r2, _global_g_p1
-    STA r1, r2
+    STM r1, _global_g_p1
     LDI r1, _global_g_p1
     MOV r2, r15
     PUSH r1
@@ -50,11 +48,9 @@ Main:
     ADD r3, r4
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
-    LDP r2, r3
+    LDP r2, r15
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7

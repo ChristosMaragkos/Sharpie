@@ -10,8 +10,7 @@ Main:
     MOV r15, r6
     MOV r1, r15
     LDI r2, 1
-    MOV r3, r1
-    STA r2, r3
+    STA r2, r1
     LDI r2, 2
     MOV r3, r1
     IADD r3, 2
@@ -38,7 +37,6 @@ Main:
     STA r2, r3
     MOV r1, r15
     CALL _func_do_stuff
-    SETSP r15
     MOV r6, r15
     LDI r7, 14
     ADD r6, r7
@@ -60,8 +58,7 @@ _func_do_stuff:
     MOV r8, r1
     MOV r1, r15
     LDI r2, 9
-    MOV r3, r1
-    ALT STA r2, r3
+    ALT STA r2, r1
     LDI r2, 10
     MOV r3, r1
     INC r3
@@ -103,16 +100,13 @@ _func_do_stuff:
     MOV r1, r0
     MOV r9, r1
     LDI r1, 99
-    MOV r2, r15
-    ALT STA r1, r2
-    MOV r2, r8
-    LDP r1, r2
+    ALT STA r1, r15
+    LDP r1, r8
     MOV r3, r15
     INC r3
     ALT LDP r2, r3
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 10
     ADD r6, r7

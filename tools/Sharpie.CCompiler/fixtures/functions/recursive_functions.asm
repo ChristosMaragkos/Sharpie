@@ -29,8 +29,7 @@ _func_factorial:
     RET
 else_L1:
     MOV r1, r8
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r15
     MOV r0, r15
     IADD r0, 2
     STA r2, r0
@@ -39,8 +38,7 @@ else_L1:
     MOV r1, r3
     CALL _func_factorial
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     MOV r0, r15
     IADD r0, 2
     LDP r2, r0
@@ -48,7 +46,6 @@ else_L1:
     MOV r2, r0
     MUL r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7

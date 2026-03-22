@@ -10,9 +10,7 @@ Main:
     LDI r7, 4
     SUB r6, r7
     SETSP r6
-    MOV r15, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r6
     LDI r1, 42
     PUSH r13
     PUSH r14
@@ -22,8 +20,7 @@ Main:
     POP r14
     POP r13
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     POP r0
     MOV r1, r0
     MOV r8, r1
@@ -31,8 +28,7 @@ Main:
     MOV r6, r15
     IADD r6, 2
     STA r2, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r15
     LDI r2, 10
     LDI r3, 20
     MOV r1, r2
@@ -47,8 +43,7 @@ Main:
     POP r14
     POP r13
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     POP r0
     MOV r1, r0
     MOV r10, r1
@@ -56,7 +51,6 @@ Main:
     MOV r2, r10
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7

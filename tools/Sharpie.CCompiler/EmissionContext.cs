@@ -96,6 +96,9 @@ public sealed class EmissionContext
 
     public StorageLocation AllocateStorage(string name, bool forceStack, int bytes = 2)
     {
+        if (Locals.TryGetValue(name, out var existing))
+            return existing;
+
         if (!forceStack && _nextLocalRegister <= SharpieEmitter.LocalRegisterEnd)
         {
             int reg = _nextLocalRegister++;
@@ -183,14 +186,16 @@ public sealed class EmissionContext
 
     public IEnumerable<string> GetEpilogue()
     {
-        yield return "SETSP r15";
-
         if (TotalStackBytes > 0)
         {
             yield return "MOV r6, r15";
             yield return $"LDI r7, {TotalStackBytes}";
             yield return "ADD r6, r7";
             yield return "SETSP r6";
+        }
+        else
+        {
+            yield return "SETSP r15";
         }
 
         yield return "POP r15";

@@ -28,28 +28,6 @@ public static class Optimizer
                     break;
                 }
 
-                // IADD rX, 1 -> INC rX
-                if (!current.IsAlt && current.Arg2 == "1")
-                {
-                    if (current.Mnemonic == "IADD")
-                    {
-                        current.Mnemonic = "INC";
-                        current.Arg2 = "";
-                    }
-                    else if (current.Mnemonic == "ISUB")
-                    {
-                        current.Mnemonic = "DEC";
-                        current.Arg2 = "";
-                    }
-
-                    if (current.Mnemonic is "INC" or "DEC")
-                    {
-                        current.RebuildText();
-                        changed = true;
-                        break;
-                    }
-                }
-
                 // ALT IADD rX, 1 -> DINC rX
                 if (current.IsAlt && current.Arg2 == "1")
                 {
@@ -268,18 +246,28 @@ public static class Optimizer
 
                     if (
                         !current.IsAlt
-                        && !next.IsAlt
                         && !nextNext.IsAlt
-                        && current.Mnemonic == "LDP"
-                        && nextNext.Mnemonic == "STA"
+                        && current.Mnemonic == "LDM"
+                        && nextNext.Mnemonic == "STM"
                         && current.Arg1 == next.Arg1
-                        && // Temp reg matches math reg
-                        next.Arg1 == nextNext.Arg1
-                        && // Math reg matches store reg
-                        current.Arg2 == nextNext.Arg2
-                    ) // Load pointer matches store pointer
+                        && next.Arg1 == nextNext.Arg1
+                        && current.Arg2 == nextNext.Arg2
+                    )
                     {
-                        if (
+                        if (next.Mnemonic is "INC" or "DEC")
+                        {
+                            current.Mnemonic = "LDI"; // Load the address instead of the value
+                            current.RebuildText();
+
+                            next.Mnemonic = "D" + next.Mnemonic; // DINC or DDEC
+                            next.Arg1 = current.Arg1; // The pointer register
+                            next.RebuildText();
+
+                            instructions.RemoveAt(i + 2); // Remove STM
+                            changed = true;
+                            break;
+                        }
+                        else if (
                             next.Mnemonic
                             is "IADD"
                                 or "ISUB"
@@ -291,14 +279,15 @@ public static class Optimizer
                                 or "IXOR"
                         )
                         {
-                            current.IsAlt = true;
-                            current.Mnemonic = next.Mnemonic;
-                            current.Arg1 = current.Arg2; // Pointer register
-                            current.Arg2 = next.Arg2; // Immediate byte
+                            current.Mnemonic = "LDI"; // Load the address
                             current.RebuildText();
 
-                            instructions.RemoveAt(i + 2); // Remove STA
-                            instructions.RemoveAt(i + 1); // Remove math
+                            next.IsAlt = true;
+                            next.Arg1 = current.Arg1;
+                            // Arg2 is already the correct immediate value
+                            next.RebuildText();
+
+                            instructions.RemoveAt(i + 2); // Remove STM
                             changed = true;
                             break;
                         }
@@ -426,6 +415,75 @@ public static class Optimizer
                         instructions.RemoveAt(i + 1);
                         changed = true;
                         break;
+                    }
+                }
+
+                // IADD rX, 1 -> INC rX
+                if (!current.IsAlt && current.Arg2 == "1")
+                {
+                    if (current.Mnemonic == "IADD")
+                    {
+                        current.Mnemonic = "INC";
+                        current.Arg2 = "";
+                    }
+                    else if (current.Mnemonic == "ISUB")
+                    {
+                        current.Mnemonic = "DEC";
+                        current.Arg2 = "";
+                    }
+
+                    if (current.Mnemonic is "INC" or "DEC")
+                    {
+                        current.RebuildText();
+                        changed = true;
+                        break;
+                    }
+                }
+
+                // LDI -> STA/LDP ==> STM/LDM
+                // Avoid loading an address known at compile time and dereferencing it
+                if (!current.IsAlt && current.Mnemonic == "LDI")
+                {
+                    if (next.Mnemonic == "STA" && current.Arg1 == next.Arg2)
+                    {
+                        current.IsAlt = next.IsAlt; // Preserve the 8-bit/16-bit flag from the STA
+                        current.Mnemonic = "STM"; // Convert to absolute store
+                        current.Arg1 = next.Arg1; // The value register
+                        // current.Arg2 is already the label/address
+                        current.RebuildText();
+
+                        instructions.RemoveAt(i + 1); // Delete the STA
+                        changed = true;
+                        break;
+                    }
+                    else if (next.Mnemonic == "LDP" && current.Arg1 == next.Arg2)
+                    {
+                        current.IsAlt = next.IsAlt; // Preserve the 8-bit/16-bit flag from the LDP
+                        current.Mnemonic = "LDM"; // Convert to absolute Load
+                        current.Arg1 = next.Arg1; // The destination register
+                        // current.Arg2 is already the label/address
+                        current.RebuildText();
+
+                        instructions.RemoveAt(i + 1); // Delete the LDP
+                        changed = true;
+                        break;
+                    }
+                }
+
+                // MOV rTemp, rSrc -> LDP rDest, rTemp ==> LDP rDest, rSource
+                if (!current.IsAlt && current.Mnemonic == "MOV")
+                {
+                    var isLoadStore = next.Mnemonic is "LDP" or "STA" or "LDS" or "STS";
+
+                    // If the NEXT instruction uses our target register as its POINTER (Arg2)
+                    if (isLoadStore && current.Arg1 == next.Arg2)
+                    {
+                        next.Arg2 = current.Arg2; // Swap the pointer to the original source
+                        next.RebuildText();
+
+                        instructions.RemoveAt(i); // delete the MOV
+                        changed = true;
+                        continue;
                     }
                 }
             }

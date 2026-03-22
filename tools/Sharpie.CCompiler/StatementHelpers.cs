@@ -156,9 +156,6 @@ public partial class SharpieEmitter
         if (string.IsNullOrWhiteSpace(variableName))
             throw new InvalidOperationException("Encountered unnamed local variable.");
 
-        if (context.Locals.ContainsKey(variableName))
-            throw new InvalidOperationException($"Duplicate local variable `{variableName}`.");
-
         var typeKind = varDecl.Type.CanonicalType.kind;
         bool isRecord = typeKind == CXTypeKind.CXType_Record;
         bool isArray =

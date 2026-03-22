@@ -8,9 +8,7 @@ Main:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    MOV r15, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r6
     LDI r2, 6
     PUSH r2
     LDI r2, 5
@@ -27,8 +25,7 @@ Main:
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     POP r0
     MOV r1, r0
     MOV r8, r1
@@ -40,7 +37,6 @@ Main:
     LDI r4, 529
     DRAW r1, r2, r3, r4
     MOV r0, r8
-    SETSP r15
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -102,14 +98,11 @@ _func_test_memory:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    MOV r15, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r6
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     POP r0
     MOV r1, r0
     MOV r8, r1
@@ -117,7 +110,6 @@ _func_test_memory:
     LDI r3, 20
     CALL SYS_MEM_SET
     LDI r0, 1
-    SETSP r15
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7

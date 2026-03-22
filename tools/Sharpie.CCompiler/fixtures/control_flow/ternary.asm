@@ -8,14 +8,11 @@ Main:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    MOV r15, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r6
     LDI r1, 2
     ALT RND r0, r1
     PUSH r0
-    MOV r0, r15
-    LDP r1, r0
+    LDP r1, r15
     POP r0
     MOV r1, r0
     MOV r8, r1
@@ -26,7 +23,6 @@ Main:
 ternary_false_L0:
     LDI r0, 420
 ternary_end_L1:
-    SETSP r15
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7

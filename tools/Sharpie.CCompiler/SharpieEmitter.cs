@@ -89,22 +89,44 @@ public sealed partial class SharpieEmitter
 
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
 
-            var parameters = GetChildren(func)
-                .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)
-                .ToList();
-
-            int currentReg = 1;
-            int currentStackArgOffset = 0;
-
             var retSizeBytes = func.ResultType.SizeOf;
             if (retSizeBytes > 2)
             {
                 var hiddenReturn = context.AllocateStorage("__hidden_ret", false, 2);
                 context.HiddenRetPtrReg = hiddenReturn.Value;
                 context.Emit($"MOV r{hiddenReturn.Value}, r1");
-
-                currentReg = 2;
             }
+
+            var usageCounts = GetVariableUsage(func);
+            var methodVars = GetAllLocalDeclarations(func)
+                .OrderByDescending(v => usageCounts.GetValueOrDefault(v.Spelling.ToString(), 0))
+                .ToList();
+
+            foreach (var v in methodVars)
+            {
+                var varName = v.Spelling.ToString();
+                if (string.IsNullOrWhiteSpace(varName))
+                    continue;
+
+                var typeKind = v.Type.CanonicalType.kind;
+                long sizeBytes = v.Type.SizeOf <= 0 ? 2 : v.Type.SizeOf;
+
+                bool isRecord = typeKind is CXTypeKind.CXType_Record;
+                bool isArray =
+                    typeKind
+                    is CXTypeKind.CXType_ConstantArray
+                        or CXTypeKind.CXType_IncompleteArray;
+                bool needsStack = isRecord || isArray || context.EscapedVariables.Contains(varName);
+
+                context.AllocateStorage(varName, needsStack, (int)sizeBytes);
+            }
+
+            var parameters = GetChildren(func)
+                .Where(c => c.Kind == CXCursorKind.CXCursor_ParmDecl)
+                .ToList();
+
+            var currentReg = retSizeBytes > 2 ? 2 : 1;
+            var currentStackArgOffset = 0;
 
             for (var i = 0; i < parameters.Count; i++)
             {
@@ -316,5 +338,47 @@ public sealed partial class SharpieEmitter
         {
             EmitStatement(stmt, context);
         }
+    }
+
+    private static List<CXCursor> GetAllLocalDeclarations(CXCursor functionCursor)
+    {
+        var decls = new List<CXCursor>();
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(functionCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (
+                current.Kind == CXCursorKind.CXCursor_ParmDecl
+                || current.Kind == CXCursorKind.CXCursor_VarDecl
+            )
+                decls.Add(current);
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
+        return decls;
+    }
+
+    private static Dictionary<string, int> GetVariableUsage(CXCursor functionCursor)
+    {
+        var usage = new Dictionary<string, int>(StringComparer.Ordinal);
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(functionCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current.Kind == CXCursorKind.CXCursor_DeclRefExpr)
+            {
+                var name = current.Spelling.ToString();
+                usage[name] = usage.TryGetValue(name, out int count) ? count + 1 : 1;
+            }
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
+        return usage;
     }
 }

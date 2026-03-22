@@ -16,7 +16,6 @@ Main:
     LDI r2, 4
     ADD r1, r2
     LDP r0, r1
-    SETSP r15
     MOV r6, r15
     LDI r7, 6
     ADD r6, r7
@@ -31,22 +30,22 @@ _func_fill_array:
     PUSH r10
     PUSH r15
     GETSP r15
-    MOV r8, r1
-    MOV r9, r2
+    MOV r9, r1
+    MOV r10, r2
     XOR r1, r1
-    MOV r10, r1
+    MOV r8, r1
 while_start_L0:
-    CMP r10, r9
+    CMP r8, r10
     JGE while_end_L1
-    MOV r1, r10
+    MOV r1, r8
     IMUL r1, 10
-    MOV r2, r8
-    MOV r3, r10
+    MOV r2, r9
+    MOV r3, r8
     LDI r4, 2
     MUL r3, r4
     ADD r2, r3
     STA r1, r2
-    INC r10
+    INC r8
     JMP while_start_L0
 while_end_L1:
     RET

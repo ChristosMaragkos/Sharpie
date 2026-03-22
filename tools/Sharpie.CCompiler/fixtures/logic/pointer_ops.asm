@@ -12,19 +12,14 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r1, 500
-    MOV r2, r15
-    STA r1, r2
+    STA r1, r15
     MOV r1, r15
-    MOV r8, r1
-    LDI r9, 1000
-    LDI r1, 42
-    MOV r2, r9
-    STA r1, r2
-    MOV r1, r9
-    LDP r1, r1
     MOV r10, r1
-    MOV r0, r10
-    SETSP r15
+    LDI r8, 1000
+    LDI r1, 42
+    STA r1, r8
+    MOV r9, r1
+    MOV r0, r9
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
