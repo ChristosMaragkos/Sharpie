@@ -39,6 +39,32 @@ As of 0.3, you can also write games in C and compile them to Sharpie Assembly us
 - Windows: `winget install LLVM`
 - Linux: `<your-package-manager> install llvm`
 
+## Using the C Compiler (sharpiecc)
+
+Once LLVM is installed, you can compile your C code directly into playable Sharpie ROMs (or raw assembly) from the command line.
+
+Basic Compilation:
+```sh
+sharpiecc main.c -O -o mygame.bin
+```
+
+Compiler Flags:
+
+    -O: Enables the Peephole Optimizer and Parameter Promotion. (Highly recommended for performant games!)
+
+    -S: Emits readable Sharpie Assembly (.asm) instead of compiling directly to a binary. Great for debugging or learning the ISA.
+
+    -o <file>: Specifies the output file name.
+
+Multi-Bank Projects:
+Sharpie games can span multiple files and memory banks. Simply pass all your .c files to the compiler at once:
+
+```sh
+sharpiecc main.c player.c level1.c -O -o mygame.bin
+```
+
+To assign a file to a specific memory bank, just add #pragma bank X (e.g., #pragma bank 1) to the very top of your .c file. The compiler handles all the cross-bank routing automatically!
+
 ## Support
 If you encounter any issues with the Runner or the SDK or have any suggestions, please open an issue over at [the GitHub repository](https://github.com/ChristosMaragkos/Sharpie).
 
