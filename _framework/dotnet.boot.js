@@ -1,7 +1,7 @@
 export const config = /*json-start*/{
   "mainAssemblyName": "Sharpie.Runner.Web.dll",
   "resources": {
-    "hash": "sha256-3XZN9ZnHtmTaeAEDq5uU+E55lhoW6Zg+qIPk9mQ2C/4=",
+    "hash": "sha256-PCSvk34irxdP/sXQlmppcsre2Q9v66SCfBSza0/1eSg=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.js"
@@ -15,7 +15,7 @@ export const config = /*json-start*/{
     "wasmNative": [
       {
         "name": "dotnet.native.wasm",
-        "integrity": "sha256-kvbTxkRQ+4igUTRjc9tTR4fVXRwYULDVzbu+O/OIoms="
+        "integrity": "sha256-+wWi+6F7f/LEPImqVvJHGZ+gwW+Yy+OyO3GgFDtpE4A="
       }
     ],
     "coreAssembly": [
@@ -27,12 +27,12 @@ export const config = /*json-start*/{
       {
         "virtualPath": "Sharpie.Core.wasm",
         "name": "Sharpie.Core.wasm",
-        "integrity": "sha256-ujlkK7rTVOpNr+jragSljq1Vhzd9fwprc6/f+Yhj48k="
+        "integrity": "sha256-kPPFogAjI/NSlW1XPqBhyAlMiid1X92t28HyaDeMLzg="
       },
       {
         "virtualPath": "Sharpie.Runner.Web.wasm",
         "name": "Sharpie.Runner.Web.wasm",
-        "integrity": "sha256-5u9uztwcs2Hw4NQXuTMazcoRXeD+rGC1CtUNeTZZALA="
+        "integrity": "sha256-8gt15hFa0okGiUS1A+cDy1PXZw4isVz6u5tdEyV+cKY="
       },
       {
         "virtualPath": "System.Console.wasm",
