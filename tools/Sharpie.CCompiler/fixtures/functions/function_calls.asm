@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: function_calls.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -21,6 +30,7 @@ Main:
     MOV r1, r0
     MOV r9, r1
     MOV r0, r9
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -33,15 +43,13 @@ Main:
 .GLOBAL
 _func_square:
     PUSH r8
-    PUSH r15
-    GETSP r15
     MOV r8, r1
     MOV r2, r8
     MUL r1, r2
     MOV r0, r1
-    SETSP r15
-    POP r15
+epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
 .ENDREGION
+

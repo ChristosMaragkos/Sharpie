@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: alloca_and_fp.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -29,6 +38,7 @@ Main:
     LDP r2, r8
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -40,3 +50,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

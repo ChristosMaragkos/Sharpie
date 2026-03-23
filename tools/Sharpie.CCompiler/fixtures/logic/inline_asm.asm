@@ -1,12 +1,19 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: inline_asm.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r15
-    GETSP r15
     XOR r1, r1
     XOR r0, r0
-    SETSP r15
-    POP r15
+epilogue_L0:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

@@ -1,20 +1,24 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: multiple_functions.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r15
-    GETSP r15
     LDI r0, 1
-    SETSP r15
-    POP r15
+epilogue_L0:
     HALT
 .ENDGLOBAL
 .GLOBAL
 _func_helper:
-    PUSH r15
-    GETSP r15
     LDI r0, 42
-    SETSP r15
-    POP r15
+epilogue_L1:
     RET
 .ENDGLOBAL
 .ENDREGION
+

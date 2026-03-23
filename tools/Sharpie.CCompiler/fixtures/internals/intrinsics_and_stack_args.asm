@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: intrinsics_and_stack_args.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -37,6 +46,7 @@ Main:
     LDI r4, 529
     DRAW r1, r2, r3, r4
     MOV r0, r8
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -79,7 +89,7 @@ _func_add_six_numbers:
     MOV r2, r13
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
+epilogue_L1:
     POP r15
     POP r13
     POP r12
@@ -110,6 +120,7 @@ _func_test_memory:
     LDI r3, 20
     CALL SYS_MEM_SET
     LDI r0, 1
+epilogue_L2:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -119,3 +130,4 @@ _func_test_memory:
     RET
 .ENDGLOBAL
 .ENDREGION
+

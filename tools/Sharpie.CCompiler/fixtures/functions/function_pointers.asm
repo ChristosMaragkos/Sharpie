@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: function_pointers.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -63,6 +72,7 @@ Main:
     MOV r2, r9
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 6
     ADD r6, r7
@@ -76,16 +86,13 @@ Main:
 _func_add:
     PUSH r8
     PUSH r9
-    PUSH r15
-    GETSP r15
     MOV r8, r1
     MOV r9, r2
     MOV r1, r8
     MOV r2, r9
     ADD r1, r2
     MOV r0, r1
-    SETSP r15
-    POP r15
+epilogue_L1:
     POP r9
     POP r8
     RET
@@ -94,16 +101,13 @@ _func_add:
 _func_sub:
     PUSH r8
     PUSH r9
-    PUSH r15
-    GETSP r15
     MOV r8, r1
     MOV r9, r2
     MOV r1, r8
     MOV r2, r9
     SUB r1, r2
     MOV r0, r1
-    SETSP r15
-    POP r15
+epilogue_L2:
     POP r9
     POP r8
     RET
@@ -129,6 +133,7 @@ _func_do_math:
     MOV r2, r10
     LDP r0, r15
     ALT CALL r0
+epilogue_L3:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -140,3 +145,4 @@ _func_do_math:
     RET
 .ENDGLOBAL
 .ENDREGION
+

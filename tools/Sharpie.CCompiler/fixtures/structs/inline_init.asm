@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: inline_init.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -53,6 +62,7 @@ Main:
     IDIV r2, 3
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 10
     ADD r6, r7
@@ -61,3 +71,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

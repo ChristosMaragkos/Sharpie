@@ -1,11 +1,18 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: return_42.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r15
-    GETSP r15
     LDI r0, 42
-    SETSP r15
-    POP r15
+epilogue_L0:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

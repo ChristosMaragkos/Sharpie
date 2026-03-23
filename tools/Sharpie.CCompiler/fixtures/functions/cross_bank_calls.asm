@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: cross_bank_calls.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -51,6 +60,7 @@ Main:
     MOV r2, r10
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -62,3 +72,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

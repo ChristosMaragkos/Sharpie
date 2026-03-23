@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: struct_returns.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -62,6 +71,7 @@ Main:
     MOV r2, r8
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 16
     ADD r6, r7
@@ -98,6 +108,7 @@ _func_make_point:
     POP r2
     LDI r3, 4
     CALL SYS_MEM_MOVE
+epilogue_L3:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -109,3 +120,4 @@ _func_make_point:
     RET
 .ENDGLOBAL
 .ENDREGION
+

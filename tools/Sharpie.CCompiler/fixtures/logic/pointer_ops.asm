@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: pointer_ops.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -20,6 +29,7 @@ Main:
     STA r1, r8
     MOV r9, r1
     MOV r0, r9
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -31,3 +41,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

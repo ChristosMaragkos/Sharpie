@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: string_literals.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -12,10 +21,10 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    LDI r9, str_L0
-    LDI r10, str_L1
-    LDI r11, str_L0
-    LDI r1, str_L2
+    LDI r9, str_L1
+    LDI r10, str_L2
+    LDI r11, str_L1
+    LDI r1, str_L3
     XOR r2, r2
     XOR r3, r3
     CALL SYS_PRINT
@@ -42,6 +51,7 @@ Main:
     XOR r3, r3
     CALL SYS_PRINT
     XOR r0, r0
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -54,10 +64,11 @@ Main:
     HALT
 .ENDGLOBAL
 ; Readonly Data
-str_L0:
-    .DB "Hello from Sharpie", 0
 str_L1:
-    .DB "This is a compiler test", 0
+    .DB "Hello from Sharpie", 0
 str_L2:
+    .DB "This is a compiler test", 0
+str_L3:
     .DB "Something in the way", 0
 .ENDREGION
+

@@ -1,12 +1,18 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: recursive_functions.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r15
-    GETSP r15
     LDI r1, 5
     CALL _func_factorial
-    SETSP r15
-    POP r15
+epilogue_L0:
     HALT
 .ENDGLOBAL
 .GLOBAL
@@ -21,13 +27,10 @@ _func_factorial:
     MOV r15, r6
     MOV r8, r1
     ICMP r1, 1
-    JNE else_L1
+    JNE else_L3
     LDI r0, 1
-    SETSP r15
-    POP r15
-    POP r8
-    RET
-else_L1:
+    JMP epilogue_L1
+else_L3:
     MOV r1, r8
     STA r1, r15
     MOV r0, r15
@@ -46,6 +49,9 @@ else_L1:
     MOV r2, r0
     MUL r1, r2
     MOV r0, r1
+    JMP epilogue_L1
+if_L2:
+epilogue_L1:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -53,6 +59,6 @@ else_L1:
     POP r15
     POP r8
     RET
-if_L0:
 .ENDGLOBAL
 .ENDREGION
+

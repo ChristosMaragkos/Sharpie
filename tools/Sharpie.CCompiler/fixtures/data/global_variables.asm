@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: global_variables.c
+; ----------------------------------
 .REGION FIXED
 ; Global Variables
 .GLOBAL
@@ -51,6 +60,7 @@ Main:
     LDP r2, r15
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -59,3 +69,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: stack_frame.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -37,6 +46,7 @@ Main:
     STA r2, r3
     MOV r1, r15
     CALL _func_do_stuff
+epilogue_L0:
     MOV r6, r15
     LDI r7, 14
     ADD r6, r7
@@ -107,6 +117,7 @@ _func_do_stuff:
     ALT LDP r2, r3
     ADD r1, r2
     MOV r0, r1
+epilogue_L1:
     MOV r6, r15
     LDI r7, 10
     ADD r6, r7
@@ -117,3 +128,4 @@ _func_do_stuff:
     RET
 .ENDGLOBAL
 .ENDREGION
+

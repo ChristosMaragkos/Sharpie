@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: arrays.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -16,6 +25,7 @@ Main:
     LDI r2, 4
     ADD r1, r2
     LDP r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 6
     ADD r6, r7
@@ -28,15 +38,13 @@ _func_fill_array:
     PUSH r8
     PUSH r9
     PUSH r10
-    PUSH r15
-    GETSP r15
     MOV r9, r1
     MOV r10, r2
     XOR r1, r1
     MOV r8, r1
-while_start_L0:
+while_start_L2:
     CMP r8, r10
-    JGE while_end_L1
+    JGE while_end_L3
     MOV r1, r8
     IMUL r1, 10
     MOV r2, r9
@@ -46,8 +54,14 @@ while_start_L0:
     ADD r2, r3
     STA r1, r2
     INC r8
-    JMP while_start_L0
-while_end_L1:
+    JMP while_start_L2
+while_end_L3:
+    RET
+epilogue_L1:
+    POP r10
+    POP r9
+    POP r8
     RET
 .ENDGLOBAL
 .ENDREGION
+

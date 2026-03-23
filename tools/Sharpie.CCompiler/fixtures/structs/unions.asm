@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: unions.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -21,6 +30,7 @@ Main:
     LDI r1, 10
     ALT STA r1, r15
     LDP r0, r15
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -31,3 +41,4 @@ Main:
     HALT
 .ENDGLOBAL
 .ENDREGION
+

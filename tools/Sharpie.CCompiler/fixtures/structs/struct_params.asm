@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: struct_params.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -77,6 +86,7 @@ Main:
     LDP r2, r15
     ADD r1, r2
     MOV r0, r1
+epilogue_L0:
     MOV r6, r15
     LDI r7, 10
     ADD r6, r7
@@ -108,6 +118,7 @@ _func_test_registers:
     LDP r2, r3
     ADD r1, r2
     MOV r0, r1
+epilogue_L1:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -151,6 +162,7 @@ _func_test_stack:
     LDP r2, r3
     ADD r1, r2
     MOV r0, r1
+epilogue_L2:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
@@ -164,11 +176,13 @@ _func_test_stack:
 .GLOBAL
 _func_test_pointer:
     PUSH r8
-    PUSH r15
-    GETSP r15
     MOV r8, r1
     LDI r1, 30
     STA r1, r8
     RET
+epilogue_L3:
+    POP r8
+    RET
 .ENDGLOBAL
 .ENDREGION
+

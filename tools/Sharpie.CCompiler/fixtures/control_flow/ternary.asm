@@ -1,3 +1,12 @@
+; ------------------------
+; Sharpie C cartridge
+; ------------------------
+.REGION FIXED
+    JMP Main
+.ENDREGION
+; ----------------------------------
+; SOURCE: ternary.c
+; ----------------------------------
 .REGION FIXED
 .GLOBAL
 Main:
@@ -17,12 +26,13 @@ Main:
     MOV r1, r0
     MOV r8, r1
     ICMP r1, 0
-    JNE ternary_false_L0
+    JNE ternary_false_L1
     LDI r0, 69
-    JMP ternary_end_L1
-ternary_false_L0:
+    JMP ternary_end_L2
+ternary_false_L1:
     LDI r0, 420
-ternary_end_L1:
+ternary_end_L2:
+epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
@@ -32,3 +42,4 @@ ternary_end_L1:
     HALT
 .ENDGLOBAL
 .ENDREGION
+
