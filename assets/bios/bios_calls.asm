@@ -379,6 +379,7 @@ Print:
         ICMP r4, 0
         JEQ Return
         PRNT r4
+        INC r1
         JMP Loop
 
     Return:
