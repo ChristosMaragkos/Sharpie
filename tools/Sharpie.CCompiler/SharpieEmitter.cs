@@ -52,7 +52,7 @@ public sealed partial class SharpieEmitter
             .Where(c => c.Kind == CXCursorKind.CXCursor_VarDecl)
             .ToList();
 
-        HandleGlobals(asm, globalNames, globalVars);
+        HandleGlobals(asm, globalNames, globalVars, roData, stringPool);
 
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
@@ -241,7 +241,9 @@ public sealed partial class SharpieEmitter
     private static void HandleGlobals(
         StringBuilder asm,
         HashSet<string> globalNames,
-        List<CXCursor> globalVars
+        List<CXCursor> globalVars,
+        List<string> readOnlyData,
+        Dictionary<string, string> stringPool
     )
     {
         if (globalVars.Count > 0)
@@ -316,12 +318,69 @@ public sealed partial class SharpieEmitter
                         }
                     }
                 }
-                // Handle primitives safely
+                // Handle primitives and String Literals safely
                 else if (normalExprs.Count > 0)
                 {
-                    long v = PeelExpression(normalExprs.Last()).Evaluate.AsLongLong;
-                    asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                    bytesWritten += sizeBytes;
+                    var initExpr = PeelExpression(normalExprs.Last());
+
+                    // --- NEW: CATCH STRING LITERALS ---
+                    if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
+                    {
+                        string rawString = "";
+                        unsafe
+                        {
+                            var range = clang.getCursorExtent(initExpr);
+                            var tu = clang.Cursor_getTranslationUnit(initExpr);
+                            uint numTokens = 0;
+                            CXToken* tokens = null;
+
+                            clang.tokenize(tu, range, &tokens, &numTokens);
+                            if (numTokens > 0)
+                            {
+                                var cxString = clang.getTokenSpelling(tu, tokens[0]);
+                                rawString = cxString.ToString();
+                                clang.disposeString(cxString);
+                            }
+                            clang.disposeTokens(tu, tokens, numTokens);
+                        }
+
+                        var typeKind = global.Type.CanonicalType.kind;
+
+                        // Array: char my_string[] = "Hello";
+                        if (
+                            typeKind == CXTypeKind.CXType_ConstantArray
+                            || typeKind == CXTypeKind.CXType_IncompleteArray
+                        )
+                        {
+                            // Dump directly into the global memory block
+                            asm.AppendLine($"    .DB {rawString}, 0");
+
+                            // Clang conveniently knows exactly how many bytes (including \0) the string takes!
+                            bytesWritten += initExpr.Type.SizeOf;
+                        }
+                        // Pointer: const char* my_string = "Hello";
+                        else
+                        {
+                            if (!stringPool.TryGetValue(rawString, out var existingLabel))
+                            {
+                                existingLabel = EmissionContext.GenerateLabel("str");
+                                stringPool[rawString] = existingLabel;
+
+                                readOnlyData.Add($"{existingLabel}:");
+                                readOnlyData.Add($"    .DB {rawString}, 0");
+                            }
+                            // Just save the 16-bit address pointing to the read-only string
+                            asm.AppendLine($"    .DW {existingLabel}");
+                            bytesWritten += 2;
+                        }
+                    }
+                    // --- STANDARD NUMBERS ---
+                    else
+                    {
+                        long v = initExpr.Evaluate.AsLongLong;
+                        asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                        bytesWritten += sizeBytes;
+                    }
                 }
 
                 // Zero-pad any uninitialized space (e.g. `int x;` or partially filled arrays)

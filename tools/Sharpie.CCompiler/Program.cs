@@ -73,7 +73,15 @@ try
     {
         var assembler = new Sharpie.Sdk.Asm.Assembler(false);
         var data = assembler.LoadRawAsm(finalAssembly);
-        File.WriteAllBytes(outputPath, data);
+
+        var exporter = new Sharpie.Sdk.Asm.Exporter(
+            "sharpie-cc",
+            "sharpie-cc",
+            outputPath,
+            Array.Empty<int>()
+        );
+        exporter.ExportRom(data, false);
+        Console.WriteLine($"Wrote Sharpie cartridge to {outputPath}");
     }
 }
 catch (TypeInitializationException ex)
@@ -102,6 +110,12 @@ catch (Exception ex)
 static string CompileFiles(List<string> inputFiles, bool optimize)
 {
     var masterAssembly = new StringBuilder();
+    masterAssembly.AppendLine("; ------");
+    masterAssembly.AppendLine("; Sharpie C cartridge");
+    masterAssembly.AppendLine("; ------");
+    masterAssembly.AppendLine(".REGION FIXED");
+    masterAssembly.AppendLine("    JMP Main");
+    masterAssembly.AppendLine(".ENDREGION");
     using var index = ClangSharp.Interop.CXIndex.Create();
 
     var clangArgs = new[] { "-std=gnu11", "-target", "msp430" };

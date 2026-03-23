@@ -540,7 +540,8 @@ public partial class Assembler
 
     public byte[] LoadRawAsm(string asm)
     {
-        return Assemble(asm.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        string[] lines = asm.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        return Assemble(lines);
     }
 
     private byte[] Assemble(IEnumerable<string> asmCode)
