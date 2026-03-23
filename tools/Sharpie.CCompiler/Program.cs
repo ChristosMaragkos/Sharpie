@@ -110,9 +110,9 @@ catch (Exception ex)
 static string CompileFiles(List<string> inputFiles, bool optimize)
 {
     var masterAssembly = new StringBuilder();
-    masterAssembly.AppendLine("; ------");
+    masterAssembly.AppendLine("; ------------------------");
     masterAssembly.AppendLine("; Sharpie C cartridge");
-    masterAssembly.AppendLine("; ------");
+    masterAssembly.AppendLine("; ------------------------");
     masterAssembly.AppendLine(".REGION FIXED");
     masterAssembly.AppendLine("    JMP Main");
     masterAssembly.AppendLine(".ENDREGION");

@@ -486,6 +486,17 @@ public static class Optimizer
                         continue;
                     }
                 }
+
+                // JMP to the next line => Remove the JMP
+                if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel)
+                {
+                    if (current.Arg1 == next.OriginalText.Trim(':'))
+                    {
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                }
             }
         }
     }

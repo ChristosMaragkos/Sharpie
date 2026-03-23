@@ -204,6 +204,12 @@ public sealed partial class SharpieEmitter
                 context.Emit(context.ReturnInstruction);
             }
 
+            context.Emit($"{context.EpilogueLabel}:");
+            foreach (var line in context.GetEpilogue())
+                context.Emit(line);
+
+            context.Emit(context.ReturnInstruction);
+
             context.Instructions.InsertRange(
                 0,
                 context.GetPrologue().Select(asm => Instruction.Parse(asm))

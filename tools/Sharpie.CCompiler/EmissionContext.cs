@@ -55,6 +55,9 @@ public sealed class EmissionContext
 
     private readonly Dictionary<int, int> _tempSpillOfsets = new();
 
+    public string EpilogueLabel { get; } = GenerateLabel("epilogue");
+    public bool NeedsFramePointer => TotalStackBytes > 0 || PendingStackArguments.Count > 0;
+
     public int GetSpillOffset(int reg)
     {
         if (!_tempSpillOfsets.TryGetValue(reg, out int offset))
@@ -127,20 +130,19 @@ public sealed class EmissionContext
             yield return $"PUSH r{reg}";
         }
 
-        yield return "PUSH r15";
+        if (NeedsFramePointer)
+        {
+            yield return "PUSH r15";
+            yield return "GETSP r15";
 
-        if (TotalStackBytes > 0)
-        {
-            yield return "GETSP r15";
-            yield return "MOV r6, r15";
-            yield return $"LDI r7, {TotalStackBytes}";
-            yield return "SUB r6, r7"; // SiX sEvEN
-            yield return "SETSP r6";
-            yield return "MOV r15, r6";
-        }
-        else
-        {
-            yield return "GETSP r15";
+            if (TotalStackBytes > 0)
+            {
+                yield return "MOV r6, r15";
+                yield return $"LDI r7, {TotalStackBytes}";
+                yield return "SUB r6, r7"; // SiX sEvEN
+                yield return "SETSP r6";
+                yield return "MOV r15, r6";
+            }
         }
 
         foreach (var pending in PendingStackArguments)
@@ -186,19 +188,17 @@ public sealed class EmissionContext
 
     public IEnumerable<string> GetEpilogue()
     {
-        if (TotalStackBytes > 0)
+        if (NeedsFramePointer)
         {
-            yield return "MOV r6, r15";
-            yield return $"LDI r7, {TotalStackBytes}";
-            yield return "ADD r6, r7";
-            yield return "SETSP r6";
+            if (TotalStackBytes > 0)
+            {
+                yield return "MOV r6, r15";
+                yield return $"LDI r7, {TotalStackBytes}";
+                yield return "ADD r6, r7";
+                yield return "SETSP r6";
+            }
+            yield return "POP r15";
         }
-        else
-        {
-            yield return "SETSP r15";
-        }
-
-        yield return "POP r15";
 
         // Restore preserved registers (in REVERSE order)
         for (int i = UsedPreservedRegisters.Count - 1; i >= 0; i--)

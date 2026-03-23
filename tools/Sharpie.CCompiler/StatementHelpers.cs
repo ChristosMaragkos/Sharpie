@@ -424,10 +424,7 @@ public partial class SharpieEmitter
             }
         }
 
-        foreach (var line in context.GetEpilogue())
-            context.Emit(line);
-
-        context.Emit(context.ReturnInstruction);
+        context.Emit($"JMP {context.EpilogueLabel}");
         context.HasReturn = true;
     }
 
