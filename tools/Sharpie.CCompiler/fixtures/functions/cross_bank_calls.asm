@@ -11,7 +11,6 @@
 .GLOBAL
 Main:
     PUSH r8
-    PUSH r9
     PUSH r10
     PUSH r15
     GETSP r15
@@ -67,7 +66,6 @@ epilogue_L0:
     SETSP r6
     POP r15
     POP r10
-    POP r9
     POP r8
     HALT
 .ENDGLOBAL

@@ -10,7 +10,6 @@
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r8
     LDI r1, 10
     ICMP r1, 10
     JNE else_L2
@@ -21,7 +20,6 @@ else_L2:
     JMP epilogue_L0
 if_L1:
 epilogue_L0:
-    POP r8
     HALT
 .ENDGLOBAL
 .ENDREGION
