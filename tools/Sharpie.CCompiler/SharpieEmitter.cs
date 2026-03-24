@@ -209,6 +209,16 @@ public sealed partial class SharpieEmitter
                 context.Emit(context.ReturnInstruction);
             }
 
+            if (_optimize)
+            {
+                Optimizer.Optimize(context.Instructions);
+                context.UsedPreservedRegisters.RemoveAll(reg =>
+                    !context.Instructions.Any(inst =>
+                        inst.Arg1 == $"r{reg}" || inst.Arg2 == $"r{reg}"
+                    )
+                );
+            }
+
             context.Emit($"{context.EpilogueLabel}:");
             foreach (var line in context.GetEpilogue())
                 context.Emit(line);
@@ -217,7 +227,7 @@ public sealed partial class SharpieEmitter
 
             context.Instructions.InsertRange(0, context.GetPrologue().Select(Instruction.Parse));
 
-            if (_optimize)
+            if (_optimize) // second optimization pass to nuke dead code that survived the first (like redundant PUSH/POP shenanigans)
             {
                 Optimizer.Optimize(context.Instructions);
             }
