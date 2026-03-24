@@ -390,7 +390,6 @@ public static class Optimizer
                         || (current.Mnemonic == "DEC" && next.Mnemonic == "INC")
                     )
                     {
-                        // They cancel out!
                         instructions.RemoveAt(i);
                         instructions.RemoveAt(i);
                         changed = true;
@@ -398,7 +397,6 @@ public static class Optimizer
                     }
                     else if (current.Mnemonic == "INC" && next.Mnemonic == "INC")
                     {
-                        // Two INCs = 4 bytes. IADD rX, 2 = 3 bytes. Fuse them!
                         current.Mnemonic = "IADD";
                         current.Arg2 = "2";
                         current.RebuildText();
@@ -408,7 +406,6 @@ public static class Optimizer
                     }
                     else if (current.Mnemonic == "DEC" && next.Mnemonic == "DEC")
                     {
-                        // Two DECs = 4 bytes. ISUB rX, 2 = 3 bytes. Fuse them!
                         current.Mnemonic = "ISUB";
                         current.Arg2 = "2";
                         current.RebuildText();
