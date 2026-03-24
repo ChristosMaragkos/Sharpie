@@ -16,6 +16,9 @@ public sealed partial class SharpieEmitter
 
     private readonly bool _optimize;
 
+    [GeneratedRegex(@"#pragma\s+bank\s+(\d+)")]
+    private static partial Regex MyRegex();
+
     public SharpieEmitter(bool optimizationsEnabled)
     {
         _optimize = optimizationsEnabled;
@@ -37,7 +40,7 @@ public sealed partial class SharpieEmitter
             if (File.Exists(tuSpelling))
             {
                 var srcText = File.ReadAllText(tuSpelling);
-                var match = Regex.Match(srcText, @"#pragma\s+bank\s+(\d+)");
+                var match = MyRegex().Match(srcText);
                 if (match.Success)
                 {
                     regionName = $"BANK_{match.Groups[1].Value}";
