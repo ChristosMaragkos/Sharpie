@@ -13,9 +13,9 @@ public class ScopeLevel
     {
         Id = id;
         Parent = parent;
-        LabelAddresses = new();
-        Constants = new();
-        Enums = new();
+        LabelAddresses = [];
+        Constants = [];
+        Enums = [];
     }
 
     public void DefineLabel(string name, ushort address) => LabelAddresses[name] = address;
@@ -30,9 +30,9 @@ public class ScopeLevel
 
     public bool IsConstantDefined(string name) => Constants.ContainsKey(name);
 
-    public void DefineEnum(string name) => Enums[name] = new();
+    public void DefineEnum(string name) => Enums[name] = [];
 
-    public bool TryDefineEnum(string name) => Enums.TryAdd(name, new Dictionary<string, ushort>());
+    public bool TryDefineEnum(string name) => Enums.TryAdd(name, []);
 
     public bool IsEnumDefined(string name) => Enums.ContainsKey(name);
 

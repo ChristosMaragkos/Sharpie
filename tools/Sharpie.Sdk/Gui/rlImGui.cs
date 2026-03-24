@@ -10,11 +10,10 @@ public static class rlImGui
     internal static IntPtr ImGuiContext = IntPtr.Zero;
 
     private static ImGuiMouseCursor CurrentMouseCursor = ImGuiMouseCursor.COUNT;
-    private static Dictionary<ImGuiMouseCursor, MouseCursor> MouseCursorMap =
-        new Dictionary<ImGuiMouseCursor, MouseCursor>();
+    private static Dictionary<ImGuiMouseCursor, MouseCursor> MouseCursorMap = [];
     private static Texture2D FontTexture;
 
-    static Dictionary<KeyboardKey, ImGuiKey> RaylibKeyMap = new Dictionary<KeyboardKey, ImGuiKey>();
+    static Dictionary<KeyboardKey, ImGuiKey> RaylibKeyMap = [];
 
     internal static bool LastFrameFocused = false;
 
@@ -123,7 +122,7 @@ public static class rlImGui
     /// </summary>
     public static void BeginInitImGui()
     {
-        MouseCursorMap = new Dictionary<ImGuiMouseCursor, MouseCursor>();
+        MouseCursorMap = [];
 
         LastFrameFocused = Raylib.IsWindowFocused();
         LastControlPressed = false;

@@ -29,7 +29,7 @@ public sealed class EmissionContext
         int CallerOffset,
         StorageLocation Target,
         int Slots
-    )> PendingStackArguments { get; } = new();
+    )> PendingStackArguments { get; } = [];
 
     public int TotalStackBytes { get; private set; }
     private int _currentStackOffset = 0;
@@ -39,13 +39,15 @@ public sealed class EmissionContext
 
     public static string GenerateLabel(string prefix = "") => $"{prefix}_L{_labelCount++}";
 
+#pragma warning disable IDE0028 // Simplify collection initialization
     public Dictionary<string, StorageLocation> Locals { get; } = new(StringComparer.Ordinal);
+#pragma warning restore IDE0028 // Simplify collection initialization
     public HashSet<string> EscapedVariables { get; }
 
     // track callee saved registers (r8-r15)
-    public List<int> UsedPreservedRegisters { get; } = new();
+    public List<int> UsedPreservedRegisters { get; } = [];
 
-    public List<Instruction> Instructions { get; } = new();
+    public List<Instruction> Instructions { get; } = [];
 
     public Stack<string> BreakLabels { get; } = new();
     public Stack<string> ContinueLabels { get; } = new();
@@ -53,7 +55,7 @@ public sealed class EmissionContext
     public List<string> ReadOnlyData { get; }
     public Dictionary<string, string> StringPool { get; }
 
-    private readonly Dictionary<int, int> _tempSpillOfsets = new();
+    private readonly Dictionary<int, int> _tempSpillOfsets = [];
 
     public string EpilogueLabel { get; } = GenerateLabel("epilogue");
     public bool NeedsFramePointer => TotalStackBytes > 0 || PendingStackArguments.Count > 0;

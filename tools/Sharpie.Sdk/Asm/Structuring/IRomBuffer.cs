@@ -66,9 +66,9 @@ public class FixedRegionBuffer : IRomBuffer
     public byte[] ByteBuffer { get; }
     public bool[] TouchedBytes { get; }
     public string Name { get; init; } = "Fixed Region";
-    public List<TokenLine> Tokens { get; init; } = new();
+    public List<TokenLine> Tokens { get; init; } = [];
     public Stack<ScopeLevel> Scopes { get; init; } = new();
-    public Dictionary<int, ScopeLevel> AllScopes { get; init; } = new();
+    public Dictionary<int, ScopeLevel> AllScopes { get; init; } = [];
     public int ScopeCounter { get; set; } = 1;
 
     public FixedRegionBuffer()
@@ -98,9 +98,9 @@ public class BankBuffer : IRomBuffer
     public bool[] TouchedBytes { get; }
     public static int TotalBanksCreated = 0;
     public string Name { get; init; }
-    public List<TokenLine> Tokens { get; init; } = new();
+    public List<TokenLine> Tokens { get; init; } = [];
     public Stack<ScopeLevel> Scopes { get; init; } = new();
-    public Dictionary<int, ScopeLevel> AllScopes { get; init; } = new();
+    public Dictionary<int, ScopeLevel> AllScopes { get; init; } = [];
     public int ScopeCounter { get; set; } = 1;
     public int BankId { get; init; }
 
@@ -160,9 +160,9 @@ public class SpriteAtlasBuffer : SpriteCapableBuffer
     public override byte[] ByteBuffer { get; }
     public override bool[] TouchedBytes { get; }
     public override string Name { get; init; } = "Sprite Atlas";
-    public override List<TokenLine> Tokens { get; init; } = new();
+    public override List<TokenLine> Tokens { get; init; } = [];
     public override Stack<ScopeLevel> Scopes { get; init; } = new();
-    public override Dictionary<int, ScopeLevel> AllScopes { get; init; } = new();
+    public override Dictionary<int, ScopeLevel> AllScopes { get; init; } = [];
     public override int ScopeCounter { get; set; } = 1;
 
     public SpriteAtlasBuffer()
@@ -200,9 +200,9 @@ public class FirmwareBuffer : SpriteCapableBuffer
     public override ushort Cursor { get; protected set; }
     public override byte[] ByteBuffer { get; }
     public override bool[] TouchedBytes { get; }
-    public override List<TokenLine> Tokens { get; init; } = new();
+    public override List<TokenLine> Tokens { get; init; } = [];
     public override Stack<ScopeLevel> Scopes { get; init; } = new();
-    public override Dictionary<int, ScopeLevel> AllScopes { get; init; } = new();
+    public override Dictionary<int, ScopeLevel> AllScopes { get; init; } = [];
     public override int ScopeCounter { get; set; } = 1;
     public override string Name { get; init; } = "Full ROM Buffer";
 

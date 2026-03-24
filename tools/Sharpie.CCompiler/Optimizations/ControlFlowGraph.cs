@@ -3,18 +3,18 @@ namespace Sharpie.CCompiler.Optimizations;
 public class BasicBlock
 {
     public string Name { get; set; } = "";
-    public List<Instruction> Instructions { get; } = new();
+    public List<Instruction> Instructions { get; } = [];
 
     // Graph edges
-    public List<BasicBlock> Successors { get; } = new();
-    public List<BasicBlock> Predecessors { get; } = new();
+    public List<BasicBlock> Successors { get; } = [];
+    public List<BasicBlock> Predecessors { get; } = [];
 
     public override string ToString() => Name;
 }
 
 public class ControlFlowGraph
 {
-    public List<BasicBlock> Blocks { get; } = new();
+    public List<BasicBlock> Blocks { get; } = [];
 
     public static ControlFlowGraph Build(List<Instruction> instructions)
     {
@@ -45,7 +45,7 @@ public class ControlFlowGraph
             {
                 currentBlock.Instructions.Add(inst);
 
-                var isBranch = inst.Mnemonic.StartsWith("J") || inst.Mnemonic is "RET" or "HALT";
+                var isBranch = inst.Mnemonic.StartsWith('J') || inst.Mnemonic is "RET" or "HALT";
 
                 if (isBranch && i < instructions.Count - 1 && !instructions[i + 1].IsLabel)
                 {

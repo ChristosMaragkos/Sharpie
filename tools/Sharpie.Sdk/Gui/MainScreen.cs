@@ -23,7 +23,7 @@ public class MainScreen
     private static bool _successfulBuild = true;
 
     private static bool _showPaletteEditor = false;
-    private static List<int> _selectedColors = new() { 0 };
+    private static List<int> _selectedColors = [0];
 
     public static void RunMainGui()
     {

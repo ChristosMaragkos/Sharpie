@@ -10,7 +10,7 @@ public partial class Assembler
     private IEnumerable<string>? FileContents { get; set; }
 
     private static readonly char[] DisallowedEnumChars = [':', ',', '#', '=', ' ', '\'', '"'];
-    private static readonly List<TokenLine> FirmwareModeTokens = new();
+    private static readonly List<TokenLine> FirmwareModeTokens = [];
 
     private void AddToken(TokenLine token)
     {
@@ -28,7 +28,7 @@ public partial class Assembler
     private bool _globalMode;
 
     private IRomBuffer? CurrentRegion = null;
-    private readonly Dictionary<string, IRomBuffer> AllRegions = new();
+    private readonly Dictionary<string, IRomBuffer> AllRegions = [];
 
     private void NewScope()
     {
