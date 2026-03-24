@@ -1040,7 +1040,7 @@ public partial class SharpieEmitter
         context.Emit(jumpIfTrue ? $"JNE {targetLabel}" : $"JEQ {targetLabel}");
     }
 
-    private static object GetJumpMnemonic(CXBinaryOperatorKind kind, bool jumpIfTrue)
+    private static string GetJumpMnemonic(CXBinaryOperatorKind kind, bool jumpIfTrue)
     {
         return kind switch
         {
@@ -1199,10 +1199,10 @@ public partial class SharpieEmitter
             }
         }
 
-        foreach (var assignment in regAssignments)
+        foreach (var (rargetReg, sourceTempReg) in regAssignments)
         {
-            if (assignment.TargetReg != assignment.SourceTempReg)
-                context.Emit($"MOV r{assignment.TargetReg}, r{assignment.SourceTempReg}");
+            if (rargetReg != sourceTempReg)
+                context.Emit($"MOV r{rargetReg}, r{sourceTempReg}");
         }
 
         if (hasHiddenPtr)

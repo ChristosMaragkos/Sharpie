@@ -24,7 +24,7 @@ for (int i = 0; i < args.Length; i++)
     {
         outputPath = args[++i];
     }
-    else if (!args[i].StartsWith("-"))
+    else if (!args[i].StartsWith('-'))
     {
         inputFiles.Add(args[i]);
     }

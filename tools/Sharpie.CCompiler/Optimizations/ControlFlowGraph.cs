@@ -67,7 +67,7 @@ public class ControlFlowGraph
 
             var lastInst = block.Instructions.Last();
 
-            if (lastInst.Mnemonic.StartsWith("J"))
+            if (lastInst.Mnemonic.StartsWith('J'))
             {
                 if (blockMap.TryGetValue(lastInst.Arg1, out var targetBlock))
                 {

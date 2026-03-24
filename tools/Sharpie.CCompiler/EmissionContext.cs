@@ -147,23 +147,22 @@ public sealed class EmissionContext
             }
         }
 
-        foreach (var pending in PendingStackArguments)
+        foreach (var (callerOffset, target, slots) in PendingStackArguments)
         {
-            int argOffset =
-                TotalStackBytes + (UsedPreservedRegisters.Count * 2) + 4 + pending.CallerOffset;
+            int argOffset = TotalStackBytes + (UsedPreservedRegisters.Count * 2) + 4 + callerOffset;
 
-            if (pending.Slots == 1)
+            if (slots == 1)
             {
                 yield return $"MOV r6, r15";
                 yield return $"IADD r6, {argOffset}"; // Or use AccumulateOffset logic here
                 yield return "LDS r7, r6";
 
-                if (pending.Target.Type == StorageType.Register)
-                    yield return $"MOV r{pending.Target.Value}, r7";
+                if (target.Type == StorageType.Register)
+                    yield return $"MOV r{target.Value}, r7";
                 else
                 {
                     yield return $"MOV r6, r15";
-                    yield return $"IADD r6, {pending.Target.Value}";
+                    yield return $"IADD r6, {target.Value}";
                     yield return $"STS r7, r6";
                 }
             }
@@ -172,13 +171,13 @@ public sealed class EmissionContext
                 yield return $"MOV r6, r15";
                 yield return $"IADD r6, {argOffset}";
                 yield return $"MOV r5, r15";
-                yield return $"IADD r5, {pending.Target.Value}";
+                yield return $"IADD r5, {target.Value}";
 
-                for (int s = 0; s < pending.Slots; s++)
+                for (int s = 0; s < slots; s++)
                 {
                     yield return "LDS r7, r6";
                     yield return "STS r7, r5";
-                    if (s < pending.Slots - 1)
+                    if (s < slots - 1)
                     {
                         yield return "IADD r6, 2";
                         yield return "IADD r5, 2";

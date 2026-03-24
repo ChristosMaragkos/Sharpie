@@ -97,8 +97,10 @@ public sealed partial class SharpieEmitter
             // we're just gonna have to emit the body, scan for variables that need to be spilled,
             // then stitch the prologue and epilogue after the fact.
             var escapedVars = DetectEscapingVariables(func);
-            var context = new EmissionContext(escapedVars, roData, stringPool, globalNames);
-            context.IsMain = (funcName == "main");
+            var context = new EmissionContext(escapedVars, roData, stringPool, globalNames)
+            {
+                IsMain = funcName == "main",
+            };
 
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
 
@@ -213,10 +215,7 @@ public sealed partial class SharpieEmitter
 
             context.Emit(context.ReturnInstruction);
 
-            context.Instructions.InsertRange(
-                0,
-                context.GetPrologue().Select(asm => Instruction.Parse(asm))
-            );
+            context.Instructions.InsertRange(0, context.GetPrologue().Select(Instruction.Parse));
 
             if (_optimize)
             {

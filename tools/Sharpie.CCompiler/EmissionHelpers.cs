@@ -65,7 +65,7 @@ public partial class SharpieEmitter
 
     private static void EmitWhileStatement(CXCursor whileStatement, EmissionContext context)
     {
-        var children = SharpieEmitter.GetChildren(whileStatement);
+        var children = GetChildren(whileStatement);
         var condition = children[0];
         var body = children[1];
 
@@ -150,9 +150,9 @@ public partial class SharpieEmitter
             context.ReadOnlyData.Add($"{jtLabel}:");
             for (long i = minVal; i <= maxVal; i++)
             {
-                var match = cases.FirstOrDefault(c => c.Value == i);
-                if (match.Label != null)
-                    context.ReadOnlyData.Add($"    .DW {match.Label}");
+                var (value, label) = cases.FirstOrDefault(c => c.Value == i);
+                if (label != null)
+                    context.ReadOnlyData.Add($"    .DW {label}");
                 else
                     context.ReadOnlyData.Add($"    .DW {safeDefault}"); // Fill missing gaps with default
             }
