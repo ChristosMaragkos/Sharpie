@@ -1,3 +1,5 @@
+namespace Sharpie.Assembler.Utilities;
+
 public struct TokenLine
 {
     public string? Opcode { get; set; }
@@ -11,9 +13,9 @@ public struct TokenLine
     }
 
     /// Returns whether all properties are null, effectively determining if a non-empty line was processed.
-    public bool ArePropertiesNull() => Opcode == null && Args == null;
+    public readonly bool ArePropertiesNull() => Opcode == null && Args == null;
 
-    public override string ToString()
+    public override readonly string ToString()
     {
         var str =
             $"Token line: Opcode = {Opcode} | Source Line = {SourceLine} | Address = {Address} | ";

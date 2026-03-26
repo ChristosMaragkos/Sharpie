@@ -1,9 +1,10 @@
 using System.Text.RegularExpressions;
-using Sharpie.Sdk.Asm.Structuring;
+using Sharpie.Assembler.Structuring;
+using Sharpie.Assembler.Utilities;
 
-namespace Sharpie.Sdk.Asm;
+namespace Sharpie.Assembler;
 
-public partial class Assembler
+public partial class SharpieRomEmitter
 {
     private static readonly Dictionary<string, ushort> BiosCallAddresses = new()
     {
@@ -31,23 +32,13 @@ public partial class Assembler
         VerifyBiosPrefix(name, lineNumber);
         var currentScope =
             (CurrentRegion == null || global) ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
-        int offset;
-        switch (CurrentRegion)
+        var offset = CurrentRegion switch
         {
-            case FixedRegionBuffer:
-                offset = 0;
-                break;
-            case BankBuffer:
-                var bnk = CurrentRegion as BankBuffer;
-                offset = 18 * 1024;
-                break;
-            case SpriteAtlasBuffer:
-                offset = (18 * 1024) + (32 * 1024);
-                break;
-            default:
-                offset = 0;
-                break;
-        }
+            FixedRegionBuffer => 0,
+            BankBuffer => 18 * 1024,
+            SpriteAtlasBuffer => (18 * 1024) + (32 * 1024),
+            _ => 0,
+        };
         return currentScope.TryDefineLabel(name, (ushort)(address + offset));
     }
 
@@ -101,7 +92,7 @@ public partial class Assembler
             );
     }
 
-    private void AddBiosLabels()
+    private static void AddBiosLabels()
     {
         foreach (var kvp in BiosCallAddresses)
             IRomBuffer.GlobalScope.TryDefineLabel(kvp.Key, kvp.Value);
@@ -128,9 +119,7 @@ public partial class Assembler
 
         if (input.Contains("::"))
         {
-            ushort value;
-            string[] split;
-            ResolveEnumValue(input, lineNumber, out split, out value);
+            ResolveEnumValue(input, lineNumber, out _, out ushort value);
             return !negative ? value : -value;
         }
 
@@ -308,7 +297,7 @@ public partial class Assembler
             );
     }
 
-    private int CalculateSpriteAddress(byte spriteIndex)
+    private static int CalculateSpriteAddress(byte spriteIndex)
     {
         const int spriteSize = 32;
         const int romEnd = 0xE7FF;
@@ -318,7 +307,7 @@ public partial class Assembler
 
     // fucking music theory, man.
     // the amount of googling this took was vomit inducing at best.
-    private int? ParseNote(string input)
+    private static int? ParseNote(string input)
     {
         var match = Regex.Match(input.ToUpper(), @"^([A-G])(#|B)?(-?\d+)$"); // thank God for regex101
 

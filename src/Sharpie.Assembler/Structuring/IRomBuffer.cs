@@ -1,4 +1,6 @@
-namespace Sharpie.Sdk.Asm.Structuring;
+using Sharpie.Assembler.Utilities;
+
+namespace Sharpie.Assembler.Structuring;
 
 public interface IRomBuffer
 {

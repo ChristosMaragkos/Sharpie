@@ -1,12 +1,13 @@
-using Sharpie.Sdk.Asm.Structuring;
+using Sharpie.Assembler.Structuring;
+using Sharpie.Assembler.Utilities;
 
-namespace Sharpie.Sdk.Asm;
+namespace Sharpie.Assembler;
 
-public partial class Assembler
+public partial class SharpieRomEmitter
 {
     private readonly bool _firmwareMode = false;
 
-    public Assembler(bool firmwareMode)
+    public SharpieRomEmitter(bool firmwareMode)
     {
         _firmwareMode = firmwareMode;
     }
@@ -203,7 +204,7 @@ public partial class Assembler
         return buffer.ByteBuffer;
     }
 
-    private void WriteToRom(byte value, IRomBuffer buffer, int offset = 0)
+    private static void WriteToRom(byte value, IRomBuffer buffer, int offset = 0)
     {
         var realAddr = buffer.Cursor + offset;
 
@@ -212,7 +213,7 @@ public partial class Assembler
         buffer.SetCursor(realAddr - offset);
     }
 
-    private void WriteToRom(ushort value, IRomBuffer buffer, int offset = 0)
+    private static void WriteToRom(ushort value, IRomBuffer buffer, int offset = 0)
     {
         var low = (byte)value;
         var high = (byte)(value >> 8);

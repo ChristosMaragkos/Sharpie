@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-var json = File.ReadAllText("./tools/Sharpie.Generator/res/opcodes.json");
+var json = File.ReadAllText("./src/Sharpie.Generator/res/opcodes.json");
 JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 var ops =
     JsonSerializer.Deserialize<List<Opcode>>(json, options)
@@ -63,7 +63,7 @@ Console.WriteLine("Opcode switch generated successfully. Sanity saved.");
 
 sb.Clear();
 sb.AppendLine("// auto-generated");
-sb.AppendLine("namespace Sharpie.Sdk.Asm;");
+sb.AppendLine("namespace Sharpie.Assembler.Assembler.Utilities;");
 sb.AppendLine("");
 sb.AppendLine("public static class InstructionSet");
 sb.AppendLine("{");
@@ -109,7 +109,7 @@ sb.AppendLine("");
 sb.AppendLine("    public static bool IsValidOpcode(string name)");
 sb.AppendLine("        => OpcodeTable.ContainsKey(name);");
 sb.AppendLine("}");
-File.WriteAllText("./tools/Sharpie.Sdk/Asm/InstructionSet.g.cs", sb.ToString());
+File.WriteAllText("./src/Sharpie.Assembler/InstructionSet.g.cs", sb.ToString());
 Console.WriteLine("Assembler opcode table generated successfuly. Great success!");
 
 sb.Clear();
@@ -136,7 +136,7 @@ foreach (var op in ops)
         $"| `{hexStr}` | **{op.Name}** | `{formattedPattern}` | {op.Len} | {op.Desc} | {op.Alt} |"
     );
 }
-File.WriteAllText("./tools/Sharpie.Sdk/docs/ISA_REFERENCE.md", sb.ToString());
+File.WriteAllText("./docs/ISA_REFERENCE.md", sb.ToString());
 Console.WriteLine("Assembly reference document generated. Long live the Empire.");
 
 var nvimOps = string.Join(" ", ops.Select(o => o.Name.ToUpper() + " " + o.Name.ToLower()));
@@ -173,7 +173,7 @@ sb.AppendLine("hi def link sharpieNumber Number");
 sb.AppendLine("hi def link sharpieDirective PreProc");
 sb.AppendLine(@"hi def link sharpieString String");
 
-File.WriteAllText("./tools/editor-support/nvim/syntax/sharpie.vim", sb.ToString());
+File.WriteAllText("./ext/nvim/syntax/sharpie.vim", sb.ToString());
 Console.WriteLine("Neovim syntax generated. I'm running out of clever things to write.");
 
 var vsOps = string.Join("|", ops.Select(o => o.Name));
@@ -195,7 +195,7 @@ string vscodeSyntax =
   ""scopeName"": ""source.sharpie""
 }}";
 
-File.WriteAllText("./tools/editor-support/vscode/sharpie.tmLanguage.json", vscodeSyntax);
+File.WriteAllText("./ext/vscode/sharpie.tmLanguage.json", vscodeSyntax);
 
 var vscodePackage =
     $@"{{
@@ -222,7 +222,7 @@ var vscodePackage =
   }}
 }}"; // holy mess of double quotes
 
-File.WriteAllText("./tools/editor-support/vscode/package.json", vscodePackage);
+File.WriteAllText("./ext/vscode/package.json", vscodePackage);
 
 var vscodeConfig =
     @"{
@@ -239,7 +239,7 @@ var vscodeConfig =
   ]
 }";
 
-File.WriteAllText("./tools/editor-support/vscode/language-configuration.json", vscodeConfig);
+File.WriteAllText("./ext/vscode/language-configuration.json", vscodeConfig);
 Console.WriteLine("VS Code grammar generated. I think.");
 
 return;

@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -12,14 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="ClangSharp" Version="21.1.8.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Sharpie.Sdk\Sharpie.Sdk.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ClCompile Include="fixtures\pointer_ops.c" />
   </ItemGroup>
 
 </Project>

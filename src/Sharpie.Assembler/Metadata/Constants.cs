@@ -1,4 +1,4 @@
-namespace Sharpie.Sdk.Meta;
+namespace Sharpie.Assembler.Metadata;
 
 internal static class Constants
 {

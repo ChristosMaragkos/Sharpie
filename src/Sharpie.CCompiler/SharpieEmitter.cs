@@ -341,7 +341,6 @@ public sealed partial class SharpieEmitter
                 {
                     var initExpr = PeelExpression(normalExprs.Last());
 
-                    // --- NEW: CATCH STRING LITERALS ---
                     if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
                     {
                         string rawString = "";
@@ -373,7 +372,6 @@ public sealed partial class SharpieEmitter
                             // Dump directly into the global memory block
                             asm.AppendLine($"    .DB {rawString}, 0");
 
-                            // Clang conveniently knows exactly how many bytes (including \0) the string takes!
                             bytesWritten += initExpr.Type.SizeOf;
                         }
                         // Pointer: const char* my_string = "Hello";

@@ -1,4 +1,4 @@
-namespace Sharpie.Sdk.Asm;
+namespace Sharpie.Assembler.Utilities;
 
 public class AssemblySyntaxException : Exception
 {
@@ -10,7 +10,7 @@ public class AssemblySyntaxException : Exception
     public AssemblySyntaxException(string message, int lineNumber)
         : this($"Syntax Error at line {lineNumber + 1}: {message}") { }
 
-    public AssemblySyntaxException(string message, System.Exception inner)
+    public AssemblySyntaxException(string message, Exception inner)
         : base(message, inner) { }
 }
 

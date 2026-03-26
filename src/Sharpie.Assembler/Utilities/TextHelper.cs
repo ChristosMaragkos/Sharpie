@@ -1,3 +1,5 @@
+namespace Sharpie.Assembler.Utilities;
+
 public static class TextHelper
 {
     // Glyph index layout (1-byte internal representation, unchanged):

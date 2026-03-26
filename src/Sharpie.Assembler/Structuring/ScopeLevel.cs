@@ -1,4 +1,4 @@
-namespace Sharpie.Sdk.Asm;
+namespace Sharpie.Assembler.Structuring;
 
 public class ScopeLevel
 {

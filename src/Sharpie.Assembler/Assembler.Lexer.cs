@@ -1,9 +1,10 @@
 using System.Text.RegularExpressions;
-using Sharpie.Sdk.Asm.Structuring;
+using Sharpie.Assembler.Structuring;
+using Sharpie.Assembler.Utilities;
 
-namespace Sharpie.Sdk.Asm;
+namespace Sharpie.Assembler;
 
-public partial class Assembler
+public partial class SharpieRomEmitter
 {
     private static readonly char[] CommonDelimiters = [',', ' '];
 
@@ -41,12 +42,12 @@ public partial class Assembler
     {
         if (CurrentRegion == null)
             throw new AssemblySyntaxException("Cannot exit local scope outside of a region.");
-        CurrentRegion!.ExitScope();
+        CurrentRegion.ExitScope();
     }
 
     private ScopeLevel? CurrentScope =>
         CurrentRegion == null ? IRomBuffer.GlobalScope : CurrentRegion.CurrentScope;
-    private bool IsInLocalScope => CurrentRegion == null ? false : CurrentRegion.Scopes.Count > 2;
+    private bool IsInLocalScope => CurrentRegion != null && CurrentRegion.Scopes.Count > 2;
 
     private byte[] ReadFile()
     {
@@ -64,7 +65,7 @@ public partial class Assembler
             AllRegions["FIRMWARE"] = CurrentRegion;
         }
 
-        foreach (var line in FileContents!)
+        foreach (var line in FileContents)
         {
             var tokenLine = new TokenLine();
             lineNum++;
@@ -87,7 +88,7 @@ public partial class Assembler
                 continue;
             }
 
-            ParseGlobal(ref cleanLine, lineNum);
+            ParseGlobal(ref cleanLine);
             if (IsLineEmpty(cleanLine))
                 continue;
 
@@ -126,10 +127,10 @@ public partial class Assembler
 
         return Compile();
 
-        bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
+        static bool IsLineEmpty(string line) => string.IsNullOrWhiteSpace(line);
     }
 
-    private void ParseGlobal(ref string cleanLine, int lineNum)
+    private void ParseGlobal(ref string cleanLine)
     {
         if (cleanLine.StartsWith(".GLOBAL"))
         {
