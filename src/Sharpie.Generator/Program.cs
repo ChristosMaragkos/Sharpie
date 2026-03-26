@@ -63,7 +63,7 @@ Console.WriteLine("Opcode switch generated successfully. Sanity saved.");
 
 sb.Clear();
 sb.AppendLine("// auto-generated");
-sb.AppendLine("namespace Sharpie.Assembler.Assembler.Utilities;");
+sb.AppendLine("namespace Sharpie.Assembler.Utilities;");
 sb.AppendLine("");
 sb.AppendLine("public static class InstructionSet");
 sb.AppendLine("{");
@@ -109,7 +109,7 @@ sb.AppendLine("");
 sb.AppendLine("    public static bool IsValidOpcode(string name)");
 sb.AppendLine("        => OpcodeTable.ContainsKey(name);");
 sb.AppendLine("}");
-File.WriteAllText("./src/Sharpie.Assembler/InstructionSet.g.cs", sb.ToString());
+File.WriteAllText("./src/Sharpie.Assembler/Utilities/InstructionSet.g.cs", sb.ToString());
 Console.WriteLine("Assembler opcode table generated successfuly. Great success!");
 
 sb.Clear();

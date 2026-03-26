@@ -14,8 +14,7 @@ internal class Sequencer
     public Sequencer(IMotherboard mobo)
     {
         _mobo = mobo;
-        if (Instance == null)
-            Instance = this;
+        Instance ??= this;
     }
 
     public void Reset()

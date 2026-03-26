@@ -3,10 +3,8 @@ namespace Sharpie.Assembler.Utilities;
 
 public static class InstructionSet
 {
-    private static Dictionary<
-        string,
-        (int Length, int Hex, int RequiredWords, bool IsFamily, string Pattern)
-    > OpcodeTable = new()
+
+    private static Dictionary<string, (int Length, int Hex, int RequiredWords, bool IsFamily, string Pattern)> OpcodeTable = new()
     {
         { "NOP", (1, 0, 0, false, "") },
         { "MOV", (2, 1, 2, false, "RR") },
@@ -92,30 +90,21 @@ public static class InstructionSet
         { "HALT", (1, 255, 0, false, "") },
     };
 
-    public static int GetOpcodeLength(string name) =>
-        OpcodeTable.ContainsKey(name)
-            ? OpcodeTable[name].Length
-            : throw new AssemblySyntaxException($"Unexpected token: {name}");
+    public static int GetOpcodeLength(string name)
+        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Length : throw new AssemblySyntaxException($"Unexpected token: {name}");
 
-    public static int GetOpcodeHex(string name) =>
-        OpcodeTable.ContainsKey(name)
-            ? OpcodeTable[name].Hex
-            : throw new AssemblySyntaxException($"Unexpected token: {name}");
+    public static int GetOpcodeHex(string name)
+        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Hex : throw new AssemblySyntaxException($"Unexpected token: {name}");
 
-    public static int GetOpcodeWords(string name) =>
-        OpcodeTable.ContainsKey(name)
-            ? OpcodeTable[name].RequiredWords
-            : throw new AssemblySyntaxException($"Unexpected token: {name}");
+    public static int GetOpcodeWords(string name)
+        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].RequiredWords : throw new AssemblySyntaxException($"Unexpected token: {name}");
 
-    public static bool IsOpcodeFamily(string name) =>
-        OpcodeTable.ContainsKey(name)
-            ? OpcodeTable[name].IsFamily
-            : throw new AssemblySyntaxException($"Unexpected token: {name}");
+    public static bool IsOpcodeFamily(string name)
+        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].IsFamily : throw new AssemblySyntaxException($"Unexpected token: {name}");
 
-    public static string GetOpcodePattern(string name) =>
-        OpcodeTable.ContainsKey(name)
-            ? OpcodeTable[name].Pattern
-            : throw new AssemblySyntaxException($"Unexpected token: {name}");
+    public static string GetOpcodePattern(string name)
+        => OpcodeTable.ContainsKey(name) ? OpcodeTable[name].Pattern : throw new AssemblySyntaxException($"Unexpected token: {name}");
 
-    public static bool IsValidOpcode(string name) => OpcodeTable.ContainsKey(name);
+    public static bool IsValidOpcode(string name)
+        => OpcodeTable.ContainsKey(name);
 }
