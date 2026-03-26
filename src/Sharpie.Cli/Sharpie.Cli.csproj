@@ -21,7 +21,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Sharpie.Assembler\Sharpie.Assembler.csproj" />
         <ProjectReference Include="..\Sharpie.CCompiler\Sharpie.CCompiler.csproj" />
-        <PackageReference Include="CommandLineParser" Version="2.9.1" />
     </ItemGroup>
 
 </Project>
