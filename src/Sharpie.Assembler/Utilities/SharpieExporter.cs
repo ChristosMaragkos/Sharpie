@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Sharpie.Assembler.Utilities;
 
-public class Exporter
+public class SharpieExporter
 {
     private const string MagicBytes = "SHRP";
     private const int TitleLength = 32;

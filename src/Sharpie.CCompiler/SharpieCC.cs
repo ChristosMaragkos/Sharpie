@@ -3,7 +3,7 @@ using Sharpie.CCompiler.NativeInterop;
 
 namespace Sharpie.CCompiler;
 
-public static class CCompilerLibrary
+public static class SharpieCC
 {
     public static string Compile(IEnumerable<string> inputFiles, bool optimize)
     {
