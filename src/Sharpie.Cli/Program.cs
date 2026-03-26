@@ -174,7 +174,7 @@ class Program
 
             if (firstFileExt is ".c")
             {
-                Console.WriteLine($"[CC] Compiling {inputList.Count} source files...");
+                Console.WriteLine($"[CC] Compiling {inputList.Count} source file(s)...");
 
                 assemblySource = SharpieCC.Compile(options.Inputs, options.Optimize);
 
@@ -182,6 +182,13 @@ class Program
                 {
                     var outPath = options.Output ?? Path.ChangeExtension(inputList[0], ".asm");
                     File.WriteAllText(outPath, assemblySource);
+                    sw.Stop();
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(
+                        $"Compilation successful in {sw.ElapsedMilliseconds / 1000f} seconds ({outPath})"
+                    );
+                    Console.ResetColor();
                     return 0;
                 }
             }
