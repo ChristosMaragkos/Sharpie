@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using CommandLine;
 using Sharpie.Assembler;
 using Sharpie.Assembler.Utilities;
 using Sharpie.CCompiler;
@@ -11,7 +10,106 @@ class Program
 {
     static void Main(string[] args)
     {
-        Parser.Default.ParseArguments<CliOptions>(args).MapResult(RunPipeline, _ => 1);
+        if (args.Length == 0 || args.Contains("-h") || args.Contains("--help"))
+        {
+            PrintHelp();
+            Environment.Exit(0);
+        }
+
+        try
+        {
+            var options = ParseArgs(args);
+            int exitCode = RunPipeline(options);
+            Environment.Exit(exitCode);
+        }
+        catch (Exception e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine($"Error: {e.Message}");
+            Console.ResetColor();
+            Environment.Exit(1);
+        }
+    }
+
+    private static CliOptions ParseArgs(string[] args)
+    {
+        var options = new CliOptions();
+        var inputs = new List<string>();
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "-O":
+                case "--optimize":
+                    options.Optimize = true;
+                    break;
+                case "-S":
+                case "--asm-only":
+                    options.StopAtAsm = true;
+                    break;
+                case "-OS":
+                case "-SO":
+                    options.Optimize = true;
+                    options.StopAtAsm = true;
+                    break;
+                case "-f":
+                case "--firmware":
+                    options.IsFirmware = true;
+                    break;
+                case "-o":
+                case "--output":
+                    if (i + 1 < args.Length)
+                        options.Output = args[++i];
+                    else
+                        throw new ArgumentException("Missing value for -o/--output");
+                    break;
+                case "-t":
+                case "--title":
+                    if (i + 1 < args.Length)
+                        options.Title = args[++i];
+                    else
+                        throw new ArgumentException("Missing value for -t/--title");
+                    break;
+                case "-a":
+                case "--author":
+                    if (i + 1 < args.Length)
+                        options.Author = args[++i];
+                    else
+                        throw new ArgumentException("Missing value for -a/--author");
+                    break;
+                default:
+                    if (args[i].StartsWith('-'))
+                        throw new ArgumentException($"Unknown argument: {args[i]}");
+
+                    inputs.Add(args[i]);
+                    break;
+            }
+        }
+
+        if (inputs.Count == 0)
+            throw new ArgumentException("No input files specified.");
+
+        options.Inputs = inputs;
+        return options;
+    }
+
+    private static void PrintHelp()
+    {
+        Console.WriteLine("Sharpie CLI");
+        Console.WriteLine("Usage: sharpie <inputs...> [options]");
+        Console.WriteLine("\nOptions:");
+        Console.WriteLine("  -o, --output <path>    The output file path (.shr, .bin, or .asm).");
+        Console.WriteLine("  -O, --optimize         Enable C compiler optimizations.");
+        Console.WriteLine(
+            "  -S, --asm-only         Stop after C compilation and emit assembly text. Can be combined with -O."
+        );
+        Console.WriteLine(
+            "  -f, --firmware         Assemble as raw firmware (no cartridge header)."
+        );
+        Console.WriteLine("  -t, --title <name>     The ROM title (default: Untitled).");
+        Console.WriteLine("  -a, --author <name>    The ROM author (default: Anonymous).");
+        Console.WriteLine("  -h, --help             Show this help screen.");
     }
 
     private static int RunPipeline(CliOptions options)
