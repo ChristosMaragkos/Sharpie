@@ -17,16 +17,16 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-            runner_bin: Sharpie.Runner.RaylibCs
-            sdk_bin: Sharpie.Sdk
+            runner_bin: Sharpie
+            cli_bin: sharpie
           - os: windows-latest
             rid: win-x64
-            runner_bin: Sharpie.Runner.RaylibCs.exe
-            sdk_bin: Sharpie.Sdk.exe
+            runner_bin: Sharpie.exe
+            cli_bin: sharpie.exe
           - os: windows-11-arm
             rid: win-arm64
-            runner_bin: Sharpie.Runner.RaylibCs.exe
-            sdk_bin: Sharpie.Sdk.exe
+            runner_bin: Sharpie.exe
+            cli_bin: sharpie.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -64,57 +64,52 @@ jobs:
 
           Get-ChildItem "${{ github.workspace }}/src/Sharpie.Runner/RaylibCs/libs/win-arm64/native/"
 
-      - name: Publish Runner, SDK & Compiler
+      - name: Publish CLI
         run: |
-          dotnet publish ./src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj -c Release -r ${{ matrix.rid }} -o ./pub-runner -p:SelfContained=true -p:UseAppHost=true
+          dotnet publish ./src/Sharpie.CLI/Sharpie.CLI.csproj -c Release -r ${{ matrix.rid }} -o ./pub-cli
 
-          dotnet publish ./tools/Sharpie.Sdk/Sharpie.Sdk.csproj -c Release -r ${{ matrix.rid }} -o ./pub-sdk -p:SelfContained=true -p:UseAppHost=true
+      - name: Publish Raylib Runner
+        run: |
+          dotnet publish ./src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj -c Release -r ${{ matrix.rid }} -o ./pub-runner
 
-          # NEW: Publish the C Compiler!
-          dotnet publish ./tools/Sharpie.CCompiler/Sharpie.CCompiler.csproj -c Release -r ${{ matrix.rid }} -o ./pub-sdk -p:SelfContained=true -p:UseAppHost=true
+      - name: Strip Executables (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          strip ./pub-cli/${{ matrix.cli_bin }}
+          strip ./pub-runner/${{ matrix.runner_bin }}
 
       - name: Assemble Packages
         shell: bash
         run: |
-          EXT=""
-          if [[ "${{ matrix.rid }}" == win* ]]; then EXT=".exe"; fi
-
-          mv ./pub-runner/${{ matrix.runner_bin }} ./pub-runner/Sharpie$EXT
           cp assets/RELEASE_README.md ./pub-runner/README.md
           cp LICENSE.md ./pub-runner/LICENSE.txt
 
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             cp assets/icons/icon.png ./pub-runner/
             cp assets/linux/sharpie-raylib.desktop ./pub-runner/
-            cp assets/icons/sdk.png ./pub-sdk/
           fi
 
-          mkdir ./pub-sdk/docs/
-          cp tools/Sharpie.Sdk/docs/ISA_REFERENCE.md ./pub-sdk/docs/
-          cp tools/Sharpie.Sdk/docs/SYSCALL_REFERENCE.md ./pub-sdk/docs/
+          mkdir -p ./pub-cli/docs/
+          mkdir -p ./pub-cli/include/
+          cp src/Sharpie.CCompiler/fixtures/headers/sharpie.h ./pub-cli/include/
 
-          mv ./pub-sdk/${{ matrix.sdk_bin }} ./pub-sdk/sharpie-sdk$EXT
-          mv ./pub-sdk/Sharpie.CCompiler$EXT ./pub-sdk/sharpiecc$EXT
-          cp LICENSE.md ./pub-sdk/LICENSE.txt     # Add License to SDK
+          cp docs/*.md ./pub-cli/docs/ || true
+          cp LICENSE.md ./pub-cli/LICENSE.txt
 
-          mkdir -p ./pub-sdk/include/
-          cp tools/Sharpie.CCompiler/fixtures/headers/sharpie.h ./pub-sdk/include/
 
           if [[ "${{ matrix.rid }}" == win* ]]; then
+            7z a "sharpie-cli-${{ matrix.rid }}.zip" ./pub-cli/*
             7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
-            7z a "sharpie-sdk-${{ matrix.rid }}.zip" ./pub-sdk/*
           else
             (cd pub-runner && zip -r ../sharpie-runner-${{ matrix.rid }}.zip .)
-            (cd pub-sdk && zip -r ../sharpie-sdk-${{ matrix.rid }}.zip .)
+            (cd pub-cli && zip -r ../sharpie-cli-${{ matrix.rid }}.zip .)
           fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sharpie-packages-${{ matrix.rid }}
-          path: |
-            sharpie-runner-${{ matrix.rid }}.zip
-            sharpie-sdk-${{ matrix.rid }}.zip
+          path: "*.zip"
 
   build-web:
     runs-on: ubuntu-latest
