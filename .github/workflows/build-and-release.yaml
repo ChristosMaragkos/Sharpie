@@ -66,17 +66,11 @@ jobs:
 
       - name: Publish CLI
         run: |
-          dotnet publish ./src/Sharpie.CLI/Sharpie.CLI.csproj -c Release -r ${{ matrix.rid }} -o ./pub-cli
+          dotnet publish ./src/Sharpie.Cli/Sharpie.Cli.csproj -c Release -r ${{ matrix.rid }} -o ./pub-cli
 
       - name: Publish Raylib Runner
         run: |
           dotnet publish ./src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj -c Release -r ${{ matrix.rid }} -o ./pub-runner
-
-      - name: Strip Executables (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          strip ./pub-cli/${{ matrix.cli_bin }}
-          strip ./pub-runner/${{ matrix.runner_bin }}
 
       - name: Assemble Packages
         shell: bash
@@ -96,20 +90,27 @@ jobs:
           cp docs/*.md ./pub-cli/docs/ || true
           cp LICENSE.md ./pub-cli/LICENSE.txt
 
+      - name: Assemble Linux Packages
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          strip ./pub-cli/${{ matrix.cli_bin }}
+          strip ./pub-runner/${{ matrix.runner_bin }}
 
-          if [[ "${{ matrix.rid }}" == win* ]]; then
-            7z a "sharpie-cli-${{ matrix.rid }}.zip" ./pub-cli/*
-            7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
-          else
-            (cd pub-runner && zip -r ../sharpie-runner-${{ matrix.rid }}.zip .)
-            (cd pub-cli && zip -r ../sharpie-cli-${{ matrix.rid }}.zip .)
-          fi
+          tar -cJf sharpie-cli-${{ matrix.rid }}.tar.xz -C pub-cli .
+          tar -cJf sharpie-runner-${{ matrix.rid }}.tar.xz -C pub-runner .
+
+      - name: Assemble Windows Packages
+        if: matrix.os != 'ubuntu-latest'
+        shell: pwsh
+        run: |
+          7z a "sharpie-cli-${{ matrix.rid }}.zip" ./pub-cli/*
+          7z a "sharpie-runner-${{ matrix.rid }}.zip" ./pub-runner/*
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sharpie-packages-${{ matrix.rid }}
-          path: "*.zip"
+          path: "sharpie-*"
 
   build-web:
     runs-on: ubuntu-latest
@@ -163,10 +164,26 @@ jobs:
         with:
           path: artifacts
 
+      - name: Determine Release Type
+        id: check-tag
+        shell: bash
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          # If tag contains a dash, it's a prerelease (e.g. v0.4-alpha)
+          if [[ "$TAG" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "make_latest=false" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "make_latest=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.zip
+          files: artifacts/**/*
+          prerelease: ${{ steps.check-tag.outputs.is_prerelease }}
+          make_latest: ${{ steps.check-tag.outputs.make_latest }} # do not mark prereleases as latest
           body_path: assets/RELEASE_README.md
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
