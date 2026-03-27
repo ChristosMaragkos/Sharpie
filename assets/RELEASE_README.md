@@ -1,71 +1,63 @@
-# Sharpie Console v0.2 (Beta)
+# Sharpie Console v0.4
 
 Thank you for downloading the Sharpie fantasy console! No, seriously, your support means everything.
-The program you have downloaded is a *runner* for the Sharpie console, specifically built on Raylib and tested extensively. It allows up to two players and has full controller support.
 
 ## Getting Started
 
-1. **Windows:** Run the `.exe`.
-2. **Linux:** Run the program (maybe you will need to `chmod +x` it), or fill in the paths of the included `.desktop` file and run that.
-3. **MacOS:** MacOS is currently not supported, but it might be in the future. Stick around!
+1. **Windows:** Run `Sharpie.exe`.
+2. **Linux:** Run the `Sharpie` binary (you may need to `chmod +x` it), or use the included `.desktop` file.
+3. **MacOS:** MacOS is currently not supported. Stick around!
 
-All necessary assets are included either in the `zip` you just downloaded or embedded into the executable itself, so no need to worry about dependencies!
+All necessary assets are included either in the package you just downloaded or embedded into the executable itself, so no need to worry about dependencies!
 
 ## Controls (Keyboard/Joypad)
-Currently, the keyboard controls Player 1, and the first detected controller controls Player 2, with the second one going to Player 1 as well. The control scheme is as follows:
+Currently, the keyboard controls Player 1, and the first detected controller controls Player 2.
 
-- **D-pad:** Arrow Keys / Left Joystick or controller d-pad if you like to live on the edge
-- **A:** Z / XBox B or PlayStation circle or Nintendo A
-- **B:** X / XBox A or PlayStation X or Nintendo B
-- **Start:** Left Shift / The right middle button (PlayStation Start, Switch Pro Controller +)
-- **Option:** Tab / The left middle button
+- **D-pad:** Arrow Keys / Left Joystick or Controller D-pad
+- **A:** Z / Xbox B / PlayStation Circle / Nintendo A
+- **B:** X / Xbox A / PlayStation X / Nintendo B
+- **Start:** Left Shift / Start / Options / +
+- **Option:** Tab / Back / Select / -
 - **Reset:** Currently no reset button.
 
 ## Loading ROMs
-To load a ROM, you can either start the Sharpie by dragging the `.shr` file on it or start the program and then drag the ROM in. However, to load another cartridge, you must restart the console.
+To load a ROM, you can either drag the `.shr` file onto the Sharpie executable or start the program and drag the ROM into the window.
+Alternatively, you can pass in a file path through the command line like so: `Sharpie path/to/your/cartridge.shr`
 
-## Developing ROMs
-The SDK now has a dedicated GUI and the CLI mode got a major overhaul: You now use project manifests in JSON format to assemble ROMs. In these manifests you define:
+However, to load a different cartridge, you must restart the console.
 
-- The palette
-- Title & author metadata
-- Whether you're compiling as firmware
-- Input & output paths
+## Developing ROMs (The Sharpie CLI)
+As of v0.4, the legacy SDK and the C compiler have been unified into a single tool: `sharpie`.
 
-You can also edit those fields manually from the GUI.
+### Using the CLI
+The `sharpie` tool handles C compilation, assembly, and ROM exporting in one go. It decides what to do based on your file extensions.
 
-As of 0.3, you can also write games in C and compile them to Sharpie Assembly using the bundled `sharpiecc` and `sharpie.h`, but you must install LLVM like so:
-
-- Windows: `winget install LLVM`
-- Linux: `<your-package-manager> install llvm`
-
-## Using the C Compiler (sharpiecc)
-
-Once LLVM is installed, you can compile your C code directly into playable Sharpie ROMs (or raw assembly) from the command line.
-
-Basic Compilation:
+**Basic C Compilation:**
 ```sh
-sharpiecc main.c -O -o mygame.bin
+sharpie main.c -o game.shr
 ```
 
-Compiler Flags:
-
-    -O: Enables the Peephole Optimizer and Parameter Promotion. (Highly recommended for performant games!)
-
-    -S: Emits readable Sharpie Assembly (.asm) instead of compiling directly to a binary. Great for debugging or learning the ISA.
-
-    -o <file>: Specifies the output file name.
-
-Multi-Bank Projects:
-Sharpie games can span multiple files and memory banks. Simply pass all your .c files to the compiler at once:
-
+**Assembling raw ASM files:**
 ```sh
-sharpiecc main.c player.c level1.c -O -o mygame.bin
+sharpie bios.asm -f -o bios.bin
 ```
 
-To assign a file to a specific memory bank, just add #pragma bank X (e.g., #pragma bank 1) to the very top of your .c file. The compiler handles all the cross-bank routing automatically!
+- CLI Flags:
+
+    Inputs: You can pass multiple .c files at once to compile them into a single ROM, or a single .asm file.
+
+    - -o <file>: Specifies the output path.
+
+    - -O: Enables C optimizations. Defaults to off.
+
+    - -S: Stops after compiling C and emits an assembly file.
+
+    - -f: Firmware mode. Assembles a raw binary without the standard .shr headers.
+
+    - -t \<title\>: Sets the internal ROM title (visible in the header).
+
+    - -a \<author\>: Sets the internal ROM author name.
 
 ## Support
-If you encounter any issues with the Runner or the SDK or have any suggestions, please open an issue over at [the GitHub repository](https://github.com/ChristosMaragkos/Sharpie).
-
+If you encounter any issues with the Runner or the CLI, please open an issue over at [the GitHub repository](https://github.com/ChristosMaragkos/Sharpie).
 Happy playing and developing!
