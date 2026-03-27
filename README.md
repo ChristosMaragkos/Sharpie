@@ -29,5 +29,6 @@ int main(void) {
 4. Run: Drag and drop `game.shr` onto the Sharpie window or pass its path through the command line.
 
 ## License
-Sharpie, the Sharpie Logo, and the Sharpie BIOS are licensed under the LGPL License. See [[LICENSE.md]] for details.
-Sharpie (the fantasy console) is in no way affiliated with the actual brand of dry-erase markers.
+Sharpie, the Sharpie Logo, and the Sharpie BIOS are licensed under the LGPL License. See [LICENSE.md](https://github.com/ChristosMaragkos/Sharpie/blob/main/LICENSE.md) for details.
+
+*Sharpie (the fantasy console) is in no way affiliated with the actual brand of dry-erase markers.*
