@@ -185,5 +185,6 @@ jobs:
           prerelease: ${{ steps.check-tag.outputs.is_prerelease }}
           make_latest: ${{ steps.check-tag.outputs.make_latest }} # do not mark prereleases as latest
           body_path: assets/RELEASE_README.md
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
