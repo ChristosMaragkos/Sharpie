@@ -50,12 +50,9 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Control" type="Control" parent="Control/PanelContainer/HBoxContainer" unique_id=2136876191]
-layout_mode = 2
-size_flags_horizontal = 3
-
 [node name="VSeparator2" type="VSeparator" parent="Control/PanelContainer/HBoxContainer" unique_id=1774560374]
 layout_mode = 2
 
 [node name="Clock" parent="Control/PanelContainer/HBoxContainer" unique_id=1644095555 instance=ExtResource("3_4nfnr")]
 layout_mode = 2
+size_flags_horizontal = 8
