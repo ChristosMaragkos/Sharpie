@@ -12,9 +12,6 @@
 !bios.bin
 /distr
 /res
-*.png
-!font_small.png
-!icon.png
 
 # Godot
 **/.godot/
