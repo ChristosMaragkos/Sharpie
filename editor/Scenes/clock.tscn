@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://c0jtg3qlx0mk4"]
+
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_pdqta"]
+[ext_resource type="Script" uid="uid://d2co0nm25grgb" path="res://Scripts/Clock.cs" id="2_pdqta"]
+
+[node name="Clock" type="PanelContainer" unique_id=1644095555 node_paths=PackedStringArray("DateLabel", "TimeLabel")]
+custom_minimum_size = Vector2(64, 36)
+anchors_preset = -1
+anchor_right = 0.052083332
+anchor_bottom = 0.049382716
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme = ExtResource("1_pdqta")
+theme_type_variation = &"Inset"
+script = ExtResource("2_pdqta")
+DateLabel = NodePath("VBoxContainer/Date")
+TimeLabel = NodePath("VBoxContainer/Time")
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=769923485]
+layout_mode = 2
+size_flags_vertical = 4
+metadata/_edit_use_anchors_ = true
+
+[node name="Date" type="Label" parent="VBoxContainer" unique_id=702898315]
+layout_mode = 2
+text = "20/20/2020"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Time" type="Label" parent="VBoxContainer" unique_id=135521790]
+layout_mode = 2
+text = "20:20"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
