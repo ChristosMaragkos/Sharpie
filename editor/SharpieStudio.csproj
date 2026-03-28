@@ -1,4 +1,9 @@
 <Project Sdk="Godot.NET.Sdk/4.6.1">
+  <ItemGroup>
+    <ProjectReference Include="..\src\Sharpie.Core\Sharpie.Core.csproj" />
+    <ProjectReference Include="..\src\Sharpie.Cli\Sharpie.Cli.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net9.0</TargetFramework>
