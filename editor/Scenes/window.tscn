@@ -4,7 +4,9 @@
 
 [node name="Window" type="Window" unique_id=1673107950]
 transparent_bg = true
+canvas_item_default_texture_filter = 0
 oversampling_override = 1.0
+title = "Sharpie"
 position = Vector2i(0, 28)
 size = Vector2i(400, 350)
 wrap_controls = true
