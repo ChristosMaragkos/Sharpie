@@ -1,3 +1,12 @@
 [gd_scene format=3 uid="uid://w2cffjowmdw6"]
 
+[ext_resource type="Script" uid="uid://dkyqrh6gummdx" path="res://Scripts/DesktopManager.cs" id="1_c3mwy"]
+[ext_resource type="PackedScene" uid="uid://b6curdu0rxx0a" path="res://Scenes/task_bar.tscn" id="1_i04dx"]
+[ext_resource type="PackedScene" uid="uid://by01ls0eag0cn" path="res://Scenes/desktop.tscn" id="2_8pvmw"]
+
 [node name="DesktopManager" type="Node" unique_id=1515229234]
+script = ExtResource("1_c3mwy")
+
+[node name="TaskBar" parent="." unique_id=2124272352 instance=ExtResource("1_i04dx")]
+
+[node name="Desktop" parent="." unique_id=1837818263 instance=ExtResource("2_8pvmw")]
