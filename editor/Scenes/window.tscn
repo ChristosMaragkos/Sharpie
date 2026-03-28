@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://6pbvactcpf6y"]
+
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_mvsta"]
+
+[node name="Window" type="Window" unique_id=1673107950]
+transparent_bg = true
+oversampling_override = 1.0
+position = Vector2i(0, 28)
+size = Vector2i(400, 350)
+wrap_controls = true
+transparent = true
+theme = ExtResource("1_mvsta")
