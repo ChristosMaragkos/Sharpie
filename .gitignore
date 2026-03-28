@@ -21,6 +21,7 @@
 *.tmp
 # Just in case Godot keeps fighting to produce its own solution:
 *.sln
+!editor/Assets/*.png
 
 # Generic
 *.log
