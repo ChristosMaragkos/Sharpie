@@ -2,14 +2,13 @@
 
 [ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_8bpyy"]
 [ext_resource type="Texture2D" uid="uid://bs37o5lt2nvmn" path="res://Assets/DesktopApps/sharpie_runner.png" id="2_ivs31"]
-[ext_resource type="Script" uid="uid://2nk513du2m20" path="res://Scripts/DesktopIcon.cs" id="2_xe07s"]
+[ext_resource type="Script" uid="uid://d3pysbtse3avy" path="res://Scripts/Apps/DesktopIcon.cs" id="2_xe07s"]
 
 [node name="DesktopIcon" type="VBoxContainer" unique_id=518460060]
 offset_right = 64.0
 offset_bottom = 64.0
 theme = ExtResource("1_8bpyy")
 script = ExtResource("2_xe07s")
-IconTexture = ExtResource("2_ivs31")
 
 [node name="Icon" type="TextureRect" parent="." unique_id=198584447]
 custom_minimum_size = Vector2(32, 32)

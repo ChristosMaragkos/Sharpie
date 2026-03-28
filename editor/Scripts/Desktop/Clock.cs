@@ -1,6 +1,6 @@
 using Godot;
 
-namespace SharpieStudio;
+namespace SharpieStudio.Desktop;
 
 public partial class Clock : PanelContainer
 {

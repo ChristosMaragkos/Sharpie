@@ -1,11 +1,14 @@
 using Godot;
 
-namespace SharpieStudio;
+namespace SharpieStudio.Desktop;
 
 public static class DesktopItemExtensions
 {
     extension(Node node)
     {
         public void MoveToFront() => node.GetParent()?.MoveChild(node, -1);
+
+        public void UnfocusAppIcons() =>
+            node.GetTree().CallGroup("DesktopIcons", "SetSelected", false);
     }
 }

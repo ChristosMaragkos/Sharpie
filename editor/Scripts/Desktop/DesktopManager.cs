@@ -1,7 +1,8 @@
 using System.Linq;
 using Godot;
+using SharpieStudio.Apps;
 
-namespace SharpieStudio;
+namespace SharpieStudio.Desktop;
 
 public partial class DesktopManager : Node
 {
@@ -21,6 +22,22 @@ public partial class DesktopManager : Node
         {
             win.CloseRequested += () => OnCloseRequested(win);
         }
+
+        using var dirAccess = DirAccess.Open("res://Resources/");
+
+        foreach (
+            var resourceFile in dirAccess
+                .GetFiles()
+                .Where(fp => fp.EndsWith(".tres") || fp.EndsWith(".res"))
+                .Select(fp => dirAccess.GetCurrentDir() + "/" + fp)
+        )
+        {
+            GD.Print(resourceFile);
+            var appData = GD.Load<AppResource>(resourceFile);
+            AddAppIcon(appData);
+        }
+
+        dirAccess.Dispose();
     }
 
     private void OnWindowCreated(Node node)
@@ -28,6 +45,7 @@ public partial class DesktopManager : Node
         if (node is Window win)
         {
             win.CloseRequested += () => OnCloseRequested(win);
+            win.FocusEntered += this.UnfocusAppIcons;
         }
     }
 
@@ -43,11 +61,10 @@ public partial class DesktopManager : Node
         AddChild(window);
     }
 
-    public void AddAppIcon(Texture2D icon, string name)
+    public void AddAppIcon(AppResource appResource)
     {
         var appIcon = AppIconScene.Instantiate<DesktopIcon>();
-        appIcon.FileName = name;
-        appIcon.IconTexture = icon;
+        appIcon.Data = appResource;
 
         AddChild(appIcon);
     }
