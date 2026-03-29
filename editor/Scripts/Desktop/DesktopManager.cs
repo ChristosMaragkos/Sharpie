@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using SharpieStudio.Apps;
@@ -13,6 +14,8 @@ public partial class DesktopManager : Node
     private static readonly PackedScene AppIconScene = GD.Load<PackedScene>(
         "res://Scenes/desktop_icon.tscn"
     );
+
+    private readonly Dictionary<string, Window> OpenWindows = [];
 
     public override void _Ready()
     {
@@ -49,16 +52,28 @@ public partial class DesktopManager : Node
         }
     }
 
-    public override void _Process(double delta) { }
+    public void TryOpenWindow(PackedScene appContent, string appName)
+    {
+        if (OpenWindows.TryGetValue(appName, out var open))
+        {
+            open.MoveToFront();
+            return;
+        }
+
+        AddWindow(appContent, appName);
+    }
 
     public void AddWindow(PackedScene appContent, string title)
     {
+        this.UnfocusAppIcons();
         var window = WindowScene.Instantiate<Window>();
         window.Title = title;
 
         var windowContent = appContent.Instantiate();
-        window.AddChild(windowContent);
+        window.GetNode("MarginContainer").AddChild(windowContent);
+
         AddChild(window);
+        OpenWindows[title] = window;
     }
 
     public void AddAppIcon(AppResource appResource)
@@ -67,10 +82,12 @@ public partial class DesktopManager : Node
         appIcon.Data = appResource;
 
         AddChild(appIcon);
+        appIcon.OpenRequested += TryOpenWindow;
     }
 
-    private static void OnCloseRequested(Window win)
+    private void OnCloseRequested(Window win)
     {
+        OpenWindows.Remove(win.Title);
         win.QueueFree();
     }
 }
