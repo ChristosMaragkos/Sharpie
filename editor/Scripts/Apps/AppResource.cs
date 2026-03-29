@@ -9,6 +9,9 @@ public partial class AppResource : Resource
     public string FileName;
 
     [Export]
+    public string Description;
+
+    [Export]
     public Texture2D Icon;
 
     [Export]

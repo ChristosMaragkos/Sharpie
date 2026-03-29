@@ -55,6 +55,7 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
 
         _label.Text = Data.FileName;
         _icon.Texture = Data.Icon;
+        TooltipText = Data.Description;
 
         _selectedStyle = new StyleBoxFlat
         {

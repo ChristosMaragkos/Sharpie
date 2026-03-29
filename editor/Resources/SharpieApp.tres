@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_jyfyv")
 FileName = "Sharpie"
+Description = "Open the Sharpie Console"
 Icon = ExtResource("1_otiov")
 AppScene = ExtResource("1_tsiyr")
 metadata/_custom_type_script = "uid://wmxi465s34ks"
