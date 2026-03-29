@@ -11,7 +11,7 @@ theme = ExtResource("1_8bpyy")
 script = ExtResource("2_xe07s")
 
 [node name="Icon" type="TextureRect" parent="." unique_id=198584447]
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 6
 texture = ExtResource("2_ivs31")
@@ -22,7 +22,7 @@ custom_minimum_size = Vector2(64, 28)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "Sharpie Runner"
+text = "Sharpie"
 horizontal_alignment = 1
 autowrap_mode = 2
 clip_text = true

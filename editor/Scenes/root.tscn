@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://w2cffjowmdw6"]
 
-[ext_resource type="Script" uid="uid://dkyqrh6gummdx" path="res://Scripts/DesktopManager.cs" id="1_c3mwy"]
+[ext_resource type="Script" uid="uid://bp3n0x6m0135l" path="res://Scripts/Desktop/DesktopManager.cs" id="1_c3mwy"]
 [ext_resource type="PackedScene" uid="uid://b6curdu0rxx0a" path="res://Scenes/task_bar.tscn" id="1_i04dx"]
 [ext_resource type="PackedScene" uid="uid://by01ls0eag0cn" path="res://Scenes/desktop.tscn" id="2_8pvmw"]
 

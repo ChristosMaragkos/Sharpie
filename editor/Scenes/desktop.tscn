@@ -1,13 +1,23 @@
 [gd_scene format=3 uid="uid://by01ls0eag0cn"]
 
-[node name="Desktop" type="CanvasLayer" unique_id=1837818263]
-layer = -420
+[ext_resource type="Script" uid="uid://dmmdpn27un5d0" path="res://Scripts/Desktop/DesktopBackground.cs" id="1_hjcrg"]
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=13577107]
+[sub_resource type="Gradient" id="Gradient_hjcrg"]
+colors = PackedColorArray(0, 0.5019608, 0.5019608, 1, 0, 0.5019608, 0.5019608, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_o1xxf"]
+gradient = SubResource("Gradient_hjcrg")
+
+[node name="Desktop" type="CanvasLayer" unique_id=1837818263 node_paths=PackedStringArray("Background")]
+layer = -420
+script = ExtResource("1_hjcrg")
+Background = NodePath("ColorRect")
+
+[node name="ColorRect" type="TextureRect" parent="." unique_id=1379334819]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0.5019608, 0.5019608, 1)
+texture = SubResource("GradientTexture1D_o1xxf")
 metadata/_edit_use_anchors_ = true

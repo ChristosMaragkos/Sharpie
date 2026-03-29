@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c0jtg3qlx0mk4"]
 
 [ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_pdqta"]
-[ext_resource type="Script" uid="uid://d2co0nm25grgb" path="res://Scripts/Clock.cs" id="2_pdqta"]
+[ext_resource type="Script" uid="uid://beadfxdkcb5vq" path="res://Scripts/Desktop/Clock.cs" id="2_pdqta"]
 
 [node name="Clock" type="PanelContainer" unique_id=1644095555 node_paths=PackedStringArray("DateLabel", "TimeLabel")]
 custom_minimum_size = Vector2(64, 36)
