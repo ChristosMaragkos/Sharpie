@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://druyaafu52v4o"]
+
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_gu3wn"]
+
+[node name="SharpieRunner" type="PanelContainer" unique_id=1298719143]
+custom_minimum_size = Vector2(256, 256)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_gu3wn")
+theme_type_variation = &"Inset"
+
+[node name="TextEdit" type="TextEdit" parent="." unique_id=1025949649]
+layout_mode = 2
+placeholder_text = "Edit your text here..."

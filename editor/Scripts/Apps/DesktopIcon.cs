@@ -3,12 +3,12 @@ using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class DesktopIcon : VBoxContainer
+public partial class DesktopIcon : VBoxContainer, ISelectable
 {
     [Export]
     public AppResource Data { get; set; }
 
-    public bool IsSelected
+    private bool IsSelected
     {
         get;
         set
@@ -25,18 +25,26 @@ public partial class DesktopIcon : VBoxContainer
         }
     }
 
-    // I don't know how well property accessors play with Godot's CallGroup, so I'll add another method
-    public void SetSelected(bool selected)
-    {
-        IsSelected = selected;
-    }
-
     private Label _label;
     private TextureRect _icon;
     private bool _isDragging = false;
     private Vector2 _dragOffset;
 
     private StyleBoxFlat _selectedStyle;
+
+    [Signal]
+    public delegate void OpenRequestedEventHandler(PackedScene sceneToOpen, string appName);
+
+    // I don't know how well property accessors play with Godot's CallGroup, so I'll add another method
+    public void SetSelected(bool selected)
+    {
+        IsSelected = selected;
+    }
+
+    public void RequestOpenScene(PackedScene sceneToOpen, string appName)
+    {
+        EmitSignalOpenRequested(sceneToOpen, appName);
+    }
 
     public override void _Ready()
     {
@@ -69,7 +77,11 @@ public partial class DesktopIcon : VBoxContainer
 
                 IsSelected = true;
                 if (mouse.DoubleClick)
+                {
                     GD.Print($"Launching: {_label.Text}");
+                    RequestOpenScene(Data.AppScene, Data.FileName);
+                    return;
+                }
 
                 _isDragging = true;
                 _dragOffset = GetGlobalMousePosition() - GlobalPosition;
