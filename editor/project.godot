@@ -27,6 +27,10 @@ window/size/mode=2
 
 project/assembly_name="SharpieStudio"
 
+[global_group]
+
+DesktopIcons=""
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

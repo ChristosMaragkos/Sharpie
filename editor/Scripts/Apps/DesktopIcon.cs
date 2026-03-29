@@ -1,16 +1,14 @@
 using Godot;
+using SharpieStudio.Desktop;
 
-namespace SharpieStudio;
+namespace SharpieStudio.Apps;
 
 public partial class DesktopIcon : VBoxContainer
 {
     [Export]
-    public string FileName = "New File";
+    public AppResource Data { get; set; }
 
-    [Export]
-    public Texture2D IconTexture;
-
-    private bool IsSelected
+    public bool IsSelected
     {
         get;
         set
@@ -27,6 +25,12 @@ public partial class DesktopIcon : VBoxContainer
         }
     }
 
+    // I don't know how well property accessors play with Godot's CallGroup, so I'll add another method
+    public void SetSelected(bool selected)
+    {
+        IsSelected = selected;
+    }
+
     private Label _label;
     private TextureRect _icon;
     private bool _isDragging = false;
@@ -36,11 +40,13 @@ public partial class DesktopIcon : VBoxContainer
 
     public override void _Ready()
     {
+        AddToGroup("DesktopIcons");
+
         _label = GetNode<Label>("Text");
         _icon = GetNode<TextureRect>("Icon");
 
-        _label.Text = FileName;
-        _icon.Texture = IconTexture;
+        _label.Text = Data.FileName;
+        _icon.Texture = Data.Icon;
 
         _selectedStyle = new StyleBoxFlat
         {
@@ -58,9 +64,12 @@ public partial class DesktopIcon : VBoxContainer
         {
             if (mouse.Pressed)
             {
+                AcceptEvent();
+                this.UnfocusAppIcons();
+
                 IsSelected = true;
                 if (mouse.DoubleClick)
-                    GD.Print($"Launching: {FileName}");
+                    GD.Print($"Launching: {_label.Text}");
 
                 _isDragging = true;
                 _dragOffset = GetGlobalMousePosition() - GlobalPosition;
