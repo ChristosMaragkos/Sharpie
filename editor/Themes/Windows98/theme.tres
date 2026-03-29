@@ -509,6 +509,13 @@ texture_margin_bottom = 4.0
 expand_margin_top = 28.0
 region_rect = Rect2(0, 0, 480, 48)
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_nxtey"]
+texture = ExtResource("36_xy74y")
+texture_margin_left = 4.0
+texture_margin_top = 24.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
 [resource]
 default_font = ExtResource("1_vei3r")
 default_font_size = 11
@@ -829,3 +836,8 @@ Window/icons/close = ExtResource("36_fsj5q")
 Window/icons/close_pressed = ExtResource("37_0cd8l")
 Window/styles/embedded_border = SubResource("StyleBoxTexture_ovoc8")
 Window/styles/embedded_unfocused_border = SubResource("StyleBoxTexture_ovoc8")
+WindowPanel/base_type = &"PanelContainer"
+WindowPanel/styles/panel = SubResource("StyleBoxTexture_nxtey")
+WindowTitleLabel/base_type = &"Label"
+WindowTitleLabel/colors/font_color = Color(1, 1, 1, 1)
+WindowTitleLabel/font_sizes/font_size = 12

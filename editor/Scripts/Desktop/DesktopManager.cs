@@ -7,26 +7,33 @@ namespace SharpieStudio.Desktop;
 
 public partial class DesktopManager : Node
 {
+    private const string DesktopBackgroundPath = "VBoxContainer/Desktop";
+
     private static readonly PackedScene WindowScene = GD.Load<PackedScene>(
-        "res://Scenes/window.tscn"
+        "res://Scenes/window_frame.tscn"
     );
 
     private static readonly PackedScene AppIconScene = GD.Load<PackedScene>(
         "res://Scenes/desktop_icon.tscn"
     );
 
-    private readonly Dictionary<string, Window> OpenWindows = [];
+    private readonly Dictionary<string, WindowFrame> OpenWindows = [];
 
     public override void _Ready()
     {
         ChildEnteredTree += OnWindowCreated;
 
-        foreach (var win in GetChildren().OfType<Window>())
+        foreach (var win in GetChildren().OfType<WindowFrame>())
         {
-            win.CloseRequested += () => OnCloseRequested(win);
+            win.OnCloseRequested += OnCloseRequested;
         }
 
-        using var dirAccess = DirAccess.Open("res://Resources/");
+        LoadApps();
+    }
+
+    private void LoadApps()
+    {
+        using var dirAccess = DirAccess.Open("res://Resources/Apps");
 
         foreach (
             var resourceFile in dirAccess
@@ -35,7 +42,6 @@ public partial class DesktopManager : Node
                 .Select(fp => dirAccess.GetCurrentDir() + "/" + fp)
         )
         {
-            GD.Print(resourceFile);
             var appData = GD.Load<AppResource>(resourceFile);
             AddAppIcon(appData);
         }
@@ -45,35 +51,34 @@ public partial class DesktopManager : Node
 
     private void OnWindowCreated(Node node)
     {
-        if (node is Window win)
+        if (node is WindowFrame win)
         {
-            win.CloseRequested += () => OnCloseRequested(win);
+            win.OnCloseRequested += OnCloseRequested;
             win.FocusEntered += this.UnfocusAppIcons;
         }
     }
 
-    public void TryOpenWindow(PackedScene appContent, string appName)
+    public void TryOpenWindow(AppResource data)
     {
-        if (OpenWindows.TryGetValue(appName, out var open))
+        if (OpenWindows.TryGetValue(data.FileName, out var open))
         {
             open.MoveToFront();
             return;
         }
 
-        AddWindow(appContent, appName);
+        AddWindow(data);
     }
 
-    public void AddWindow(PackedScene appContent, string title)
+    public void AddWindow(AppResource data)
     {
         this.UnfocusAppIcons();
-        var window = WindowScene.Instantiate<Window>();
-        window.Title = title;
+        var window = WindowScene.Instantiate<WindowFrame>();
 
-        var windowContent = appContent.Instantiate();
-        window.GetNode("MarginContainer").AddChild(windowContent);
+        window.Configure(data);
+        window.OnCloseRequested += OnCloseRequested;
+        GetNode(DesktopBackgroundPath).AddChild(window);
 
-        AddChild(window);
-        OpenWindows[title] = window;
+        OpenWindows[data.FileName] = window;
     }
 
     public void AddAppIcon(AppResource appResource)
@@ -81,13 +86,13 @@ public partial class DesktopManager : Node
         var appIcon = AppIconScene.Instantiate<DesktopIcon>();
         appIcon.Data = appResource;
 
-        AddChild(appIcon);
+        GetNode(DesktopBackgroundPath).AddChild(appIcon);
         appIcon.OpenRequested += TryOpenWindow;
     }
 
-    private void OnCloseRequested(Window win)
+    private void OnCloseRequested(WindowFrame win)
     {
-        OpenWindows.Remove(win.Title);
+        OpenWindows.Remove(win.TitleLabel.Text);
         win.QueueFree();
     }
 }
