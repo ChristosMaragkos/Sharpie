@@ -27,6 +27,7 @@ window/size/mode=2
 [dotnet]
 
 project/assembly_name="SharpieStudio"
+project/solution_directory="../"
 
 [global_group]
 
