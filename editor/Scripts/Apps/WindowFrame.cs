@@ -30,8 +30,6 @@ public partial class WindowFrame : PanelContainer
     #region Button Events
     public event Action<WindowFrame> OnCloseRequested;
 
-    public event Action<WindowFrame> OnMaximizeRequested;
-
     public event Action<WindowFrame> OnMinimizeRequested;
     #endregion
 
@@ -83,14 +81,31 @@ public partial class WindowFrame : PanelContainer
             if (mouseEvent.Pressed)
             {
                 this.UnfocusAppIcons();
+
+                if (_isMaximized)
+                {
+                    float mouseDragOffset =
+                        (GetGlobalMousePosition().X - GetGlobalMousePosition().Y) / Size.X;
+
+                    SetMaximized(false);
+
+                    float newX = GetGlobalMousePosition().X - (_restoreSize.X * mouseDragOffset);
+                    Position = new Vector2(newX, 0);
+                }
+
+                AcceptEvent();
                 _isDragging = true;
                 _dragOffset = GetGlobalMousePosition() - GlobalPosition;
                 MoveToFront();
-                AcceptEvent();
             }
             else
             {
                 _isDragging = false;
+
+                if (Position.Y <= 0)
+                {
+                    SetMaximized(true);
+                }
             }
         }
     }
@@ -142,11 +157,25 @@ public partial class WindowFrame : PanelContainer
         }
     }
 
+    public void Configure(AppResource data)
+    {
+        TitleLabel.Text = data.FileName;
+
+        var app = data.AppScene.Instantiate();
+        AppArea.AddChild(app);
+    }
+
     public override void _Process(double delta)
     {
         if (_isMaximized)
             return;
 
+        HandleDragging();
+        HandleResizing();
+    }
+
+    private void HandleDragging()
+    {
         if (_isDragging)
         {
             var parent = GetParentOrNull<Control>();
@@ -163,7 +192,11 @@ public partial class WindowFrame : PanelContainer
                 GlobalPosition = targetPos;
             }
         }
-        else if (_isResizing)
+    }
+
+    private void HandleResizing()
+    {
+        if (_isResizing)
         {
             Vector2 mouseDelta = GetGlobalMousePosition() - _resizeStartMousePos;
 
@@ -174,14 +207,6 @@ public partial class WindowFrame : PanelContainer
 
             ApplyResize(newSize);
         }
-    }
-
-    public void Configure(AppResource data)
-    {
-        TitleLabel.Text = data.FileName;
-
-        var app = data.AppScene.Instantiate();
-        AppArea.AddChild(app);
     }
 
     private void ApplyResize(Vector2 targetSize)
@@ -202,19 +227,15 @@ public partial class WindowFrame : PanelContainer
         Size = targetSize;
     }
 
-    private void ToggleMaximize()
+    private void ToggleMaximize() => SetMaximized(!_isMaximized);
+
+    private void SetMaximized(bool maximize)
     {
         var parent = GetParentOrNull<Control>();
         if (parent is null)
             return;
 
-        if (_isMaximized)
-        {
-            GlobalPosition = _restorePosition;
-            Size = _restoreSize;
-            _isMaximized = false;
-        }
-        else
+        if (maximize && !_isMaximized)
         {
             _restorePosition = GlobalPosition;
             _restoreSize = Size;
@@ -224,6 +245,12 @@ public partial class WindowFrame : PanelContainer
 
             _isMaximized = true;
             MoveToFront();
+        }
+        else if (!maximize && _isMaximized)
+        {
+            GlobalPosition = _restorePosition;
+            Size = _restoreSize;
+            _isMaximized = false;
         }
     }
 }
