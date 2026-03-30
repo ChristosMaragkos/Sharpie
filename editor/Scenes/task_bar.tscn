@@ -4,34 +4,21 @@
 [ext_resource type="Texture2D" uid="uid://ebeg2c3ibjj1" path="res://Assets/icon_small.png" id="2_4nfnr"]
 [ext_resource type="PackedScene" uid="uid://c0jtg3qlx0mk4" path="res://Scenes/clock.tscn" id="3_4nfnr"]
 
-[node name="TaskBar" type="CanvasLayer" unique_id=2124272352]
-layer = 420
-
-[node name="Control" type="Control" parent="." unique_id=1027341383]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 3
+[node name="PanelContainer" type="PanelContainer" unique_id=1240506319]
+top_level = true
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -48.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_u1ukq")
 
-[node name="PanelContainer" type="PanelContainer" parent="Control" unique_id=1240506319]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -35.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Control/PanelContainer" unique_id=1499543375]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1499543375]
 layout_mode = 2
 
-[node name="StartButton" type="Button" parent="Control/PanelContainer/HBoxContainer" unique_id=644280893]
+[node name="StartButton" type="Button" parent="HBoxContainer" unique_id=644280893]
 texture_filter = 1
 layout_mode = 2
 theme_override_colors/icon_normal_color = Color(1, 1, 1, 1)
@@ -43,16 +30,16 @@ theme_override_colors/icon_disabled_color = Color(0.18717614, 0.18717614, 0.1871
 theme_override_icons/icon = ExtResource("2_4nfnr")
 text = "Start"
 
-[node name="VSeparator" type="VSeparator" parent="Control/PanelContainer/HBoxContainer" unique_id=1095005176]
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer" unique_id=1095005176]
 layout_mode = 2
 
-[node name="WindowList" type="HBoxContainer" parent="Control/PanelContainer/HBoxContainer" unique_id=457662314]
+[node name="WindowList" type="HBoxContainer" parent="HBoxContainer" unique_id=457662314]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VSeparator2" type="VSeparator" parent="Control/PanelContainer/HBoxContainer" unique_id=1774560374]
+[node name="VSeparator2" type="VSeparator" parent="HBoxContainer" unique_id=1774560374]
 layout_mode = 2
 
-[node name="Clock" parent="Control/PanelContainer/HBoxContainer" unique_id=1644095555 instance=ExtResource("3_4nfnr")]
+[node name="Clock" parent="HBoxContainer" unique_id=1644095555 instance=ExtResource("3_4nfnr")]
 layout_mode = 2
 size_flags_horizontal = 8

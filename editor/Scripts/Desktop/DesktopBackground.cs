@@ -2,7 +2,7 @@ using Godot;
 
 namespace SharpieStudio.Desktop;
 
-public partial class DesktopBackground : CanvasLayer
+public partial class DesktopBackground : Control
 {
     [Export]
     private TextureRect Background { get; set; }

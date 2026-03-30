@@ -7,6 +7,19 @@
 [node name="DesktopManager" type="Node" unique_id=1515229234]
 script = ExtResource("1_c3mwy")
 
-[node name="TaskBar" parent="." unique_id=2124272352 instance=ExtResource("1_i04dx")]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1800546792]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Desktop" parent="." unique_id=1837818263 instance=ExtResource("2_8pvmw")]
+[node name="Desktop" parent="VBoxContainer" unique_id=1837818263 instance=ExtResource("2_8pvmw")]
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 3
+
+[node name="TaskBar" parent="VBoxContainer" unique_id=2124272352 instance=ExtResource("1_i04dx")]
+layout_mode = 2
+size_flags_vertical = 3
