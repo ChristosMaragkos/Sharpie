@@ -4,7 +4,7 @@ namespace SharpieStudio.Apps;
 
 public interface ISelectable
 {
-    void RequestOpenScene(PackedScene sceneToOpen, string appName);
+    void RequestOpenScene(AppResource data);
 
     [Export]
     public AppResource Data { get; set; }

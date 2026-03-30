@@ -33,7 +33,7 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
     private StyleBoxFlat _selectedStyle;
 
     [Signal]
-    public delegate void OpenRequestedEventHandler(PackedScene sceneToOpen, string appName);
+    public delegate void OpenRequestedEventHandler(AppResource data);
 
     // I don't know how well property accessors play with Godot's CallGroup, so I'll add another method
     public void SetSelected(bool selected)
@@ -41,9 +41,9 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
         IsSelected = selected;
     }
 
-    public void RequestOpenScene(PackedScene sceneToOpen, string appName)
+    public void RequestOpenScene(AppResource data)
     {
-        EmitSignalOpenRequested(sceneToOpen, appName);
+        EmitSignalOpenRequested(data);
     }
 
     public override void _Ready()
@@ -80,7 +80,7 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
                 if (mouse.DoubleClick)
                 {
                     GD.Print($"Launching: {_label.Text}");
-                    RequestOpenScene(Data.AppScene, Data.FileName);
+                    RequestOpenScene(Data);
                     return;
                 }
 
