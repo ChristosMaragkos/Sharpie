@@ -1,10 +1,11 @@
 using System;
 using Godot;
+using SharpieStudio.Abstractions;
 using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class WindowFrame : PanelContainer
+public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, IDesktopItem
 {
     [Export]
     public MarginContainer AppArea { get; set; }
@@ -45,15 +46,30 @@ public partial class WindowFrame : PanelContainer
     private Vector2 _restorePosition;
     private Vector2 _restoreSize;
 
+    public bool IsMinimized
+    {
+        get;
+        set
+        {
+            field = value;
+            Visible = !value;
+        }
+    }
+
     private static readonly Vector2 MinWindowSize = new(200, 150);
     private const float BorderThickness = 8f;
 
     public override void _Ready()
     {
+        AddToGroup("OpenWindows");
+
         CloseButton.Pressed += () => OnCloseRequested?.Invoke(this);
         MaximizeButton.Pressed += ToggleMaximize;
+        MinimizeButton.Pressed += () => IsMinimized = true;
+
         TitleBarArea.GuiInput += OnTitleBarGuiInput;
         GuiInput += OnWindowGuiInput;
+        BringToFront();
     }
 
     private Vector2 GetResizeAxis(Vector2 localMousePos)
@@ -85,7 +101,7 @@ public partial class WindowFrame : PanelContainer
                 if (_isMaximized)
                 {
                     float mouseDragOffset =
-                        (GetGlobalMousePosition().X - GetGlobalMousePosition().Y) / Size.X;
+                        (GetGlobalMousePosition().X - GlobalPosition.X) / Size.X;
 
                     SetMaximized(false);
 
@@ -252,5 +268,12 @@ public partial class WindowFrame : PanelContainer
             Size = _restoreSize;
             _isMaximized = false;
         }
+    }
+
+    public void BringToFront()
+    {
+        MoveToFront();
+        IsMinimized = false;
+        AddToGroup(DesktopManager.ActiveWindowGroup);
     }
 }

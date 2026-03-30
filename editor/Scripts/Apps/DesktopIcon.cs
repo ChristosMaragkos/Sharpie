@@ -1,11 +1,11 @@
 using Godot;
+using SharpieStudio.Abstractions;
 using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class DesktopIcon : VBoxContainer, ISelectable
+public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<AppResource>
 {
-    [Export]
     public AppResource Data { get; set; }
 
     private bool IsSelected
@@ -48,14 +48,15 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
 
     public override void _Ready()
     {
+        GuiInput += OnGuiInput;
+    }
+
+    public void Configure(AppResource data)
+    {
         AddToGroup("DesktopIcons");
 
         _label = GetNode<Label>("Text");
         _icon = GetNode<TextureRect>("Icon");
-
-        _label.Text = Data.FileName;
-        _icon.Texture = Data.Icon;
-        TooltipText = Data.Description;
 
         _selectedStyle = new StyleBoxFlat
         {
@@ -64,7 +65,10 @@ public partial class DesktopIcon : VBoxContainer, ISelectable
             ContentMarginRight = 2,
         };
 
-        GuiInput += OnGuiInput;
+        Data = data;
+        _label.Text = Data.FileName;
+        _icon.Texture = Data.Icon;
+        TooltipText = Data.Description;
     }
 
     private void OnGuiInput(InputEvent @event)

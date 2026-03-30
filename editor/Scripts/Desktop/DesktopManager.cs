@@ -8,13 +8,19 @@ namespace SharpieStudio.Desktop;
 public partial class DesktopManager : Node
 {
     private const string DesktopBackgroundPath = "VBoxContainer/Desktop";
+    private const string QuickLaunchAreaPath = "VBoxContainer/TaskBar/HBoxContainer/WindowList";
+    public const string ActiveWindowGroup = "ActiveWindow";
 
     private static readonly PackedScene WindowScene = GD.Load<PackedScene>(
         "res://Scenes/window_frame.tscn"
     );
 
-    private static readonly PackedScene AppIconScene = GD.Load<PackedScene>(
+    private static readonly PackedScene DesktopIconScene = GD.Load<PackedScene>(
         "res://Scenes/desktop_icon.tscn"
+    );
+
+    private static readonly PackedScene TaskbarIconScene = GD.Load<PackedScene>(
+        "res://Scenes/taskbar_icon.tscn"
     );
 
     private readonly Dictionary<string, WindowFrame> OpenWindows = [];
@@ -60,9 +66,14 @@ public partial class DesktopManager : Node
 
     public void TryOpenWindow(AppResource data)
     {
+        foreach (var window in OpenWindows.Values)
+        {
+            window.RemoveFromGroup(ActiveWindowGroup);
+        }
+
         if (OpenWindows.TryGetValue(data.FileName, out var open))
         {
-            open.MoveToFront();
+            open.BringToFront();
             return;
         }
 
@@ -83,11 +94,15 @@ public partial class DesktopManager : Node
 
     public void AddAppIcon(AppResource appResource)
     {
-        var appIcon = AppIconScene.Instantiate<DesktopIcon>();
-        appIcon.Data = appResource;
-
+        var appIcon = DesktopIconScene.Instantiate<DesktopIcon>();
+        appIcon.Configure(appResource);
         GetNode(DesktopBackgroundPath).AddChild(appIcon);
         appIcon.OpenRequested += TryOpenWindow;
+
+        var taskbarIcon = TaskbarIconScene.Instantiate<TaskbarIcon>();
+        taskbarIcon.Configure(appResource);
+        GetNode(QuickLaunchAreaPath).AddChild(taskbarIcon);
+        taskbarIcon.OpenRequested += TryOpenWindow;
     }
 
     private void OnCloseRequested(WindowFrame win)

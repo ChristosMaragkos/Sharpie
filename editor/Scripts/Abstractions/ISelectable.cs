@@ -1,6 +1,7 @@
 using Godot;
+using SharpieStudio.Apps;
 
-namespace SharpieStudio.Apps;
+namespace SharpieStudio.Abstractions;
 
 public interface ISelectable
 {

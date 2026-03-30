@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b6curdu0rxx0a"]
 
 [ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_u1ukq"]
-[ext_resource type="Texture2D" uid="uid://ebeg2c3ibjj1" path="res://Assets/icon_small.png" id="2_4nfnr"]
+[ext_resource type="Texture2D" uid="uid://bs37o5lt2nvmn" path="res://Assets/DesktopApps/sharpie_runner.png" id="2_4nfnr"]
 [ext_resource type="PackedScene" uid="uid://c0jtg3qlx0mk4" path="res://Scenes/clock.tscn" id="3_4nfnr"]
 
 [node name="PanelContainer" type="PanelContainer" unique_id=1240506319]
@@ -20,6 +20,7 @@ layout_mode = 2
 
 [node name="StartButton" type="Button" parent="HBoxContainer" unique_id=644280893]
 texture_filter = 1
+custom_minimum_size = Vector2(96, 64)
 layout_mode = 2
 theme_override_colors/icon_normal_color = Color(1, 1, 1, 1)
 theme_override_colors/icon_focus_color = Color(0.8474744, 0.84747446, 0.8474743, 1)
@@ -27,6 +28,7 @@ theme_override_colors/icon_pressed_color = Color(0.5449743, 0.54497427, 0.544974
 theme_override_colors/icon_hover_color = Color(0.84705883, 0.84705883, 0.84705883, 1)
 theme_override_colors/icon_hover_pressed_color = Color(0.54509807, 0.54509807, 0.54509807, 1)
 theme_override_colors/icon_disabled_color = Color(0.18717614, 0.18717614, 0.18717614, 1)
+theme_override_font_sizes/font_size = 16
 theme_override_icons/icon = ExtResource("2_4nfnr")
 text = "Start"
 
@@ -34,6 +36,7 @@ text = "Start"
 layout_mode = 2
 
 [node name="WindowList" type="HBoxContainer" parent="HBoxContainer" unique_id=457662314]
+clip_children = 1
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -43,3 +46,4 @@ layout_mode = 2
 [node name="Clock" parent="HBoxContainer" unique_id=1644095555 instance=ExtResource("3_4nfnr")]
 layout_mode = 2
 size_flags_horizontal = 8
+size_flags_vertical = 1
