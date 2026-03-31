@@ -16,7 +16,7 @@ config/features=PackedStringArray("4.6", "C#", "GL Compatibility")
 boot_splash/bg_color=Color(0.24313726, 0.88235295, 0.8117647, 1)
 boot_splash/stretch_mode=0
 boot_splash/image="uid://b6k1fwaqed2cg"
-config/icon="res://icon.svg"
+config/icon="uid://b6k1fwaqed2cg"
 
 [display]
 
