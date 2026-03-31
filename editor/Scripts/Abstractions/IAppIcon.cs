@@ -3,10 +3,13 @@ using SharpieStudio.Apps;
 
 namespace SharpieStudio.Abstractions;
 
-public interface ISelectable
+public interface IAppIcon
 {
-    void RequestOpenScene(AppResource data);
+    int Id { get; set; }
 
     [Export]
     public AppResource Data { get; set; }
+
+    void RequestOpenScene(AppResource data);
+    void SetSelected(bool selected);
 }

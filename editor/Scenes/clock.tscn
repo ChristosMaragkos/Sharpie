@@ -4,10 +4,11 @@
 [ext_resource type="Script" uid="uid://beadfxdkcb5vq" path="res://Scripts/Desktop/Clock.cs" id="2_pdqta"]
 
 [node name="Clock" type="PanelContainer" unique_id=1644095555 node_paths=PackedStringArray("DateLabel", "TimeLabel")]
-custom_minimum_size = Vector2(64, 36)
+custom_minimum_size = Vector2(80, 48)
 anchors_preset = -1
 anchor_right = 0.052083332
-anchor_bottom = 0.049382716
+anchor_bottom = 0.044444446
+offset_bottom = -8.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 theme = ExtResource("1_pdqta")

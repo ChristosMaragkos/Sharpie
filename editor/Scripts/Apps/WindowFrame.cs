@@ -5,7 +5,7 @@ using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, IDesktopItem
+public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, IWindow
 {
     [Export]
     public MarginContainer AppArea { get; set; }
@@ -28,11 +28,9 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
     public TextureButton MinimizeButton { get; set; }
     #endregion
 
-    #region Button Events
     public event Action<WindowFrame> OnCloseRequested;
 
-    public event Action<WindowFrame> OnMinimizeRequested;
-    #endregion
+    public event Action OnFocusRequested;
 
     private bool _isDragging = false;
     private Vector2 _dragOffset;
@@ -56,16 +54,20 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
         }
     }
 
+    private void Minimize()
+    {
+        IsMinimized = true;
+        this.UnfocusAppIcons();
+    }
+
     private static readonly Vector2 MinWindowSize = new(200, 150);
     private const float BorderThickness = 8f;
 
     public override void _Ready()
     {
-        AddToGroup("OpenWindows");
-
         CloseButton.Pressed += () => OnCloseRequested?.Invoke(this);
         MaximizeButton.Pressed += ToggleMaximize;
-        MinimizeButton.Pressed += () => IsMinimized = true;
+        MinimizeButton.Pressed += Minimize;
 
         TitleBarArea.GuiInput += OnTitleBarGuiInput;
         GuiInput += OnWindowGuiInput;
@@ -89,6 +91,8 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
 
     private void OnTitleBarGuiInput(InputEvent @event)
     {
+        AcceptEvent();
+        OnFocusRequested?.Invoke();
         if (
             @event is InputEventMouseButton mouseEvent
             && mouseEvent.ButtonIndex is MouseButton.Left
@@ -109,7 +113,6 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
                     Position = new Vector2(newX, 0);
                 }
 
-                AcceptEvent();
                 _isDragging = true;
                 _dragOffset = GetGlobalMousePosition() - GlobalPosition;
                 MoveToFront();
@@ -128,6 +131,8 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
 
     private void OnWindowGuiInput(InputEvent @event)
     {
+        AcceptEvent();
+        OnFocusRequested?.Invoke();
         if (@event is InputEventMouseMotion motion && !_isResizing && !_isDragging)
         {
             Vector2 axis = GetResizeAxis(motion.Position);
@@ -175,7 +180,7 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
 
     public void Configure(AppResource data)
     {
-        TitleLabel.Text = data.FileName;
+        TitleLabel.Text = data.AppName;
 
         var app = data.AppScene.Instantiate();
         AppArea.AddChild(app);
@@ -274,6 +279,10 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
     {
         MoveToFront();
         IsMinimized = false;
-        AddToGroup(DesktopManager.ActiveWindowGroup);
+    }
+
+    ~WindowFrame()
+    {
+        CloseButton.Pressed -= () => OnCloseRequested?.Invoke(this);
     }
 }

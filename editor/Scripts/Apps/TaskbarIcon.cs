@@ -1,21 +1,22 @@
-using System.Linq;
 using Godot;
 using SharpieStudio.Abstractions;
-using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class TaskbarIcon : VBoxContainer, ISelectable, IConfigurable<AppResource>
+public partial class TaskbarIcon : VBoxContainer, IAppIcon, IConfigurable<AppResource>
 {
     public AppResource Data { get; set; }
 
     [Export]
-    public TextureRect[] AppIcons { get; set; }
+    public TextureRect UnselectedIcon { get; set; }
+
+    [Export]
+    private TextureRect SelectedIcon { get; set; }
 
     [Export]
     public PanelContainer SelectedIndicator { get; set; }
 
-    private WindowFrame BoundWindow { get; set; }
+    public WindowFrame? BoundWindow { get; set; }
 
     public bool IsSelected
     {
@@ -26,19 +27,30 @@ public partial class TaskbarIcon : VBoxContainer, ISelectable, IConfigurable<App
             if (value)
             {
                 SelectedIndicator.Visible = true;
-                AppIcons.First().Visible = false;
+                UnselectedIcon.Visible = false;
             }
             else
             {
                 SelectedIndicator.Visible = false;
-                AppIcons.First().Visible = true;
+                UnselectedIcon.Visible = true;
             }
         }
     }
 
+    public int Id { get; set; }
+
+    public void SetSelected(bool selected)
+    {
+        IsSelected = selected;
+    }
+
+    [Signal]
+    public delegate void OpenRequestedEventHandler(AppResource data);
+
     public override void _Ready()
     {
         base._Ready();
+        AddToGroup("DesktopIcons");
         GuiInput += OnGuiInput;
     }
 
@@ -51,7 +63,8 @@ public partial class TaskbarIcon : VBoxContainer, ISelectable, IConfigurable<App
         )
         {
             AcceptEvent();
-            this.UnfocusAppIcons();
+            RequestOpenScene(Data);
+            IsSelected = true;
         }
     }
 
@@ -59,9 +72,6 @@ public partial class TaskbarIcon : VBoxContainer, ISelectable, IConfigurable<App
     {
         base._Process(delta);
     }
-
-    [Signal]
-    public delegate void OpenRequestedEventHandler(AppResource data);
 
     public void RequestOpenScene(AppResource data)
     {
@@ -71,9 +81,9 @@ public partial class TaskbarIcon : VBoxContainer, ISelectable, IConfigurable<App
     public void Configure(AppResource data)
     {
         Data = data;
-        foreach (var rect in AppIcons)
-            rect.Texture = data.Icon;
-
-        TooltipText = $"\t{data.FileName}\n{data.Description}";
+        UnselectedIcon.Texture = data.Icon;
+        SelectedIcon.Texture = UnselectedIcon.Texture;
+        SelectedIcon.SelfModulate = Colors.LightGray;
+        TooltipText = $"\t{data.AppName}\n{data.Description}";
     }
 }

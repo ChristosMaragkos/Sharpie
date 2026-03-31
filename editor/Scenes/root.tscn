@@ -3,17 +3,20 @@
 [ext_resource type="Script" uid="uid://bp3n0x6m0135l" path="res://Scripts/Desktop/DesktopManager.cs" id="1_c3mwy"]
 [ext_resource type="PackedScene" uid="uid://b6curdu0rxx0a" path="res://Scenes/task_bar.tscn" id="1_i04dx"]
 [ext_resource type="PackedScene" uid="uid://by01ls0eag0cn" path="res://Scenes/desktop.tscn" id="2_8pvmw"]
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="2_c3mwy"]
 
-[node name="DesktopManager" type="Node" unique_id=1515229234]
+[node name="DesktopManager" type="Node" unique_id=1515229234 node_paths=PackedStringArray("DesktopArea", "QuickLaunchArea")]
 script = ExtResource("1_c3mwy")
+DesktopArea = NodePath("VBoxContainer/Desktop")
+QuickLaunchArea = NodePath("VBoxContainer/TaskBar/HBoxContainer/WindowList")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1800546792]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_c3mwy")
 
 [node name="Desktop" parent="VBoxContainer" unique_id=1837818263 instance=ExtResource("2_8pvmw")]
 layout_mode = 2

@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("3_lp1ub")
-FileName = "Sharpie"
+AppName = "Sharpie"
 Description = "Open the Sharpie Console"
 Icon = ExtResource("2_x3hx7")
 AppScene = ExtResource("1_gtnx6")

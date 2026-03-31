@@ -6,7 +6,7 @@ namespace SharpieStudio.Apps;
 public partial class AppResource : Resource
 {
     [Export]
-    public string FileName;
+    public string AppName;
 
     [Export]
     public string Description;

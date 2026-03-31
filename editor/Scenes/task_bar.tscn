@@ -10,7 +10,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -48.0
+offset_top = -60.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_u1ukq")
@@ -20,7 +20,6 @@ layout_mode = 2
 
 [node name="StartButton" type="Button" parent="HBoxContainer" unique_id=644280893]
 texture_filter = 1
-custom_minimum_size = Vector2(96, 64)
 layout_mode = 2
 theme_override_colors/icon_normal_color = Color(1, 1, 1, 1)
 theme_override_colors/icon_focus_color = Color(0.8474744, 0.84747446, 0.8474743, 1)

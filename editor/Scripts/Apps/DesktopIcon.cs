@@ -1,10 +1,11 @@
+using System;
 using Godot;
 using SharpieStudio.Abstractions;
 using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<AppResource>
+public partial class DesktopIcon : VBoxContainer, IAppIcon, IConfigurable<AppResource>
 {
     public AppResource Data { get; set; }
 
@@ -25,10 +26,13 @@ public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<App
         }
     }
 
+    public int Id { get; set; }
+
     private Label _label;
     private TextureRect _icon;
     private bool _isDragging = false;
     private Vector2 _dragOffset;
+    private Vector2I _currentGridCell;
 
     private StyleBoxFlat _selectedStyle;
 
@@ -49,6 +53,21 @@ public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<App
     public override void _Ready()
     {
         GuiInput += OnGuiInput;
+        CallDeferred(MethodName.InitialSnap);
+    }
+
+    private void InitialSnap()
+    {
+        _currentGridCell = DesktopManager.WorldToGrid(Position);
+        DesktopManager.SetCellOccupied(_currentGridCell, true);
+        Position = DesktopManager.GridToWorld(_currentGridCell);
+    }
+
+    public void SetInitialCell(Vector2I startCell)
+    {
+        _currentGridCell = startCell;
+        DesktopManager.SetCellOccupied(_currentGridCell, true);
+        Position = DesktopManager.GridToWorld(_currentGridCell);
     }
 
     public void Configure(AppResource data)
@@ -66,7 +85,7 @@ public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<App
         };
 
         Data = data;
-        _label.Text = Data.FileName;
+        _label.Text = Data.AppName;
         _icon.Texture = Data.Icon;
         TooltipText = Data.Description;
     }
@@ -90,11 +109,37 @@ public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<App
 
                 _isDragging = true;
                 _dragOffset = GetGlobalMousePosition() - GlobalPosition;
+
+                DesktopManager.SetCellOccupied(_currentGridCell, false);
             }
             else
             {
                 _isDragging = false;
-                // TODO: Grid snap
+
+                Vector2I targetCell = DesktopManager.WorldToGrid(Position);
+
+                var desktopSize = GetParent<Control>().Size;
+                int maxCol = Mathf.Max(
+                    0,
+                    Mathf.FloorToInt(desktopSize.X / DesktopManager.CellSize.X) - 1
+                );
+                int maxRow = Mathf.Max(
+                    0,
+                    Mathf.FloorToInt(desktopSize.Y / DesktopManager.CellSize.Y) - 1
+                );
+
+                targetCell.X = Mathf.Clamp(targetCell.X, 0, maxCol);
+                targetCell.Y = Mathf.Clamp(targetCell.Y, 0, maxRow);
+
+                if (DesktopManager.IsCellOccupied(targetCell))
+                {
+                    targetCell = _currentGridCell;
+                }
+
+                _currentGridCell = targetCell;
+                DesktopManager.SetCellOccupied(_currentGridCell, true);
+
+                Position = DesktopManager.GridToWorld(_currentGridCell);
             }
         }
     }
@@ -103,7 +148,8 @@ public partial class DesktopIcon : VBoxContainer, ISelectable, IConfigurable<App
     {
         if (_isDragging)
         {
-            GlobalPosition = GetGlobalMousePosition() - _dragOffset;
+            Vector2 targetPos = GetGlobalMousePosition() - _dragOffset;
+            GlobalPosition = targetPos;
         }
     }
 }

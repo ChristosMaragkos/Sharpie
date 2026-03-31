@@ -1,8 +1,6 @@
-using Godot;
-
 namespace SharpieStudio.Abstractions;
 
-public interface IDesktopItem
+public interface IWindow
 {
     void BringToFront();
 }
