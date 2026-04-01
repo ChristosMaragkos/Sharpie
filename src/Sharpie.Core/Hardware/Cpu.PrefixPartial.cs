@@ -366,12 +366,6 @@ internal partial class Cpu
                 break;
             }
 
-            case 0xC2: // SAVE
-            {
-                _mobo.InvokeSave(true);
-                break;
-            }
-
             case 0xF0: // OAMTAG
             {
                 pcDelta = 2;
