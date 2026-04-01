@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AppResource" format=3 uid="uid://bw7mejo7vjqdt"]
+
+[ext_resource type="PackedScene" uid="uid://iigjsm12wm87" path="res://Scenes/Apps/terminal_app.tscn" id="1_1o6qt"]
+[ext_resource type="Script" uid="uid://wmxi465s34ks" path="res://Scripts/Apps/AppResource.cs" id="1_gn2bl"]
+[ext_resource type="Texture2D" uid="uid://b22l3ll2up530" path="res://Assets/ProgrammerArt/terminal.png" id="2_hs8xo"]
+
+[resource]
+script = ExtResource("1_gn2bl")
+AppName = "Terminal"
+Description = "Command line tool"
+Icon = ExtResource("2_hs8xo")
+AppScene = ExtResource("1_1o6qt")
+metadata/_custom_type_script = "uid://wmxi465s34ks"

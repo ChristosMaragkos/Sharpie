@@ -39,6 +39,10 @@
 [ext_resource type="Texture2D" uid="uid://ce1v3st6rb0o2" path="res://Themes/Windows98/textures/window.png" id="36_xy74y"]
 [ext_resource type="Texture2D" uid="uid://dp3sxkk1223hg" path="res://Themes/Windows98/textures/window_close_hover.png" id="37_0cd8l"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nxtey"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1wwot"]
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_6akc0"]
 content_margin_left = 8.0
 content_margin_top = 6.0
@@ -519,6 +523,10 @@ texture_margin_bottom = 4.0
 [resource]
 default_font = ExtResource("1_vei3r")
 default_font_size = 11
+BaseLineEdit/base_type = &"LineEdit"
+BaseLineEdit/styles/focus = SubResource("StyleBoxEmpty_nxtey")
+BaseLineEdit/styles/normal = SubResource("StyleBoxEmpty_1wwot")
+BaseLineEdit/styles/read_only = null
 Button/colors/font_color = Color(0, 0, 0, 1)
 Button/colors/font_disabled_color = Color(0.501961, 0.501961, 0.501961, 1)
 Button/colors/font_focus_color = Color(0, 0, 0, 1)

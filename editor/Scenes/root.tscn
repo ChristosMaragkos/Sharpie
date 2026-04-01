@@ -23,6 +23,20 @@ layout_mode = 2
 size_flags_horizontal = 1
 size_flags_vertical = 3
 
+[node name="ColorRect" parent="VBoxContainer/Desktop" index="0" unique_id=1379334819]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer" unique_id=724287948]
+layout_mode = 2
+theme_override_constants/separation = 56
+
 [node name="TaskBar" parent="VBoxContainer" unique_id=2124272352 instance=ExtResource("1_i04dx")]
 layout_mode = 2
 size_flags_vertical = 3
+
+[editable path="VBoxContainer/Desktop"]

@@ -1,4 +1,3 @@
-using System;
 using Godot;
 using SharpieStudio.Abstractions;
 using SharpieStudio.Desktop;
@@ -92,11 +91,11 @@ public partial class DesktopIcon : VBoxContainer, IAppIcon, IConfigurable<AppRes
 
     private void OnGuiInput(InputEvent @event)
     {
+        AcceptEvent();
         if (@event is InputEventMouseButton mouse && mouse.ButtonIndex is MouseButton.Left)
         {
             if (mouse.Pressed)
             {
-                AcceptEvent();
                 this.UnfocusAppIcons();
 
                 IsSelected = true;
