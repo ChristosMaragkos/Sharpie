@@ -281,6 +281,11 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
         IsMinimized = false;
     }
 
+    public void RequestClose()
+    {
+        OnCloseRequested?.Invoke(this);
+    }
+
     ~WindowFrame()
     {
         CloseButton.Pressed -= () => OnCloseRequested?.Invoke(this);
