@@ -32,8 +32,7 @@ project/solution_directory="../"
 [global_group]
 
 DesktopIcons=""
-OpenWindows=""
-ActiveWindow=""
+StartMenu=""
 
 [physics]
 

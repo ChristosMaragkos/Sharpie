@@ -91,13 +91,13 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
 
     private void OnTitleBarGuiInput(InputEvent @event)
     {
-        AcceptEvent();
-        OnFocusRequested?.Invoke();
         if (
             @event is InputEventMouseButton mouseEvent
             && mouseEvent.ButtonIndex is MouseButton.Left
         )
         {
+            AcceptEvent();
+            OnFocusRequested?.Invoke();
             if (mouseEvent.Pressed)
             {
                 this.UnfocusAppIcons();

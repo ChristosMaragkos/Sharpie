@@ -2,9 +2,11 @@
 
 [ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_u1ukq"]
 [ext_resource type="Texture2D" uid="uid://bs37o5lt2nvmn" path="res://Assets/DesktopApps/sharpie_runner.png" id="2_4nfnr"]
+[ext_resource type="Script" uid="uid://de7icrgqqo2i3" path="res://Scripts/Desktop/TaskBar.cs" id="2_4pa2d"]
 [ext_resource type="PackedScene" uid="uid://c0jtg3qlx0mk4" path="res://Scenes/clock.tscn" id="3_4nfnr"]
+[ext_resource type="PackedScene" uid="uid://cs6hv61w8go22" path="res://Scenes/start_menu.tscn" id="3_yblkg"]
 
-[node name="PanelContainer" type="PanelContainer" unique_id=1240506319]
+[node name="PanelContainer" type="PanelContainer" unique_id=1240506319 node_paths=PackedStringArray("StartButton")]
 top_level = true
 anchors_preset = 12
 anchor_top = 1.0
@@ -14,6 +16,9 @@ offset_top = -60.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_u1ukq")
+script = ExtResource("2_4pa2d")
+StartButton = NodePath("HBoxContainer/StartButton")
+StartMenuScene = ExtResource("3_yblkg")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1499543375]
 layout_mode = 2
@@ -29,6 +34,7 @@ theme_override_colors/icon_hover_pressed_color = Color(0.54509807, 0.54509807, 0
 theme_override_colors/icon_disabled_color = Color(0.18717614, 0.18717614, 0.18717614, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_icons/icon = ExtResource("2_4nfnr")
+toggle_mode = true
 text = "Start"
 
 [node name="VSeparator" type="VSeparator" parent="HBoxContainer" unique_id=1095005176]

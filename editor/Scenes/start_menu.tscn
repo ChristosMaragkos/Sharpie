@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://cs6hv61w8go22"]
+
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_juhg0"]
+[ext_resource type="Texture2D" uid="uid://brgqirhyjjxvp" path="res://Assets/ProgrammerArt/settings.png" id="2_jgtwh"]
+[ext_resource type="Texture2D" uid="uid://c052cwapljdhk" path="res://Assets/ProgrammerArt/power_off.png" id="3_m6uer"]
+
+[node name="StartMenu" type="PanelContainer" unique_id=1275932262 groups=["StartMenu"]]
+clip_contents = true
+custom_minimum_size = Vector2(128, 256)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -444.0
+offset_right = 128.0
+offset_bottom = -188.0
+grow_vertical = 0
+scale = Vector2(1.5, 1.5)
+size_flags_horizontal = 0
+size_flags_vertical = 8
+theme = ExtResource("1_juhg0")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1045470629]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="Button" type="Button" parent="VBoxContainer" unique_id=2084503908]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_type_variation = &"ButtonWithIcon"
+flat = true
+
+[node name="Button2" type="Button" parent="VBoxContainer" unique_id=89049125]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_type_variation = &"ButtonWithIcon"
+flat = true
+
+[node name="Button3" type="Button" parent="VBoxContainer" unique_id=68552744]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_type_variation = &"ButtonWithIcon"
+flat = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=185974743]
+layout_mode = 2
+
+[node name="SettingsButton" type="Button" parent="VBoxContainer/HBoxContainer" unique_id=1617407044]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ButtonWithIcon"
+text = " "
+icon = ExtResource("2_jgtwh")
+flat = true
+text_overrun_behavior = 1
+
+[node name="PowerOff" type="Button" parent="VBoxContainer/HBoxContainer" unique_id=610457255]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ButtonWithIcon"
+icon = ExtResource("3_m6uer")
+flat = true
+icon_alignment = 2
