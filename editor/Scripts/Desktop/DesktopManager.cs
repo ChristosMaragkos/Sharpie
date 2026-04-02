@@ -14,8 +14,6 @@ public partial class DesktopManager : Node
     [Export]
     public Control QuickLaunchArea { get; set; }
 
-    private const int DesktopHeight = 1080 - 60;
-    private const int DesktopWidth = 1920 - 64;
     private static readonly PackedScene WindowScene = GD.Load<PackedScene>(
         "res://Scenes/window_frame.tscn"
     );
@@ -84,12 +82,17 @@ public partial class DesktopManager : Node
         {
             win.OnCloseRequested += OnWindowCloseRequested;
         }
-        LoadApps();
+        LoadDefaultApps();
     }
 
-    private void LoadApps()
+    private void LoadDefaultApps()
     {
         using var dirAccess = DirAccess.Open("res://Resources/Apps");
+
+        if (!dirAccess.DirExists("user://Desktop"))
+        {
+            Error err = DirAccess.MakeDirAbsolute("user://Desktop");
+        }
 
         foreach (
             var resourceFile in dirAccess
@@ -99,7 +102,7 @@ public partial class DesktopManager : Node
         )
         {
             var appData = GD.Load<AppResource>(resourceFile);
-            AddAppIcon(appData);
+            AddAppToTaskbar(appData);
         }
 
         dirAccess.Dispose();
@@ -137,14 +140,10 @@ public partial class DesktopManager : Node
 
         Process process = new()
         {
-            DesktopIcon = DesktopArea
-                .GetChildren()
-                .OfType<DesktopIcon>()
-                .First(icon => icon.Data.AppScene == data.AppScene),
             TaskbarIcon = QuickLaunchArea
                 .GetChildren()
                 .OfType<TaskbarIcon>()
-                .First(icon => icon.Data.AppScene == data.AppScene),
+                .First(icon => icon.Data.AppName == data.AppName),
         };
         process.TaskbarIcon.BoundWindow = window;
         process.TaskbarIcon.IsSelected = true;
@@ -158,7 +157,7 @@ public partial class DesktopManager : Node
         process.TaskbarIcon.IsSelected = true;
     }
 
-    public void AddAppIcon(AppResource appResource)
+    public void AddAppToDesktop(AppResource appResource)
     {
         var appIcon = DesktopIconScene.Instantiate<DesktopIcon>();
         appIcon.Configure(appResource);
@@ -167,7 +166,10 @@ public partial class DesktopManager : Node
 
         Vector2I startingCell = GetNextAvailableCell(DesktopArea.Size);
         appIcon.SetInitialCell(startingCell);
+    }
 
+    private void AddAppToTaskbar(AppResource appResource)
+    {
         var taskbarIcon = TaskbarIconScene.Instantiate<TaskbarIcon>();
         taskbarIcon.Configure(appResource);
         QuickLaunchArea.AddChild(taskbarIcon);

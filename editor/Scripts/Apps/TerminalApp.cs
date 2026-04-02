@@ -6,7 +6,7 @@ using FileAccess = Godot.FileAccess;
 
 namespace SharpieStudio.Apps;
 
-// TODO: Flags for ls, show files and folders in desktop
+// TODO: show files and folders in desktop
 public partial class TerminalApp : PanelContainer, IApp
 {
     [Export]
@@ -35,7 +35,7 @@ public partial class TerminalApp : PanelContainer, IApp
 
     private void UpdatePrompt()
     {
-        string displayPath = _fs.GetCurrentDir().Replace("user://", "~");
+        string displayPath = CurrentDir.Replace("user://", "~");
         PromptLabel.Text = $"root@sharpie:{displayPath}$ ";
     }
 
@@ -125,21 +125,35 @@ public partial class TerminalApp : PanelContainer, IApp
         string[] dirs = _fs.GetDirectories();
         string[] files = _fs.GetFiles();
 
-        foreach (var dir in dirs)
+        if (!flags.Contains('l'))
         {
-            PrintLine($"[color=lightblue]{dir}/[/color]");
+            foreach (var dir in dirs)
+            {
+                PrintLine($"[color=lightblue]{dir}/[/color]");
+            }
+
+            foreach (var file in files)
+            {
+                string color = "white";
+
+                if (file.EndsWith(".c"))
+                    color = "cyan";
+                else if (file.EndsWith(".asm"))
+                    color = "red";
+
+                PrintLine($"[color={color}]{file}[/color]");
+            }
         }
-
-        foreach (var file in files)
+        else
         {
-            string color = "white";
+            foreach (var dir in dirs)
+                PrintLine($"{dir} - Directory");
 
-            if (file.EndsWith(".c"))
-                color = "cyan";
-            else if (file.EndsWith(".asm"))
-                color = "red";
-
-            PrintLine($"[color={color}]{file}[/color]");
+            foreach (var file in files)
+            {
+                var size = FileAccess.GetFileAsBytes(CurrentDir + '/' + file).Length;
+                PrintLine($"{file} - {size}B");
+            }
         }
     }
 
@@ -172,12 +186,13 @@ public partial class TerminalApp : PanelContainer, IApp
             PrintLine(
                 $"mkdir: cannot create directory '{dirName}': Permission denied. Error code: {err}"
             );
+            return;
         }
     }
 
     private void CreateFile(string fileName)
     {
-        string absolutePath = _fs.GetCurrentDir() + '/' + fileName;
+        string absolutePath = CurrentDir + '/' + fileName;
 
         if (!FileAccess.FileExists(absolutePath))
         {
@@ -187,6 +202,7 @@ public partial class TerminalApp : PanelContainer, IApp
                 PrintLine(
                     $"touch: cannot touch '{fileName}': Permission denied. Error code: {file.GetError()}"
                 );
+                return;
             }
         }
     }
@@ -199,7 +215,7 @@ public partial class TerminalApp : PanelContainer, IApp
             return;
         }
 
-        string filePath = _fs.GetCurrentDir() + '/' + args[0];
+        string filePath = CurrentDir + '/' + args[0];
 
         if (!FileAccess.FileExists(filePath))
         {
@@ -229,19 +245,26 @@ public partial class TerminalApp : PanelContainer, IApp
                 return;
             }
 
-            Error err = RemoveRecursive(_fs.GetCurrentDir() + '/' + target);
+            Error err = RemoveRecursive(CurrentDir + '/' + target);
             if (err is not Error.Ok && !force)
+            {
                 PrintLine($"rm: failed to remove '{target}'. Error code: {err}");
+                return;
+            }
         }
         else if (_fs.FileExists(target))
         {
             Error err = _fs.Remove(target);
             if (err is not Error.Ok && !force)
+            {
                 PrintLine($"rm: failed to remove '{target}'. Error code: {err}");
+                return;
+            }
         }
         else if (!force)
         {
             PrintLine($"rm: cannot remove '{target}': No such file or directory");
+            return;
         }
     }
 
