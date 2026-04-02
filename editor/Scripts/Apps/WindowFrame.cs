@@ -5,7 +5,7 @@ using SharpieStudio.Desktop;
 
 namespace SharpieStudio.Apps;
 
-public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, IWindow
+public partial class WindowFrame : PanelContainer, IWindow
 {
     [Export]
     public MarginContainer AppArea { get; set; }
@@ -178,7 +178,7 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
         }
     }
 
-    public void Configure(AppResource data)
+    public void Configure(AppResource data, string[] args = null)
     {
         TitleLabel.Text = data.AppName;
 
@@ -186,6 +186,11 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
         {
             var app = data.AppScene.Instantiate();
             AppArea.AddChild(app);
+
+            if (app is IApp exe)
+            {
+                exe.Run(args ?? []);
+            }
         }
         else
         {

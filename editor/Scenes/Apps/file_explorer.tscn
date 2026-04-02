@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://ctd2xruwqhpmq"]
+
+[ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_61qyc"]
+[ext_resource type="Script" uid="uid://d04pcuf5pd5ms" path="res://Scripts/Apps/FileExplorer.cs" id="2_utt20"]
+[ext_resource type="Texture2D" uid="uid://dnxwpanyb0jdu" path="res://Assets/ProgrammerArt/folder.png" id="3_we6ge"]
+[ext_resource type="Texture2D" uid="uid://bkn1p83ls47x7" path="res://Assets/ProgrammerArt/c_file.png" id="4_8gc05"]
+[ext_resource type="Texture2D" uid="uid://cmjd205x1yxbd" path="res://Assets/ProgrammerArt/asm_file.png" id="5_ee838"]
+[ext_resource type="Texture2D" uid="uid://cuf7opoo87j8a" path="res://Assets/ProgrammerArt/text_file.png" id="6_6wdpy"]
+
+[node name="FileExplorer" type="VBoxContainer" unique_id=2086204976]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_61qyc")
+theme_override_constants/separation = 0
+script = ExtResource("2_utt20")
+FolderIcon = ExtResource("3_we6ge")
+CFileIcon = ExtResource("4_8gc05")
+AsmFileIcon = ExtResource("5_ee838")
+TextFileIcon = ExtResource("6_6wdpy")
+
+[node name="Toolbar" type="HBoxContainer" parent="." unique_id=811458253]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="UpButton" type="Button" parent="Toolbar" unique_id=878023145]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "^"
+
+[node name="AddressBar" type="LineEdit" parent="Toolbar" unique_id=774848455]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FileView" type="ItemList" parent="." unique_id=1563590324]
+layout_mode = 2
+size_flags_vertical = 3
+max_text_lines = 2
+text_overrun_behavior = 5
+max_columns = 0
+same_column_width = true
+fixed_column_width = 72
+icon_mode = 0
+icon_scale = 2.0
+fixed_icon_size = Vector2i(32, 32)

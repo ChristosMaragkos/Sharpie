@@ -23,15 +23,28 @@ public partial class TerminalApp : PanelContainer, IApp
 
     private string CurrentDir => _fs.GetCurrentDir();
 
-    public override void _Ready()
+    public void Run(string[] args)
     {
         _fs = DirAccess.Open("user://");
 
+        if (args.Length > 0)
+        {
+            if (!_fs.DirExists(args[0]))
+                _fs.ChangeDir(args[0]);
+            else
+                PrintLine($"Path '{args[0]}' not found, defaulting to root");
+        }
+
         InputLine.TextSubmitted += OnTextSubmitted;
-        InputLine.GrabFocus();
 
         PrintLine("SharpieOS v1.0.0 (tty1)");
         UpdatePrompt();
+    }
+
+    public override void _Ready()
+    {
+        base._Ready();
+        InputLine.GrabFocus();
     }
 
     private void UpdatePrompt()

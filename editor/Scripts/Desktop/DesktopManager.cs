@@ -39,6 +39,10 @@ public partial class DesktopManager : Node
         "res://Scenes/taskbar_icon.tscn"
     );
 
+    private static readonly PackedScene FileExplorerScene = GD.Load<PackedScene>(
+        "res://Scenes/Apps/file_explorer.tscn"
+    );
+
     private static readonly Dictionary<string, Process> OpenWindows = [];
 
     public static readonly Vector2 CellSize = new(64, 100);
@@ -127,7 +131,7 @@ public partial class DesktopManager : Node
         }
     }
 
-    public void TryOpenWindow(AppResource data)
+    public void TryOpenWindow(AppResource data, string[] args = null)
     {
         if (OpenWindows.TryGetValue(data.AppName, out var open))
         {
@@ -136,15 +140,15 @@ public partial class DesktopManager : Node
             return;
         }
 
-        AddWindow(data);
+        AddWindow(data, args);
     }
 
-    public void AddWindow(AppResource data)
+    public void AddWindow(AppResource data, string[] args = null)
     {
         this.UnfocusAppIcons();
         var window = WindowScene.Instantiate<WindowFrame>();
 
-        window.Configure(data);
+        window.Configure(data, args);
         window.OnCloseRequested += OnWindowCloseRequested;
         DesktopArea.AddChild(window);
 
@@ -172,7 +176,7 @@ public partial class DesktopManager : Node
         var appIcon = DesktopIconScene.Instantiate<DesktopIcon>();
         appIcon.Configure(appResource);
         DesktopArea.AddChild(appIcon);
-        appIcon.OpenRequested += TryOpenWindow;
+        appIcon.OpenRequested += (data) => TryOpenWindow(data);
 
         Vector2I startingCell = GetNextAvailableCell(DesktopArea.Size);
         appIcon.SetInitialCell(startingCell);
@@ -183,7 +187,7 @@ public partial class DesktopManager : Node
         var taskbarIcon = TaskbarIconScene.Instantiate<TaskbarIcon>();
         taskbarIcon.Configure(appResource);
         QuickLaunchArea.AddChild(taskbarIcon);
-        taskbarIcon.OpenRequested += TryOpenWindow;
+        taskbarIcon.OpenRequested += (data) => TryOpenWindow(data);
     }
 
     private void OnWindowCloseRequested(WindowFrame win)
@@ -209,7 +213,7 @@ public partial class DesktopManager : Node
             {
                 AppName = dir,
                 Icon = FolderIcon,
-                AppScene = null, // TODO: Hook up the file explorer
+                AppScene = FileExplorerScene,
             };
             AddAppToDesktop(folder);
         }

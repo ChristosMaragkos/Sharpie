@@ -194,6 +194,16 @@ texture_margin_top = 2.0
 texture_margin_right = 2.0
 texture_margin_bottom = 2.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ej2ss"]
+bg_color = Color(0, 0, 0.735357, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_o4xux"]
+texture = ExtResource("25_acmsw")
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_15vrp"]
 content_margin_left = 6.0
 content_margin_top = 4.0
@@ -631,6 +641,17 @@ HSlider/styles/grabber_area_highlight = SubResource("StyleBoxTexture_ta27f")
 HSlider/styles/slider = SubResource("StyleBoxTexture_0nf5a")
 Inset/base_type = &"PanelContainer"
 Inset/styles/panel = SubResource("StyleBoxTexture_1ixnv")
+ItemList/colors/font_color = Color(0, 0, 0, 1)
+ItemList/colors/font_hovered_color = Color(1, 1, 1, 1)
+ItemList/font_sizes/font_size = 18
+ItemList/fonts/font = ExtResource("1_vei3r")
+ItemList/styles/focus = SubResource("StyleBoxFlat_ej2ss")
+ItemList/styles/hovered = SubResource("StyleBoxFlat_ej2ss")
+ItemList/styles/hovered_selected = SubResource("StyleBoxFlat_ej2ss")
+ItemList/styles/hovered_selected_focus = SubResource("StyleBoxFlat_ej2ss")
+ItemList/styles/panel = SubResource("StyleBoxTexture_o4xux")
+ItemList/styles/selected = SubResource("StyleBoxFlat_ej2ss")
+ItemList/styles/selected_focus = SubResource("StyleBoxFlat_ej2ss")
 Label/colors/font_color = Color(0, 0, 0, 1)
 Label/colors/font_outline_color = Color(0, 0, 0, 0)
 Label/colors/font_shadow_color = Color(0, 0, 0, 0)

@@ -4,6 +4,8 @@ namespace SharpieStudio.Apps;
 
 internal interface IApp
 {
+    void Run(string[] args);
+
     public WindowFrame? GetEnclosingWindow()
     {
         if (this is not Node node)
