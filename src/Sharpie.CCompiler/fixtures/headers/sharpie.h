@@ -66,7 +66,6 @@ void __sharpie_hard_mute(void);
 void __sharpie_vblnk(void);
 void __sharpie_bank(int bank);
 void __sharpie_save(void);
-void __sharpie_append_save(void);
 void __sharpie_halt(void);
 void __sharpie_crash(void);
 int __sharpie_random(int maxExclusive);
@@ -101,5 +100,7 @@ void __sharpie_move_cursor(int x, int y);
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
+
+// TODO: Macro for save and constant/macro for save RAM pointer
 
 #define button_down(state, btn) (((state) & (btn)))
