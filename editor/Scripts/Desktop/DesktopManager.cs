@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using SharpieStudio.Apps;
+using SharpieStudio.OS;
 
 namespace SharpieStudio.Desktop;
 
@@ -13,6 +14,18 @@ public partial class DesktopManager : Node
 
     [Export]
     public Control QuickLaunchArea { get; set; }
+
+    [Export]
+    public Texture2D FolderIcon { get; set; }
+
+    [Export]
+    public Texture2D CFileIcon { get; set; }
+
+    [Export]
+    public Texture2D AsmFileIcon { get; set; }
+
+    [Export]
+    public Texture2D TextFileIcon { get; set; }
 
     private static readonly PackedScene WindowScene = GD.Load<PackedScene>(
         "res://Scenes/window_frame.tscn"
@@ -77,22 +90,19 @@ public partial class DesktopManager : Node
     public override void _Ready()
     {
         ChildEnteredTree += OnWindowCreated;
+        SystemEvents.OnFileSystemChanged += RebuildDesktop;
 
         foreach (var win in GetChildren().OfType<WindowFrame>())
         {
             win.OnCloseRequested += OnWindowCloseRequested;
         }
         LoadDefaultApps();
+        RebuildDesktop();
     }
 
     private void LoadDefaultApps()
     {
         using var dirAccess = DirAccess.Open("res://Resources/Apps");
-
-        if (!dirAccess.DirExists("user://Desktop"))
-        {
-            Error err = DirAccess.MakeDirAbsolute("user://Desktop");
-        }
 
         foreach (
             var resourceFile in dirAccess
@@ -182,5 +192,20 @@ public partial class DesktopManager : Node
         win.OnFocusRequested -= () => FocusTaskbarIcon(proc);
         win.QueueFree();
         this.UnfocusAppIcons();
+    }
+
+    private void RebuildDesktop()
+    {
+        foreach (var icon in DesktopArea.GetChildren().OfType<DesktopIcon>())
+        {
+            icon.QueueFree();
+        }
+
+        OccupiedCells.Clear();
+
+        if (!DirAccess.DirExistsAbsolute("user://Desktop"))
+            DirAccess.MakeDirAbsolute("user://Desktop");
+
+        using var dirAccess = DirAccess.Open("user://Desktop");
     }
 }
