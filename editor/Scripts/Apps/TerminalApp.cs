@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using SharpieStudio.OS;
 using FileAccess = Godot.FileAccess;
 
 namespace SharpieStudio.Apps;
@@ -193,6 +194,7 @@ public partial class TerminalApp : PanelContainer, IApp
             );
             return;
         }
+        SystemEvents.NotifyFileSystemChanged();
     }
 
     private void CreateFile(string fileName)
@@ -209,6 +211,7 @@ public partial class TerminalApp : PanelContainer, IApp
                 );
                 return;
             }
+            SystemEvents.NotifyFileSystemChanged();
         }
     }
 
@@ -271,6 +274,7 @@ public partial class TerminalApp : PanelContainer, IApp
             PrintLine($"rm: cannot remove '{target}': No such file or directory");
             return;
         }
+        SystemEvents.NotifyFileSystemChanged();
     }
 
     private static Error RemoveRecursive(string absolutePath)
