@@ -182,8 +182,21 @@ public partial class WindowFrame : PanelContainer, IConfigurable<AppResource>, I
     {
         TitleLabel.Text = data.AppName;
 
-        var app = data.AppScene.Instantiate();
-        AppArea.AddChild(app);
+        if (data.AppScene is not null)
+        {
+            var app = data.AppScene.Instantiate();
+            AppArea.AddChild(app);
+        }
+        else
+        {
+            var placeholder = new Label
+            {
+                Text = $"No default app found for:\n{data.AppName}",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            AppArea.AddChild(placeholder);
+        }
     }
 
     public override void _Process(double delta)

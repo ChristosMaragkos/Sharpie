@@ -196,16 +196,50 @@ public partial class DesktopManager : Node
 
     private void RebuildDesktop()
     {
+        ClearDesktop();
+
+        if (!DirAccess.DirExistsAbsolute("user://Desktop"))
+            DirAccess.MakeDirAbsolute("user://Desktop");
+
+        using var dirAccess = DirAccess.Open("user://Desktop");
+
+        foreach (var dir in dirAccess.GetDirectories())
+        {
+            var folder = new AppResource
+            {
+                AppName = dir,
+                Icon = FolderIcon,
+                AppScene = null, // TODO: Hook up the file explorer
+            };
+            AddAppToDesktop(folder);
+        }
+
+        foreach (var file in dirAccess.GetFiles())
+        {
+            Texture2D icon = TextFileIcon;
+
+            if (file.EndsWith(".c"))
+                icon = CFileIcon;
+            else if (file.EndsWith(".asm"))
+                icon = AsmFileIcon;
+
+            var fileRes = new AppResource
+            {
+                AppName = file,
+                Icon = icon,
+                AppScene = null, // TODO: Hook up the text editor/code editor
+            };
+            AddAppToDesktop(fileRes);
+        }
+    }
+
+    private void ClearDesktop()
+    {
         foreach (var icon in DesktopArea.GetChildren().OfType<DesktopIcon>())
         {
             icon.QueueFree();
         }
 
         OccupiedCells.Clear();
-
-        if (!DirAccess.DirExistsAbsolute("user://Desktop"))
-            DirAccess.MakeDirAbsolute("user://Desktop");
-
-        using var dirAccess = DirAccess.Open("user://Desktop");
     }
 }
