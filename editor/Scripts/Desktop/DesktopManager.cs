@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -95,11 +94,9 @@ public partial class DesktopManager : Node
     {
         ChildEnteredTree += OnWindowCreated;
         SystemEvents.OnFileSystemChanged += RebuildDesktop;
-
-        foreach (var win in GetChildren().OfType<WindowFrame>())
-        {
-            win.OnCloseRequested += OnWindowCloseRequested;
-        }
+        SystemEvents.OnAppLaunchRequested += TryOpenWindow;
+        SystemEvents.OnAppLaunchRequested += (_, _1) =>
+            GD.Print($"Tried to launch {_.AppName} with args ", _1);
         LoadDefaultApps();
         RebuildDesktop();
     }

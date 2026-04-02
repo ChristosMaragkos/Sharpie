@@ -3,7 +3,7 @@ using SharpieStudio.OS;
 
 namespace SharpieStudio.Apps;
 
-public partial class FileExplorer : VBoxContainer
+public partial class FileExplorer : VBoxContainer, IApp
 {
     [Export]
     public Texture2D FolderIcon { get; set; }
@@ -121,5 +121,11 @@ public partial class FileExplorer : VBoxContainer
 
             SystemEvents.RequestAppLaunch(fileResource);
         }
+    }
+
+    public void Run(string[] args)
+    {
+        if (args.Length > 0 && DirAccess.DirExistsAbsolute(args[0]))
+            CurrentPath = args[0];
     }
 }

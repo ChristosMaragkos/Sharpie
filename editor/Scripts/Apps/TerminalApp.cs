@@ -133,10 +133,48 @@ public partial class TerminalApp : PanelContainer, IApp
                 GetTree().Quit();
                 break;
 
+            case "explorer":
+                PrintLine("Opening file explorer...");
+                OpenExplorer(args);
+                break;
+
             default:
-                PrintLine($"{cmd}: command not found");
+                PrintLine($"Shell: {cmd}: command not found");
                 break;
         }
+    }
+
+    private void OpenExplorer(string[] args)
+    {
+        string targetPath = CurrentDir;
+        if (args.Length > 0)
+        {
+            string requestedPath = args[0];
+
+            if (requestedPath.StartsWith('~') || requestedPath.StartsWith("user://"))
+            {
+                targetPath = targetPath.Replace("~", "user://");
+            }
+            else
+            {
+                string current = _fs.GetCurrentDir();
+                targetPath = current.EndsWith('/')
+                    ? current + requestedPath
+                    : current + "/" + requestedPath;
+            }
+        }
+
+        if (!DirAccess.DirExistsAbsolute(targetPath))
+        {
+            string displayPath = args.Length > 0 ? args[0] : targetPath;
+            PrintLine($"explorer: {displayPath}: No such directory");
+            return;
+        }
+
+        var scene = GD.Load<PackedScene>("res://Scenes/Apps/file_explorer.tscn");
+        var explorer = new AppResource { AppScene = scene, AppName = targetPath };
+
+        SystemEvents.RequestAppLaunch(explorer, targetPath);
     }
 
     private void ListDirectory(HashSet<char> flags)

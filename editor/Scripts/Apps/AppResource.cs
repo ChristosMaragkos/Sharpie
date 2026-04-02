@@ -16,4 +16,7 @@ public partial class AppResource : Resource
 
     [Export]
     public PackedScene AppScene;
+
+    [Export]
+    public bool IsSingleton = false;
 }

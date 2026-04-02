@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ctd2xruwqhpmq"]
 
 [ext_resource type="Theme" uid="uid://dq36vara0cacl" path="res://Themes/Windows98/theme.tres" id="1_61qyc"]
-[ext_resource type="Script" uid="uid://d04pcuf5pd5ms" path="res://Scripts/Apps/FileExplorer.cs" id="2_utt20"]
+[ext_resource type="Script" uid="uid://dynd2758mylu1" path="res://Scripts/Apps/FileExplorer.cs" id="2_utt20"]
 [ext_resource type="Texture2D" uid="uid://dnxwpanyb0jdu" path="res://Assets/ProgrammerArt/folder.png" id="3_we6ge"]
 [ext_resource type="Texture2D" uid="uid://bkn1p83ls47x7" path="res://Assets/ProgrammerArt/c_file.png" id="4_8gc05"]
 [ext_resource type="Texture2D" uid="uid://cmjd205x1yxbd" path="res://Assets/ProgrammerArt/asm_file.png" id="5_ee838"]
@@ -40,7 +40,7 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_vertical = 3
 max_text_lines = 2
-text_overrun_behavior = 5
+text_overrun_behavior = 6
 max_columns = 0
 same_column_width = true
 fixed_column_width = 72
