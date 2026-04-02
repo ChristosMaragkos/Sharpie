@@ -102,16 +102,21 @@ public partial class TerminalApp : PanelContainer, IApp
                 OutputDisplay.Clear();
                 break;
 
-            case "exit":
-                ((IApp)this).GetEnclosingWindow().RequestClose();
-                break;
-
             case "cat":
                 CatFile(args);
                 break;
 
             case "rm":
                 RemoveItem(args, flags);
+                break;
+
+            case "exit":
+                ((IApp)this).GetEnclosingWindow().RequestClose();
+                break;
+
+            case "poweroff":
+                PrintLine("Powering off. Bye bye!");
+                GetTree().Quit();
                 break;
 
             default:
