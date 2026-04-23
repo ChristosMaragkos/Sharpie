@@ -1,24 +1,17 @@
-# Dotnet
 **/obj
 **/bin
+/res
 
-# Editor
 .vscode
 .editorconfig
 
-# Sharpie
 *.bin
 *.shr
 !bios.bin
 /distr
-/res
 
-# Godot
-**/.godot/
-*.tmp
-# Just in case Godot keeps fighting to produce its own solution:
-*.sln
-!editor/Assets/*.png
+*.ini
 
-# Generic
-*.log
+*.png
+!font_small.png
+!icon.png
