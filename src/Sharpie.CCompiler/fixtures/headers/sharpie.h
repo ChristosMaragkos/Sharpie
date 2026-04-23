@@ -47,7 +47,7 @@ void __sharpie_pal_reset(void);
 void __sharpie_print(const char *str, int grid_x, int grid_y);
 
 // Hardware
-void __sharpie_draw(int x, int y, int id, int attr_and_type);
+void __sharpie_draw(int x, int y, char id, int attr_and_type);
 void __sharpie_cls(int color);
 void __sharpie_hard_cls(int color);
 void __sharpie_cam(int dx, int dy);

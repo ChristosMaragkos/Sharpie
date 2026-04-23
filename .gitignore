@@ -10,8 +10,6 @@
 !bios.bin
 /distr
 
-*.ini
-
 *.png
 !font_small.png
 !icon.png
