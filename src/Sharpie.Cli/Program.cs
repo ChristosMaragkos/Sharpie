@@ -3,6 +3,7 @@ using Sharpie.Assembler;
 using Sharpie.Assembler.Utilities;
 using Sharpie.CCompiler;
 using Sharpie.Cli.Options;
+using Sharpie.Tools;
 
 namespace Sharpie.Cli;
 
@@ -132,13 +133,67 @@ class Program
 
             string firstFileExt = Path.GetExtension(inputList[0]).ToLower();
 
-            if (inputList.Count > 1 && firstFileExt is not ".c")
+            if (inputList.Count > 1 && firstFileExt is not ".c" and not ".png")
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Multi-file input is only supported for C compilation.");
+                Console.Error.WriteLine(
+                    "Multi-file input is only supported for .c and .png files."
+                );
                 Console.ResetColor();
                 return 1;
             }
+
+            if (firstFileExt is ".png")
+            {
+                Console.WriteLine($"[PNG] Converting {inputList.Count} image(s)...");
+
+                var format = options.StopAtAsm ? OutputFormat.Assembly : OutputFormat.C;
+
+                string outputDir = ".";
+                if (options.Output != null)
+                {
+                    outputDir = Path.HasExtension(options.Output)
+                        ? Path.GetDirectoryName(options.Output) ?? "."
+                        : options.Output;
+
+                    if (!Directory.Exists(outputDir))
+                        Directory.CreateDirectory(outputDir);
+                }
+
+                if (
+                    options.IsFirmware
+                    || options.Title is not "Untitled"
+                    || options.Author is not "Anonymous"
+                )
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine(
+                        "Metadata and firmware flags (-t, -a, -f) are ignored when converting images."
+                    );
+                    Console.ResetColor();
+                }
+
+                foreach (var img in inputList)
+                {
+                    if (
+                        !Path.GetExtension(img)
+                            .Equals(".png", StringComparison.CurrentCultureIgnoreCase)
+                    )
+                        throw new Exception($"Mixed input types! Expected .png, got {img}");
+
+                    Console.WriteLine($"      -> {img}");
+                    ImageConverter.ConvertImage(img, outputDir, format, false);
+                }
+
+                sw.Stop();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(
+                    $"Conversion completed in {sw.ElapsedMilliseconds / 1000f} seconds."
+                );
+                Console.ResetColor();
+                return 0;
+            }
+
             if (
                 options.IsFirmware
                 && (options.Title is not "Untitled" || options.Author is not "Anonymous")

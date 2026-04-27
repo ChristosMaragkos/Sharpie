@@ -21,6 +21,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Sharpie.Assembler\Sharpie.Assembler.csproj" />
         <ProjectReference Include="..\Sharpie.CCompiler\Sharpie.CCompiler.csproj" />
+        <ProjectReference Include="..\Sharpie.Tools\Sharpie.Tools.csproj" />
     </ItemGroup>
 
 </Project>

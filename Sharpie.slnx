@@ -6,5 +6,6 @@
     <Project Path="src/Sharpie.CCompiler/Sharpie.CCompiler.csproj" />
     <Project Path="src/Sharpie.Generator/Sharpie.Generator.csproj" />
     <Project Path="src/Sharpie.Assembler/Sharpie.Assembler.csproj" />
+    <Project Path="src/Sharpie.Tools/Sharpie.Tools.csproj" />
   </Folder>
 </Solution>
