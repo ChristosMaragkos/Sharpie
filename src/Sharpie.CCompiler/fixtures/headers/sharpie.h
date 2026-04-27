@@ -4,6 +4,17 @@
 
 typedef unsigned int size_t;
 
+typedef signed int int16_t;
+typedef unsigned int uint16_t;
+
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+
+#define SRAM_START ((volatile uint8_t *)0xF820)
+#define SRAM_SIZE 512
+
+#define ARAM_START ((volatile uint8_t *)0xF800)
+
 typedef enum {
   ATTR_NONE = 0,
   ATTR_HFLIP = 1 << 0,
@@ -100,7 +111,5 @@ void __sharpie_move_cursor(int x, int y);
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
-
-// TODO: Macro for save and constant/macro for save RAM pointer
 
 #define button_down(state, btn) (((state) & (btn)))
