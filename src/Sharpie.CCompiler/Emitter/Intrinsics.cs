@@ -2,7 +2,7 @@ namespace Sharpie.CCompiler;
 
 public partial class SharpieEmitter
 {
-    private static bool TryEmitIntrinsic(string funcName, int targetReg, EmissionContext context)
+    private static bool TryEmitIntrinsic(string funcName, EmissionContext context)
     {
         var biosAliases = new Dictionary<string, string>
         {

@@ -8,6 +8,7 @@
 ; SOURCE: inline_asm.c
 ; ----------------------------------
 .REGION FIXED
+; This block should exist outside of the method.
 .GLOBAL
 Main:
     XOR r1, r1

@@ -372,4 +372,37 @@ public partial class SharpieEmitter
 
         return (int)((sizeBytes + 1) / 2);
     }
+
+    private static unsafe void ParseAndEmitAsmString(CXCursor stmt, Action<string> emitLine)
+    {
+        var range = clang.getCursorExtent(stmt);
+        var tu = clang.Cursor_getTranslationUnit(stmt);
+        uint numTokens = 0;
+        CXToken* tokens = null;
+
+        clang.tokenize(tu, range, &tokens, &numTokens);
+
+        for (uint i = 0; i < numTokens; i++)
+        {
+            var token = tokens[i];
+            if (clang.getTokenKind(token) is CXTokenKind.CXToken_Literal)
+            {
+                var cxString = clang.getTokenSpelling(tu, token);
+                var asmString = cxString.ToString();
+                clang.disposeString(cxString);
+
+                asmString = asmString.Trim('"');
+                asmString = asmString.Replace("\\n", "\n").Replace("\\t", "\t");
+
+                var asmLines = asmString.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var line in asmLines)
+                {
+                    emitLine(line.Trim());
+                }
+            }
+        }
+
+        clang.disposeTokens(tu, tokens, numTokens);
+    }
 }

@@ -57,6 +57,48 @@ public sealed partial class SharpieEmitter
 
         HandleGlobals(asm, globalNames, globalVars, roData, stringPool);
 
+        var topLevelAsm = new List<CXCursor>();
+        foreach (var child in GetChildren(translationUnitCursor))
+        {
+            if (child.Kind == CXCursorKind.CXCursor_AsmStmt)
+            {
+                topLevelAsm.Add(child);
+            }
+            else if (child.Kind == CXCursorKind.CXCursor_UnexposedDecl)
+            {
+                unsafe
+                {
+                    var range = clang.getCursorExtent(child);
+                    var tu = clang.Cursor_getTranslationUnit(child);
+                    uint numTokens = 0;
+                    CXToken* tokens = null;
+
+                    clang.tokenize(tu, range, &tokens, &numTokens);
+
+                    if (numTokens > 0)
+                    {
+                        var cxString = clang.getTokenSpelling(tu, tokens[0]);
+                        var firstToken = cxString.ToString();
+                        clang.disposeString(cxString);
+
+                        if (firstToken == "asm" || firstToken == "__asm__" || firstToken == "__asm")
+                        {
+                            topLevelAsm.Add(child);
+                        }
+                    }
+                    clang.disposeTokens(tu, tokens, numTokens);
+                }
+            }
+        }
+
+        if (topLevelAsm.Count > 0)
+        {
+            foreach (var asmStmt in topLevelAsm)
+            {
+                ParseAndEmitAsmString(asmStmt, line => asm.AppendLine(line));
+            }
+        }
+
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
             .ToList();
