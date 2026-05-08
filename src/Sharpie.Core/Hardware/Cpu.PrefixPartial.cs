@@ -32,7 +32,7 @@ internal partial class Cpu
             {
                 pcDelta = 3;
                 var x = IndexFromOpcode(prefixed);
-                var lowByte = (byte)((GetRegister(x) & 0x00FF));
+                var lowByte = (byte)(GetRegister(x) & 0x00FF);
                 var address = _mobo.ReadWord(_pc + 1);
                 _mobo.WriteByte(address, lowByte);
                 break;
@@ -403,6 +403,13 @@ internal partial class Cpu
                 break;
             }
 
+            case 0xFA: // BANK
+            {
+                var x = _mobo.ReadByte(_pc + 1);
+                GetRegister(x) = (ushort)_mobo.GetCurrentBank();
+                break;
+            }
+
             case 0xFF: // HALT
             {
                 _mobo.TriggerSegfault(SegfaultType.ManualTrigger);
@@ -419,7 +426,6 @@ internal partial class Cpu
 
     private void ComputeAndJump(ref ushort pcDelta)
     {
-        pcDelta = 0;
         var x = _mobo.ReadWord(_pc + 1) & 0x0F;
         var target = GetRegister(x);
         _pc = target;

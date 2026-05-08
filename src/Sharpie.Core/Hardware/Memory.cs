@@ -39,6 +39,8 @@ internal class Memory
         _currentBankIndex = index;
     }
 
+    public int GetBank() => _currentBankIndex;
+
     private static bool IsSwitchableRegion(ushort address) =>
         address >= SwitchableRomStart && address <= SwitchableRomEnd;
 

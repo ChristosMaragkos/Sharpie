@@ -518,4 +518,9 @@ internal class Motherboard : IMotherboard
     {
         _ram.LoadData(Memory.SaveRamStart, saveData.Take(512).ToArray());
     }
+
+    public int GetCurrentBank()
+    {
+        return _ram.GetBank();
+    }
 }

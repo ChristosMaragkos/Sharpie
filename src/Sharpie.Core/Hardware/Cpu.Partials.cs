@@ -12,7 +12,7 @@ internal partial class Cpu
     private partial void Execute_LDM(byte opcode, ref ushort pcDelta)
     {
         var x = _mobo.ReadByte(_pc + 1);
-        var address = _mobo.ReadWord((_pc + 2));
+        var address = _mobo.ReadWord(_pc + 2);
         GetRegister(x) = _mobo.ReadWord(address);
     }
 
@@ -101,7 +101,7 @@ internal partial class Cpu
 
         var result = (ushort)(GetRegister(x) - GetRegister(y));
         UpdateFlags(result, GetRegister(x), GetRegister(y), true);
-        GetRegister(x) = (ushort)result;
+        GetRegister(x) = result;
     }
 
     private partial void Execute_MUL(byte opcode, ref ushort pcDelta)
@@ -212,7 +212,7 @@ internal partial class Cpu
         var shiftAmount = GetRegister(y) & 0x0F;
         var original = GetRegister(x);
 
-        var result = GetRegister(x) << shiftAmount;
+        var result = original << shiftAmount;
         var truncated = (ushort)result;
 
         UpdateLogicFlags(truncated);
@@ -255,6 +255,9 @@ internal partial class Cpu
 
         var carry = IsFlagOn(CpuFlags.Carry) ? 1 : 0;
         var result = GetRegister(x) + GetRegister(y) + carry;
+
+        UpdateFlags(result, GetRegister(x), GetRegister(y));
+        GetRegister(x) = (ushort)result;
     }
 
     private partial void Execute_INC(byte opcode, ref ushort pcDelta)
@@ -577,7 +580,6 @@ internal partial class Cpu
         var attr = (byte)attrType; // get the low byte
         var type = (byte)(attrType >> 8);
 
-        var slotIndex = _mobo.GetOamCursor();
         _mobo.WriteSpriteEntry(GetRegister(x), GetRegister(y), spriteId, attr, type);
     }
 
@@ -611,7 +613,7 @@ internal partial class Cpu
         var rChannel = _mobo.ReadByte(_pc + 1);
         var channel = (byte)GetRegister(rChannel);
         if (channel > 7)
-            channel = (byte)7;
+            channel = 7;
         _mobo.StopChannel(channel);
     }
 
@@ -730,7 +732,7 @@ internal partial class Cpu
         var rY = _mobo.ReadByte(_pc + 1);
 
         var entry = _mobo.ReadSpriteEntry(GetRegister(rSource));
-        (GetRegister(rY), GetRegister(rY)) = (entry.X, entry.Y);
+        (GetRegister(rX), GetRegister(rY)) = (entry.X, entry.Y);
     }
 
     private partial void Execute_OAMTAG(byte opcode, ref ushort pcDelta)

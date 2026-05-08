@@ -34,6 +34,7 @@ internal interface IMotherboard
 
     void SwapColor(byte oldIndex, byte newIndex);
     void SetCurrentBank(byte bankIndex);
+    int GetCurrentBank();
     void StopSystem();
     ushort CheckCollision(int srcIndex);
 
