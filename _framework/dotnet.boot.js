@@ -1,7 +1,7 @@
 export const config = /*json-start*/{
   "mainAssemblyName": "Sharpie.Runner.Web.dll",
   "resources": {
-    "hash": "sha256-CUUKXC+aDPzT0LZsDS5GAIHPhgM+MFUt0I/XagXkkuU=",
+    "hash": "sha256-x1X5bWL/Ohxo+129DLj2WnueEnaup/YIqbiWup1CERY=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.js"
@@ -15,7 +15,7 @@ export const config = /*json-start*/{
     "wasmNative": [
       {
         "name": "dotnet.native.wasm",
-        "integrity": "sha256-bCrrWSugHM8E/zzXnntBCG64oby7ze++BpeQlLFaazw="
+        "integrity": "sha256-bYPkigv+UYAEM0X+udib9Dh2Ev5wfC4SzeT/mEOkkDU="
       }
     ],
     "coreAssembly": [
@@ -27,32 +27,32 @@ export const config = /*json-start*/{
       {
         "virtualPath": "Sharpie.Core.wasm",
         "name": "Sharpie.Core.wasm",
-        "integrity": "sha256-VwlDK6hi6n1eIirPcw6EpG9Mt7ylxvqHzO/ndbNKMP8="
+        "integrity": "sha256-artHPHT5azs8MwhmlgJyBxRMu6+qvnTuSIRtzdTPKfQ="
       },
       {
         "virtualPath": "Sharpie.Runner.Web.wasm",
         "name": "Sharpie.Runner.Web.wasm",
-        "integrity": "sha256-lszJ7q0nmHDzYqXRDdgVDDd/fyHinbV8X7JJ47nDU8Q="
+        "integrity": "sha256-skm+Ckcc+/8bHnaZ/UE9tNzn32NAdo17utCqQ4+nYvc="
       },
       {
         "virtualPath": "System.Console.wasm",
         "name": "System.Console.wasm",
-        "integrity": "sha256-TEKwHeCgte8d/3zKlbMnzNw1XbAk4erSQDy+NSMRnOs="
+        "integrity": "sha256-SHud6z4I3HY11r647VUp9yOGe3bE6K+KY0Fbkh8oGzw="
       },
       {
         "virtualPath": "System.Linq.wasm",
         "name": "System.Linq.wasm",
-        "integrity": "sha256-9VUk2e7mgypoNib56xgYkYt7rVF8s2Aos03WgO5AwdU="
+        "integrity": "sha256-V288NJEAMVHNZy0AERBEPLmphSNFJIShSmXzpcy8310="
       },
       {
         "virtualPath": "System.Private.CoreLib.wasm",
         "name": "System.Private.CoreLib.wasm",
-        "integrity": "sha256-Vxn/ekJvy4nY+Uj+zamV/hiXhSoqgaPZP88TuoBocH8="
+        "integrity": "sha256-pEgWF+2FWFR3A3UKw7cmQdEGQghPFJIRX+RQ6LPJesE="
       },
       {
         "virtualPath": "System.Runtime.InteropServices.JavaScript.wasm",
         "name": "System.Runtime.InteropServices.JavaScript.wasm",
-        "integrity": "sha256-aecU+XPxWXZvNBewXU1TkSjmdWN+WxF+i6pyKcZv2Zo="
+        "integrity": "sha256-QZA1YRo3nhbG/aA4PEUuP64ncGj2ztf8I2r6vpUYZk4="
       }
     ],
     "assembly": []
