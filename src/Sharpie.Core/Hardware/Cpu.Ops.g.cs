@@ -414,7 +414,7 @@ internal partial class Cpu {
                 break;
 
             default:
-                _mobo.PushDebug($"Unknown Opcode @ {_pc:X4} : 0x{opcode:X2}");
+                _mobo.PushDebug($"Unknown Opcode @ ${_pc:X4} : 0x{opcode:X2}");
                 IsHalted = true;
                 pcDelta = 1;
                 break;
