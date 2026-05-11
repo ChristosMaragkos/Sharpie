@@ -289,9 +289,12 @@ public sealed partial class SharpieEmitter
 
         if (roData.Count > 0)
         {
+            asm.AppendLine("");
             asm.AppendLine("; Readonly Data");
+            asm.AppendLine(".GLOBAL");
             foreach (var dataLine in roData)
                 asm.AppendLine(dataLine);
+            asm.AppendLine(".ENDGLOBAL");
         }
 
         asm.AppendLine(".ENDREGION");
@@ -378,7 +381,7 @@ public sealed partial class SharpieEmitter
                         }
                     }
                 }
-                // Handle primitives and String Literals safely
+                // Handle primitives and string literals safely
                 else if (normalExprs.Count > 0)
                 {
                     var initExpr = PeelExpression(normalExprs.Last());
