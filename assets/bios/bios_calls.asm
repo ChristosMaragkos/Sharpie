@@ -404,7 +404,7 @@ MemMove:
         ADD r2, r3
 
         DEC r2 ; zero-based index
-        DEC r3
+        DEC r1
 
         Loop:
             ALT STP r2, r1
