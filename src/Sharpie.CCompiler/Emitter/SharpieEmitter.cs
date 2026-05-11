@@ -248,7 +248,6 @@ public sealed partial class SharpieEmitter
             {
                 if (context.IsMain)
                     context.Emit("LDI r0, 0");
-                context.Emit(context.ReturnInstruction);
             }
 
             if (_optimize)
