@@ -2,7 +2,7 @@ namespace Sharpie.Assembler.Metadata;
 
 internal static class Constants
 {
-    public static readonly Version BiosVersion = new Version(0, 3);
+    public static readonly Version BiosVersion = new Version(0, 4);
     public static string VersionString =>
         $"{BiosVersion.Major}.{BiosVersion.Minor}.{BiosVersion.Build}";
     public static ushort VersionBinFormat =>
