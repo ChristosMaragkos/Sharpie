@@ -35,8 +35,7 @@ public class SharpieExporter
         // NOTE FOR SELF:
         // Write() writes the entire length of the integer, so CAST TO A BYTE!!!
 
-        writer.Write((byte)(Constants.VersionBinFormat >> 8));
-        writer.Write((byte)(Constants.VersionBinFormat & 0xFF00));
+        writer.Write(Constants.VersionBinFormat);
 
         writer.Write((byte)0xFF);
         writer.Write((byte)0xFF);
