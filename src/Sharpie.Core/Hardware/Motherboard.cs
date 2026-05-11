@@ -189,7 +189,7 @@ internal class Motherboard : IMotherboard
     {
         try
         {
-            var header = fileData.Take(64).ToArray();
+            var header = fileData.Take(80).ToArray();
 
             for (int i = 0; i < 4; i++)
                 _ram.WriteByte((ushort)BiosFlagAddresses.MagicString + i, header[i]);
