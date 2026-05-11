@@ -397,14 +397,13 @@ internal class Motherboard : IMotherboard
 
     public ushort CheckCollision(int srcIndex)
     {
-        var (x, y, id, attr, type) = _oam.ReadEntry(srcIndex);
+        var (x, y, _, _, _) = _oam.ReadEntry(srcIndex);
 
         for (var i = 0; i < OamBank.MaxEntries; i++)
         {
             if (i == srcIndex)
                 continue;
-
-            var (targX, targY, targId, targAttr, targType) = _oam.ReadEntry(i);
+            var (targX, targY, _, targAttr, _) = _oam.ReadEntry(i);
 
             if (
                 (targAttr & (ushort)SpriteFlags.Background) != 0
@@ -458,8 +457,8 @@ internal class Motherboard : IMotherboard
 
     public void MoveCamera(int dx, int dy)
     {
-        _ppu.CamX = (ushort)Math.Clamp((int)_ppu.CamX + dx, 0, ushort.MaxValue);
-        _ppu.CamY = (ushort)Math.Clamp((int)_ppu.CamY + dy, 0, ushort.MaxValue);
+        _ppu.CamX = (ushort)Math.Clamp(_ppu.CamX + dx, 0, ushort.MaxValue);
+        _ppu.CamY = (ushort)Math.Clamp(_ppu.CamY + dy, 0, ushort.MaxValue);
     }
 
     public void SetCamera(ushort x, ushort y)
