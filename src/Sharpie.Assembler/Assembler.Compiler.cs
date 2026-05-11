@@ -129,6 +129,13 @@ public partial class SharpieRomEmitter
                             WriteToRom(ParseWord(token.Args[i], lineNum), buffer, i * 2);
                         }
                         break;
+
+                    case ".PAD":
+                        for (int i = 0; i < ParseNumberLiteral(token.Args[0], false, lineNum); i++)
+                        {
+                            WriteToRom(0, buffer, i);
+                        }
+                        break;
                 }
                 continue;
             }

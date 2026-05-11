@@ -717,6 +717,28 @@ public partial class SharpieRomEmitter
                     tokenLine.Address = CurrentRegion?.Cursor;
                     CurrentRegion!.AdvanceCursor(2 * (args.Length - 1));
                     break;
+                case ".PAD":
+                    if (args.Length < 2)
+                        throw new AssemblySyntaxException(
+                            "Directive .PAD expected a byte amount.",
+                            lineNumber
+                        );
+                    var amount = ParseNumberLiteral(args[1], false, lineNumber);
+                    if (!amount.HasValue)
+                    {
+                        throw new AssemblySyntaxException(
+                            "Directive .PAD expected a valid 16-bit integer literal.",
+                            lineNumber
+                        );
+                    }
+                    if (args.Length > 2)
+                        throw new AssemblySyntaxException(
+                            $"Unexpected Token: {args.Last()}",
+                            lineNumber
+                        );
+                    tokenLine.Address = CurrentRegion?.Cursor;
+                    CurrentRegion!.AdvanceCursor(amount.Value);
+                    break;
 
                 case ".REGION":
                 case ".ENDREGION":
