@@ -23,6 +23,7 @@ public class ControlFlowGraph
             return cfg;
 
         var currentBlock = new BasicBlock { Name = "entry" };
+        cfg.Blocks.Add(currentBlock);
 
         for (var i = 0; i < instructions.Count; i++)
         {
