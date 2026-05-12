@@ -47,7 +47,7 @@ public sealed class EmissionContext
     // track callee saved registers (r8-r15)
     public List<int> UsedPreservedRegisters { get; } = [];
 
-    public List<Instruction> Instructions { get; } = [];
+    public List<Instruction> Instructions { get; set; } = [];
 
     public Stack<string> BreakLabels { get; } = new();
     public Stack<string> ContinueLabels { get; } = new();
