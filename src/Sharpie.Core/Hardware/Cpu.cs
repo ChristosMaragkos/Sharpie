@@ -22,6 +22,7 @@ internal partial class Cpu
     }
 
     private ushort _pc;
+    public ushort ProgramCounter => _pc;
     private ushort _sp;
     private ushort[] _registers = new ushort[32];
     private int _registerBankOffset => ((FlagRegister & 0x8000) >> 15) == 1 ? 16 : 0;

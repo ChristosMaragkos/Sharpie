@@ -502,15 +502,24 @@ internal class Motherboard : IMotherboard
 
     public void Step()
     {
-        for (var i = 0; i < 16000; i++)
+        try
         {
-            if (_cpu.IsAwaitingVBlank || _cpu.IsHalted)
-                break;
-            _cpu.Cycle();
-        }
+            for (var i = 0; i < 16000; i++)
+            {
+                if (_cpu.IsAwaitingVBlank || _cpu.IsHalted)
+                    break;
+                _cpu.Cycle();
+            }
 
-        VBlank();
-        _cpu.IsAwaitingVBlank = false;
+            VBlank();
+            _cpu.IsAwaitingVBlank = false;
+        }
+        catch (Exception e)
+        {
+            PushDebug($"Encountered fatal error @ ${_cpu.ProgramCounter:X4}:\n{e.Message}");
+            _dbg?.LogAll();
+            throw;
+        }
     }
 
     internal void LoadSaveData(byte[] saveData)
