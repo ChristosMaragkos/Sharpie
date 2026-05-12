@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: bytes.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -21,8 +22,6 @@ Main:
     LDI r1, 68
     INC r1
     MOV r8, r1
-    MOV r1, r15
-    MOV r1, r8
     ALT STA r1, r15
     LDI r1, 99
     MOV r2, r15

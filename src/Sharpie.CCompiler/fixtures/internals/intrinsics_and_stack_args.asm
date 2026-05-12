@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: intrinsics_and_stack_args.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -33,9 +34,6 @@ Main:
     CALL _func_add_six_numbers
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r8, r1
     XOR r1, r1
@@ -111,11 +109,7 @@ _func_test_memory:
     STA r1, r6
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
-    MOV r8, r1
     LDI r2, 255
     LDI r3, 20
     CALL SYS_MEM_SET

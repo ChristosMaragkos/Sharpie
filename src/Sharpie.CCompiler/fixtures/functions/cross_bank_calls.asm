@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: cross_bank_calls.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -27,9 +28,6 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r8, r1
     LDI r2, _func_calculate_path
@@ -50,9 +48,6 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r10, r1
     MOV r1, r8

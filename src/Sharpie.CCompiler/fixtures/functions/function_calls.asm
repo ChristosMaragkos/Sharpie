@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: function_calls.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -24,9 +25,6 @@ Main:
     MOV r2, r8
     MOV r1, r2
     CALL _func_square
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r9, r1
     MOV r0, r9

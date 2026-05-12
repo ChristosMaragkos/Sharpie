@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: string_literals.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -21,9 +22,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    LDI r9, str_L1
-    LDI r10, str_L2
-    LDI r11, str_L1
     LDI r1, str_L3
     XOR r2, r2
     XOR r3, r3
@@ -31,9 +29,6 @@ Main:
     STA r1, r15
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r8, r1
     LDI r1, 97
@@ -63,12 +58,15 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 ; Readonly Data
+.GLOBAL
 str_L1:
     .DB "Hello from Sharpie", 0
 str_L2:
     .DB "This is a compiler test", 0
 str_L3:
     .DB "Something in the way", 0
+.ENDGLOBAL
 .ENDREGION
 

@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: alloca_and_fp.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -24,9 +25,6 @@ Main:
     STA r1, r15
     LDI r1, 100
     CALL SYS_ALLOC_STACKFRAME
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
     MOV r8, r1
     LDI r1, 42

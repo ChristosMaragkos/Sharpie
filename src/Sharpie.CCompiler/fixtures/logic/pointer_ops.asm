@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: pointer_ops.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -22,8 +23,6 @@ Main:
     MOV r15, r6
     LDI r1, 500
     STA r1, r15
-    MOV r1, r15
-    MOV r10, r1
     LDI r8, 1000
     LDI r1, 42
     STA r1, r8

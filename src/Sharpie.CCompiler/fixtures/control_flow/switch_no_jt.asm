@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: switch_no_jt.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -20,9 +21,6 @@ _func_get_score:
     PUSH r8
     PUSH r9
     MOV r9, r1
-    XOR r1, r1
-    MOV r8, r1
-    MOV r1, r9
     ICMP r1, 5
     JLT default_L6
     ICMP r1, 15
@@ -51,7 +49,9 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 ; Readonly Data
+.GLOBAL
 jt_L7:
     .DW case_5_L3
     .DW default_L6
@@ -64,5 +64,6 @@ jt_L7:
     .DW default_L6
     .DW default_L6
     .DW case_15_L5
+.ENDGLOBAL
 .ENDREGION
 

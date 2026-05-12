@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: unions.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -21,12 +22,6 @@ Main:
     MOV r15, r6
     LDI r1, 258
     STA r1, r15
-    ALT LDP r1, r15
-    MOV r8, r1
-    MOV r2, r15
-    INC r2
-    ALT LDP r1, r2
-    MOV r9, r1
     LDI r1, 10
     ALT STA r1, r15
     LDP r0, r15

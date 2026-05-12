@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: struct_returns.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -27,11 +28,6 @@ Main:
     MOV r1, r15
     IADD r1, 4
     CALL _func_make_point
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 8
-    LDP r1, r0
-    POP r0
     MOV r1, r15
     IADD r1, 4
     MOV r2, r15
@@ -53,14 +49,6 @@ Main:
     MOV r1, r15
     IADD r1, 10
     CALL _func_make_point
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 8
-    LDP r1, r0
-    MOV r0, r15
-    IADD r0, 14
-    LDP r2, r0
-    POP r0
     MOV r2, r15
     IADD r2, 10
     LDP r1, r2
@@ -95,7 +83,6 @@ _func_make_point:
     MOV r8, r1
     MOV r9, r2
     MOV r10, r3
-    MOV r1, r15
     MOV r1, r9
     STA r1, r15
     MOV r1, r10

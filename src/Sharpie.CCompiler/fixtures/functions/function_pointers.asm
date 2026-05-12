@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: function_pointers.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -41,11 +42,6 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 4
-    LDP r1, r0
-    POP r0
     MOV r1, r0
     MOV r8, r1
     MOV r0, r15
@@ -61,11 +57,6 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 4
-    LDP r1, r0
-    POP r0
     MOV r1, r0
     MOV r9, r1
     MOV r1, r8

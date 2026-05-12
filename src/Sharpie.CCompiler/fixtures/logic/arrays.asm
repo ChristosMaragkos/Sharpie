@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: arrays.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -17,7 +18,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     MOV r1, r15
     LDI r2, 3
     CALL _func_fill_array
@@ -56,7 +56,6 @@ while_start_L2:
     INC r8
     JMP while_start_L2
 while_end_L3:
-    RET
 epilogue_L1:
     POP r10
     POP r9

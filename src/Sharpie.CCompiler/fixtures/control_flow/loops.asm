@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: loops.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -26,7 +27,6 @@ for_start_L1:
     JGE for_end_L3
     INC r11
 for_inc_L2:
-    MOV r1, r10
     INC r10
     JMP for_start_L1
 for_end_L3:
@@ -60,7 +60,6 @@ do_cond_L7:
     JLT do_start_L6
 do_end_L8:
     XOR r0, r0
-    HALT
 epilogue_L0:
     POP r13
     POP r12

@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: struct_params.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -19,8 +20,6 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
-    IADD r1, 4
     LDI r1, 10
     MOV r2, r15
     IADD r2, 4
@@ -42,11 +41,6 @@ Main:
     MOV r2, r4
     MOV r3, r5
     CALL _func_test_registers
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 8
-    LDP r1, r0
-    POP r0
     MOV r1, r0
     MOV r8, r1
     LDI r1, 100
@@ -71,11 +65,6 @@ Main:
     CALL _func_test_stack
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 8
-    LDP r1, r0
-    POP r0
     MOV r1, r0
     MOV r9, r1
     MOV r1, r15
@@ -179,7 +168,6 @@ _func_test_pointer:
     MOV r8, r1
     LDI r1, 30
     STA r1, r8
-    RET
 epilogue_L3:
     POP r8
     RET

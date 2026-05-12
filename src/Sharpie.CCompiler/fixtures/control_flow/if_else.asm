@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: if_else.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -17,8 +18,6 @@ Main:
     JMP epilogue_L0
 else_L2:
     XOR r0, r0
-    JMP epilogue_L0
-if_L1:
 epilogue_L0:
     HALT
 .ENDGLOBAL

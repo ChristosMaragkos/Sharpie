@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: multiple_functions.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:

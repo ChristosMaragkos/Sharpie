@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: ternary.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -20,11 +21,7 @@ Main:
     STA r1, r6
     LDI r1, 2
     ALT RND r0, r1
-    PUSH r0
-    LDP r1, r15
-    POP r0
     MOV r1, r0
-    MOV r8, r1
     ICMP r1, 0
     JNE ternary_false_L1
     LDI r0, 69

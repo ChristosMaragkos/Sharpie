@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: stack_frame.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -102,13 +103,6 @@ _func_do_stuff:
     STA r1, r0
     LDI r1, 8
     CALL SYS_ALLOC_STACKFRAME
-    PUSH r0
-    MOV r0, r15
-    IADD r0, 8
-    LDP r1, r0
-    POP r0
-    MOV r1, r0
-    MOV r9, r1
     LDI r1, 99
     ALT STA r1, r15
     LDP r1, r8

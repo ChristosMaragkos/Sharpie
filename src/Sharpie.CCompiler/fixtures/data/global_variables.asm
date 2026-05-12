@@ -7,11 +7,12 @@
 ; ----------------------------------
 ; SOURCE: global_variables.c
 ; ----------------------------------
+
 .REGION FIXED
 ; Global Variables
 .GLOBAL
 _global_g_score:
-    .DW 0
+    .PAD 2
 .ENDGLOBAL
 .GLOBAL
 _global_g_lives:
@@ -26,7 +27,7 @@ _global_g_map:
 _global_g_p1:
     .DW 100
     .DB 5
-    .DB 0
+    .PAD 1
 .GLOBAL
 Main:
     PUSH r15

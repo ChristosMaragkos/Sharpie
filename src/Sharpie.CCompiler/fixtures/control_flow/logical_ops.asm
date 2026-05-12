@@ -7,6 +7,7 @@
 ; ----------------------------------
 ; SOURCE: logical_ops.c
 ; ----------------------------------
+
 .REGION FIXED
 .GLOBAL
 Main:
@@ -67,8 +68,6 @@ logical_end_L6:
     JMP epilogue_L1
 else_L3:
     LDI r0, 69
-    JMP epilogue_L1
-if_L2:
 epilogue_L1:
     POP r11
     POP r10
