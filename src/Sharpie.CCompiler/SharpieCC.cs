@@ -40,6 +40,7 @@ public static class SharpieCC
             masterAssembly.AppendLine($"; ----------------------------------");
             masterAssembly.AppendLine($"; SOURCE: {Path.GetFileName(file)}");
             masterAssembly.AppendLine($"; ----------------------------------");
+            masterAssembly.AppendLine("");
             masterAssembly.AppendLine(emitter.EmitTranslationUnit(tu.Cursor));
         }
 

@@ -444,18 +444,11 @@ public sealed partial class SharpieEmitter
                 }
 
                 // Zero-pad any uninitialized space (e.g. `int x;` or partially filled arrays)
-                while (bytesWritten < sizeBytes)
+                var diff = sizeBytes - bytesWritten;
+                if (diff > 0)
                 {
-                    if (sizeBytes - bytesWritten == 1)
-                    {
-                        asm.AppendLine("    .DB 0");
-                        bytesWritten += 1;
-                    }
-                    else
-                    {
-                        asm.AppendLine("    .DW 0");
-                        bytesWritten += 2;
-                    }
+                    asm.AppendLine($"    .PAD {diff}");
+                    bytesWritten += diff;
                 }
 
                 if (!isStatic)
