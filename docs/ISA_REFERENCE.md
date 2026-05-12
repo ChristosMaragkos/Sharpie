@@ -54,7 +54,7 @@
 | `0x7B` | **OUT_R** | `R` | 2 | Log register R to debug console. |  |
 | `0x7C` | **OUT_B** | `B` | 2 | Log immediate byte B to debug console. |  |
 | `0x7D` | **OUT_W** | `W` | 3 | Log immediate word W to debug console. |  |
-| `0x80n` | **RND** | `R, W` | 3 | Family. Random (0 to W-1) into Rn. |  |
+| `0x80n` | **RND** | `R, W` | 3 | Family. Random (0 to W-1) into Rn. | Random (0 to R2 - 1) into Rn. |
 | `0x90` | **FLIPR** | `-` | 1 | Flips between using registers 0-15 and 16-31. |  |
 | `0x91` | **CAM** | `R, R` | 2 | Relatively moves camera by the values in (rX,rY). The values in rX and rY are treated as signed. | Sets the camera position to (rX,rY) |
 | `0x92` | **GETOAM** | `R` | 2 | Copies the current value of the OAM cursor to rX. |  |

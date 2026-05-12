@@ -550,7 +550,7 @@
         "words": 2,
         "pattern": "RW",
         "desc": "Family. Random (0 to W-1) into Rn.",
-        "alt": ""
+        "alt": "Random (0 to R2 - 1) into Rn."
     },
     {
         "hex": "0x90",
