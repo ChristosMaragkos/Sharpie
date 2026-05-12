@@ -10,9 +10,9 @@ public class Instruction
     public string Arg3 { get; set; } = "";
     public string Arg4 { get; set; } = "";
 
-    public bool IsLabel => OriginalText.EndsWith(":");
-    public bool IsDirective => Mnemonic.StartsWith(".");
-    public bool IsComment => OriginalText.StartsWith(";");
+    public bool IsLabel => OriginalText.Trim().EndsWith(':');
+    public bool IsDirective => Mnemonic.Trim().StartsWith('.');
+    public bool IsComment => OriginalText.Trim().StartsWith(';');
 
     public void RebuildText()
     {
@@ -43,10 +43,10 @@ public class Instruction
     {
         var inst = new Instruction { OriginalText = asm };
 
-        if (!asm.EndsWith(":") && !asm.StartsWith(";") && !string.IsNullOrWhiteSpace(asm))
+        if (!asm.EndsWith(':') && !asm.StartsWith(';') && !string.IsNullOrWhiteSpace(asm))
         {
             var codePart = asm.Split(';')[0].Trim();
-            var tokens = codePart.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var tokens = codePart.Split([' ', ','], StringSplitOptions.RemoveEmptyEntries);
 
             if (tokens.Length > 0)
             {
