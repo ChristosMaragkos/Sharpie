@@ -40,6 +40,7 @@ internal partial class Cpu
 
             case 0x12: // STP
             {
+                pcDelta = 2;
                 var (x, y) = ReadRegisterArgs();
                 var value = _mobo.ReadByte(GetRegister(x));
                 _mobo.WriteByte(GetRegister(y), value);
@@ -48,6 +49,7 @@ internal partial class Cpu
 
             case 0x13: // STA
             {
+                pcDelta = 2;
                 var (x, y) = ReadRegisterArgs();
                 var value = (byte)GetRegister(x);
                 var addr = GetRegister(y);
@@ -57,6 +59,7 @@ internal partial class Cpu
 
             case 0x14: // LDS
             {
+                pcDelta = 2;
                 var (x, y) = ReadRegisterArgs();
                 var addr = _sp + (short)GetRegister(y);
                 GetRegister(x) = _mobo.ReadByte(addr);
@@ -65,6 +68,7 @@ internal partial class Cpu
 
             case 0x15: // STS
             {
+                pcDelta = 2;
                 var (x, y) = ReadRegisterArgs();
                 var value = (byte)GetRegister(x);
                 var addr = _sp + (short)GetRegister(y);
@@ -358,8 +362,9 @@ internal partial class Cpu
             }
 
             case >= 0x80
-            and <= 0x8F:
+            and <= 0x8F: // RND
             {
+                pcDelta = 3;
                 var x = IndexFromOpcode(opcode);
                 var max = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F);
                 GetRegister(x) = (ushort)_rng.Next(max);
@@ -392,12 +397,14 @@ internal partial class Cpu
 
             case 0xFC: // MUTE
             {
+                pcDelta = 1;
                 _mobo.StopAllSounds();
                 break;
             }
 
             case 0x91: // CAM
             {
+                pcDelta = 2;
                 var (x, y) = ReadRegisterArgs();
                 _mobo.SetCamera(GetRegister(x), GetRegister(y));
                 break;
@@ -405,6 +412,7 @@ internal partial class Cpu
 
             case 0xFA: // BANK
             {
+                pcDelta = 2;
                 var x = _mobo.ReadByte(_pc + 1);
                 GetRegister(x) = (ushort)_mobo.GetCurrentBank();
                 break;
