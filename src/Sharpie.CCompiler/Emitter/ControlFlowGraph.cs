@@ -41,9 +41,11 @@ public class ControlFlowGraph
                 {
                     currentBlock.Name = labelName;
                 }
+                currentBlock.Instructions.Add(inst);
             }
             else
             {
+                currentBlock.Instructions.Add(inst);
                 var isBranch = inst.Mnemonic.StartsWith('J') || inst.Mnemonic is "RET" or "HALT";
 
                 if (isBranch && i < instructions.Count - 1 && !instructions[i + 1].IsLabel)
@@ -52,8 +54,6 @@ public class ControlFlowGraph
                     cfg.Blocks.Add(currentBlock);
                 }
             }
-
-            currentBlock.Instructions.Add(inst);
         }
 
         var blockMap = cfg
