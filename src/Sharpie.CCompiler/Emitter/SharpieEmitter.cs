@@ -270,6 +270,11 @@ public sealed partial class SharpieEmitter
 
             if (_optimize) // second optimization pass to nuke dead code that survived the first (like redundant PUSH/POP shenanigans)
             {
+                var cfg = ControlFlowGraph.Build(context.Instructions);
+
+                Optimizer.EliminateUnreachableBlocks(cfg, roData);
+                Optimizer.EliminateDeadStores(cfg);
+                context.Instructions = cfg.Flatten();
                 Optimizer.Optimize(context.Instructions);
             }
 
