@@ -137,6 +137,45 @@ public partial class SharpieEmitter
         var needsStack = isRecord || isArray || context.EscapedVariables.Contains(variableName);
         var space = context.AllocateStorage(variableName, needsStack, (int)sizeBytes);
 
+        var initExprs = GetChildren(varDecl)
+            .Where(c =>
+                c.Kind >= CXCursorKind.CXCursor_FirstExpr
+                && c.Kind <= CXCursorKind.CXCursor_LastExpr
+            )
+            .ToList();
+
+        if (isArray && initExprs.Count > 0)
+        {
+            var lastExpr = PeelExpression(initExprs[^1]);
+            if (lastExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
+            {
+                var sourceLabel = GetOrAddStringLiteral(lastExpr, context);
+
+                // better hope clang includes the null terminator
+                int byteLength = (int)lastExpr.Type.SizeOf;
+
+                using var addrReg = context.AcquireTempRegister();
+
+                if (space.Type == StorageType.Stack)
+                {
+                    context.Emit($"MOV r{addrReg.Value}, r15");
+                    AccumulateOffset(addrReg.Value, space.Value, context);
+                }
+                else
+                {
+                    context.Emit($"MOV r{addrReg.Value}, r{space.Value}");
+                }
+
+                if (addrReg.Value != 1)
+                    context.Emit($"MOV r1, r{addrReg.Value}");
+
+                context.Emit($"LDI r2, {sourceLabel}");
+                context.Emit($"LDI r3, {byteLength}");
+                context.Emit("CALL SYS_MEM_COPY");
+                return;
+            }
+        }
+
         // Identify actual inline initialization for arrays/structs
         var initList = GetChildren(varDecl)
             .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
@@ -197,13 +236,6 @@ public partial class SharpieEmitter
             }
             return; // done initializing
         }
-
-        var initExprs = GetChildren(varDecl)
-            .Where(c =>
-                c.Kind >= CXCursorKind.CXCursor_FirstExpr
-                && c.Kind <= CXCursorKind.CXCursor_LastExpr
-            )
-            .ToList();
 
         using var valRegPrimitive = context.AcquireTempRegister();
 
@@ -412,32 +444,8 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_StringLiteral:
                 if (targetReg >= 0)
                 {
-                    unsafe
-                    {
-                        var range = clang.getCursorExtent(node);
-                        var tu = clang.Cursor_getTranslationUnit(node);
-                        uint numTokens = 0;
-                        CXToken* tokens = null;
-
-                        clang.tokenize(tu, range, &tokens, &numTokens);
-                        if (numTokens > 0)
-                        {
-                            var cxString = clang.getTokenSpelling(tu, tokens[0]);
-                            var rawString = cxString.ToString();
-                            clang.disposeString(cxString);
-
-                            if (!context.StringPool.TryGetValue(rawString, out var existingLabel))
-                            {
-                                existingLabel = EmissionContext.GenerateLabel("str");
-                                context.StringPool[rawString] = existingLabel;
-
-                                context.ReadOnlyData.Add($"{existingLabel}:");
-                                context.ReadOnlyData.Add($"    .DB {rawString}, 0");
-                            }
-                            context.Emit($"LDI r{targetReg}, {existingLabel}");
-                        }
-                        clang.disposeTokens(tu, tokens, numTokens);
-                    }
+                    var label = GetOrAddStringLiteral(node, context);
+                    context.Emit($"LDI r{targetReg}, {label}");
                 }
                 return;
 
@@ -1382,5 +1390,37 @@ public partial class SharpieEmitter
             context.Emit($"IADD r{targetReg}, {chunk}");
             offset -= chunk;
         }
+    }
+
+    private static string GetOrAddStringLiteral(CXCursor stringLiteralNode, EmissionContext context)
+    {
+        string rawString = "";
+        unsafe
+        {
+            var range = clang.getCursorExtent(stringLiteralNode);
+            var tu = clang.Cursor_getTranslationUnit(stringLiteralNode);
+            uint numTokens = 0;
+            CXToken* tokens = null;
+
+            clang.tokenize(tu, range, &tokens, &numTokens);
+            if (numTokens > 0)
+            {
+                var cxString = clang.getTokenSpelling(tu, tokens[0]);
+                rawString = cxString.ToString();
+                clang.disposeString(cxString);
+            }
+            clang.disposeTokens(tu, tokens, numTokens);
+        }
+
+        if (!context.StringPool.TryGetValue(rawString, out var existingLabel))
+        {
+            existingLabel = EmissionContext.GenerateLabel("str");
+            context.StringPool[rawString] = existingLabel;
+
+            context.ReadOnlyData.Add($"{existingLabel}:");
+            context.ReadOnlyData.Add($"    .DB {rawString}, 0");
+        }
+
+        return existingLabel;
     }
 }
