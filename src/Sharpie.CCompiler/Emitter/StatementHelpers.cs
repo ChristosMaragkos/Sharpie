@@ -62,9 +62,12 @@ public partial class SharpieEmitter
 
             case CXCursorKind.CXCursor_BreakStmt:
                 if (context.BreakLabels.Count == 0)
+                {
                     throw new InvalidOperationException(
                         "Break statement outside of a loop or switch."
                     );
+                }
+
                 context.Emit($"JMP {context.BreakLabels.Peek()}");
                 break;
 
@@ -105,9 +108,11 @@ public partial class SharpieEmitter
         foreach (var declaration in declarations)
         {
             if (declaration.Kind != CXCursorKind.CXCursor_VarDecl)
+            {
                 throw new InvalidOperationException(
                     $"Unsupported declaration kind in statement: {declaration.Kind}"
                 );
+            }
 
             EmitVariableDeclaration(declaration, context);
         }
@@ -631,7 +636,6 @@ public partial class SharpieEmitter
         {
             // 1. Handle Variables (Locals and Globals)
             case CXCursorKind.CXCursor_DeclRefExpr:
-            {
                 var name = peeled.Spelling.ToString();
 
                 if (context.Locals.TryGetValue(name, out var loc))
@@ -709,35 +713,35 @@ public partial class SharpieEmitter
                     throw new InvalidOperationException($"Unknown variable {name}");
                 }
                 break;
-            }
+
             // 2. Handle Pointer Dereference (*ptr)++
             case CXCursorKind.CXCursor_UnaryOperator
                 when GetUnaryOperatorKind(peeled) == CXUnaryOperatorKind.CXUnaryOperator_Deref:
-            {
-                using var addrReg = context.AcquireTempRegister();
-                var ptrExpr = GetChildren(peeled).First();
-                EmitExpression(ptrExpr, addrReg.Value, context);
-
-                using var valReg = context.AcquireTempRegister();
-
-                context.Emit($"LDP r{valReg.Value}, r{addrReg.Value}");
-
-                if (isPost)
                 {
-                    if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
-                    context.Emit($"{op} r{valReg.Value}");
-                }
-                else
-                {
-                    context.Emit($"{op} r{valReg.Value}");
-                    if (targetReg >= 0)
-                        context.Emit($"MOV r{targetReg}, r{valReg.Value}");
-                }
+                    using var addrReg = context.AcquireTempRegister();
+                    var ptrExpr = GetChildren(peeled).First();
+                    EmitExpression(ptrExpr, addrReg.Value, context);
 
-                context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
-                break;
-            }
+                    using var valReg = context.AcquireTempRegister();
+
+                    context.Emit($"LDP r{valReg.Value}, r{addrReg.Value}");
+
+                    if (isPost)
+                    {
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+                        context.Emit($"{op} r{valReg.Value}");
+                    }
+                    else
+                    {
+                        context.Emit($"{op} r{valReg.Value}");
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+                    }
+
+                    context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
+                    break;
+                }
         }
     }
 
@@ -1293,7 +1297,9 @@ public partial class SharpieEmitter
                 context.Emit($"LDI r{targetReg}, _global_{name}");
             }
             else
+            {
                 throw new InvalidOperationException($"Unknown variable '{name}'");
+            }
         }
         // pointer
         else if (
@@ -1320,9 +1326,11 @@ public partial class SharpieEmitter
 
             long offsetBits = clang.Cursor_getOffsetOfField(fieldDecl);
             if (offsetBits < 0)
+            {
                 throw new InvalidOperationException(
                     $"Could not determine offset for struct field '{peeled.Spelling}'"
                 );
+            }
 
             // Clang gives us the offset in bits, so we divide by 8 to get bytes
             long offsetBytes = offsetBits / 8;
