@@ -48,7 +48,7 @@ public partial class SharpieEmitter
                 context.Emit("LDV r0, r1");
                 return true;
             case "__sharpie_write_vram":
-                context.Emit("STV r1, r2");
+                context.Emit("STV r2, r1");
                 return true;
             case "__sharpie_blit_mode":
                 context.Emit("BLITMODE r1");
