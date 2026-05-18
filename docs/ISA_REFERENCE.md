@@ -80,7 +80,7 @@
 | `0xF8` | **ATTR** | `B` | 2 | Set global text color/attributes. |  |
 | `0xF9` | **SWC** | `R, R` | 2 | Swap Palette: Active`[R1]` = Master`[R2]`. |  |
 | `0xFA` | **BANK** | `R` | 2 | Switch current bank to R1. | Read current bank into R1. |
-| `0xFB` | **BLITMODE** | `B` | 2 | Set the blitter mode. 0: default - PPU processes OAM and text grid. 1: OAM-only. PPU does not process text grid. 2: Text-only. 3: neither text nor OAM are processed. Values above 3 are treated as 3. |  |
+| `0xFB` | **BLITMODE** | `R` | 2 | Set the blitter mode. 0: default - PPU processes OAM and text grid. 1: OAM-only. PPU does not process text grid. 2: Text-only. 3: neither text nor OAM are processed. Values above 3 are treated as 3. |  |
 | `0xFC` | **MUTE** | `-` | 1 | Toggle music sequencer. | Hard Silence: Stop all sound output. |
 | `0xFD` | **COL** | `R, R` | 2 | Check Collision for OAM`[R1]`, store in R2. |  |
 | `0xFE` | **ALT** | `-` | 1 | Prefix. Modifies next opcode logic. |  |

@@ -698,7 +698,8 @@ internal partial class Cpu
 
     private partial void Execute_BLITMODE(byte opcode, ref ushort pcDelta)
     {
-        var value = _mobo.ReadByte(_pc + 1);
+        var reg = _mobo.ReadByte(_pc + 1) & 0xF;
+        var value = GetRegister(reg);
         var mode = value switch
         {
             0 => BlitterMode.Default,

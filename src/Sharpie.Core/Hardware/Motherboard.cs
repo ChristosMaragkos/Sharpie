@@ -314,8 +314,10 @@ internal class Motherboard : IMotherboard
     private void ClearTextGrid()
     {
         for (int i = 0; i < 32; i++)
+        {
             for (int j = 0; j < 32; j++)
                 TextGrid[i, j] = 0xFF;
+        }
     }
 
     public void DrawChar(int x, int y, byte charCode)
