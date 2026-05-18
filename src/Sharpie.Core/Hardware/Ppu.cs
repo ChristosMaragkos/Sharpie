@@ -98,11 +98,10 @@ internal partial class Ppu
 
     public void VBlank(OamBank oam)
     {
-        FillBuffer(BackgroundColorIndex);
-
         if (Mode is BlitterMode.None)
             return;
 
+        FillBuffer(BackgroundColorIndex);
         if (Mode is not BlitterMode.NoOam)
         {
             _totalHudEntries = 0;

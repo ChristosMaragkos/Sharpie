@@ -42,8 +42,9 @@ internal partial class Cpu
 
         const int DisplayWidth = 256;
 
-        var pixelX = (byte)y;
-        var pixelY = (byte)(y >> 8);
+        var coord = GetRegister(y);
+        var pixelX = (byte)coord;
+        var pixelY = (byte)(coord >> 8);
 
         var address = (ushort)((DisplayWidth * pixelY) + pixelX);
         GetRegister(x) = _mobo.ReadVram(address);
@@ -85,8 +86,9 @@ internal partial class Cpu
 
         const int DisplayWidth = 256;
 
-        var pixelX = (byte)y;
-        var pixelY = (byte)(y >> 8);
+        var coord = GetRegister(y);
+        var pixelX = (byte)coord;
+        var pixelY = (byte)(coord >> 8);
 
         var address = (ushort)((DisplayWidth * pixelY) + pixelX);
         _mobo.WriteVram(address, (byte)GetRegister(x));

@@ -1,4 +1,3 @@
-using System;
 using Raylib_cs;
 using Sharpie.Core.Drivers;
 
@@ -58,7 +57,7 @@ public class RaylibVideoOutput : IDisplayOutput
         Raylib.SetTextureFilter(_screenTexture, TextureFilter.Point);
     }
 
-    public bool ShouldCloseWindow() => Raylib_cs.Raylib.WindowShouldClose();
+    public bool ShouldCloseWindow() => Raylib.WindowShouldClose();
 
     public int GetWindowHeight() => Raylib.GetScreenHeight();
 
