@@ -44,6 +44,15 @@ public partial class SharpieEmitter
             case "__sharpie_swc":
                 context.Emit("SWC r1, r2");
                 return true;
+            case "__sharpie_read_vram":
+                context.Emit("LDV r0, r1");
+                return true;
+            case "__sharpie_write_vram":
+                context.Emit("STV r1, r2");
+                return true;
+            case "__sharpie_blit_mode":
+                context.Emit("BLITMODE r1");
+                return true;
 
             // --- Hardware Data (Returns to r0) ---
             case "__sharpie_input":

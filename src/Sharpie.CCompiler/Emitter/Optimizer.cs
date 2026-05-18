@@ -36,6 +36,7 @@ public static class Optimizer
         "IAND",
         "IOR",
         "IXOR",
+        "LDV"
     };
 
     private static readonly HashSet<string> UseMnemonics = new(StringComparer.OrdinalIgnoreCase)
@@ -86,6 +87,9 @@ public static class Optimizer
         "SETOAM",
         "MUTE",
         "SETSP",
+        "STV",
+        "LDV",
+        "BLITMODE"
     };
 
     public static void Optimize(List<Instruction> instructions)
@@ -824,6 +828,7 @@ public static class Optimizer
                             or "SETSP"
                             or "DINC"
                             or "DDEC"
+                            or "BLITMODE"
                     || (inst.IsAlt && inst.Mnemonic.StartsWith('I') && inst.Mnemonic.Length == 4);
 
                 if (defs.Count > 0 && !hasSideEffects)

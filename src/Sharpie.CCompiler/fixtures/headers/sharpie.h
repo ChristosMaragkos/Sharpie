@@ -46,6 +46,8 @@ typedef enum {
   OPTION = 1 << 7
 } Button;
 
+typedef enum { DEFAULT = 0, NO_TEXT = 1, NO_OAM = 2, NONE = 3 } BlitMode;
+
 // BIOS
 void *__sharpie_alloca(size_t byteAmount);
 void *__sharpie_stackalloc(void *src, size_t byteAmount);
@@ -82,6 +84,9 @@ void __sharpie_crash(void);
 int __sharpie_random(int maxExclusive);
 void __sharpie_set_cursor(int x, int y);
 void __sharpie_move_cursor(int x, int y);
+char __sharpie_read_vram(unsigned int yxPacked);
+void __sharpie_write_vram(unsigned int yxPacked, char value);
+void __sharpie_blit_mode(BlitMode mode);
 
 // --- Standard C Aliases ---
 #define alloca(size) __sharpie_alloca(size)
@@ -111,5 +116,11 @@ void __sharpie_move_cursor(int x, int y);
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
+
+#define read_vram(x, y) __sharpie_read_vram((((y) & 0xFF) << 8) | ((x) & 0xFF))
+#define write_vram(x, y, value)                                                \
+  __sharpie_write_vram((((y) & 0xFF) << 8) | ((x) & 0xFF), (value))
+
+#define set_blit_mode(mode) __sharpie_blit_mode(mode)
 
 #define button_down(state, btn) (((state) & (btn)))
