@@ -816,6 +816,7 @@ public static class Optimizer
                             or "STM"
                             or "STS"
                             or "STP"
+                            or "STV"
                             or "ALT"
                             or "HALT"
                             or "PUSH"
@@ -823,7 +824,7 @@ public static class Optimizer
                             or "SETSP"
                             or "DINC"
                             or "DDEC"
-                    || inst.IsAlt && inst.Mnemonic.StartsWith('I') && inst.Mnemonic.Length == 4;
+                    || (inst.IsAlt && inst.Mnemonic.StartsWith('I') && inst.Mnemonic.Length == 4);
 
                 if (defs.Count > 0 && !hasSideEffects)
                 {
