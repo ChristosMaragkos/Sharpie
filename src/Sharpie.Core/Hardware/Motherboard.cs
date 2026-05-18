@@ -309,6 +309,7 @@ internal class Motherboard : IMotherboard
         ClearTextGrid();
         _ppu.BackgroundColorIndex = colorIndex;
         _oam.Invalidate(_oam.Cursor * 6, OamBank.Size - 1);
+        _ppu.ScheduleClear();
     }
 
     private void ClearTextGrid()
@@ -541,5 +542,10 @@ internal class Motherboard : IMotherboard
     public void SetBlitterMode(BlitterMode mode)
     {
         _ppu.Mode = mode;
+    }
+
+    public void RequestVideoBufferClear()
+    {
+        _ppu.ScheduleClear();
     }
 }
