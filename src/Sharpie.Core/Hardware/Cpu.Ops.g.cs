@@ -23,6 +23,16 @@ internal partial class Cpu {
                 Execute_LDP(opcode, ref pcDelta);
                 break;
 
+            case 0x18: //LDV
+                pcDelta = 2;
+                Execute_LDV(opcode, ref pcDelta);
+                break;
+
+            case 0x19: //STV
+                pcDelta = 2;
+                Execute_STV(opcode, ref pcDelta);
+                break;
+
             case >= 0x20 and <= 0x2F:
                 pcDelta = 3;
                 Execute_LDI(opcode, ref pcDelta);
@@ -393,6 +403,11 @@ internal partial class Cpu {
                 Execute_BANK(opcode, ref pcDelta);
                 break;
 
+            case 0xFB: //BLITMODE
+                pcDelta = 2;
+                Execute_BLITMODE(opcode, ref pcDelta);
+                break;
+
             case 0xFC: //MUTE
                 pcDelta = 1;
                 Execute_MUTE(opcode, ref pcDelta);
@@ -424,6 +439,8 @@ internal partial class Cpu {
     private partial void Execute_MOV(byte opcode, ref ushort pcDelta);
     private partial void Execute_LDM(byte opcode, ref ushort pcDelta);
     private partial void Execute_LDP(byte opcode, ref ushort pcDelta);
+    private partial void Execute_LDV(byte opcode, ref ushort pcDelta);
+    private partial void Execute_STV(byte opcode, ref ushort pcDelta);
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta);
     private partial void Execute_STM(byte opcode, ref ushort pcDelta);
     private partial void Execute_STP(byte opcode, ref ushort pcDelta);
@@ -498,6 +515,7 @@ internal partial class Cpu {
     private partial void Execute_ATTR(byte opcode, ref ushort pcDelta);
     private partial void Execute_SWC(byte opcode, ref ushort pcDelta);
     private partial void Execute_BANK(byte opcode, ref ushort pcDelta);
+    private partial void Execute_BLITMODE(byte opcode, ref ushort pcDelta);
     private partial void Execute_MUTE(byte opcode, ref ushort pcDelta);
     private partial void Execute_COL(byte opcode, ref ushort pcDelta);
     private partial void Execute_ALT(byte opcode, ref ushort pcDelta);

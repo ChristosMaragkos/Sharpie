@@ -26,8 +26,27 @@ internal partial class Cpu
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta)
     {
         var x = IndexFromOpcode(opcode);
-        var value = _mobo.ReadWord(_pc + 1);
-        GetRegister(x) = value;
+        GetRegister(x) = _mobo.ReadWord(_pc + 1);
+    }
+
+    private partial void Execute_LDS(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+        var addr = _sp + (short)GetRegister(y);
+        GetRegister(x) = _mobo.ReadWord(addr);
+    }
+
+    private partial void Execute_LDV(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+
+        const int DisplayWidth = 256;
+
+        var pixelX = (byte)y;
+        var pixelY = (byte)(y >> 8);
+
+        var address = (ushort)((DisplayWidth * pixelY) + pixelX);
+        GetRegister(x) = _mobo.ReadVram(address);
     }
 
     private partial void Execute_STM(byte opcode, ref ushort pcDelta)
@@ -52,19 +71,25 @@ internal partial class Cpu
         _mobo.WriteWord(addr, value);
     }
 
-    private partial void Execute_LDS(byte opcode, ref ushort pcDelta)
-    {
-        var (x, y) = ReadRegisterArgs();
-        var addr = _sp + (short)GetRegister(y);
-        GetRegister(x) = _mobo.ReadWord(addr);
-    }
-
     private partial void Execute_STS(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
         var value = GetRegister(x);
         var addr = _sp + (short)GetRegister(y);
         _mobo.WriteWord(addr, value);
+    }
+
+    private partial void Execute_STV(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+
+        const int DisplayWidth = 256;
+
+        var pixelX = (byte)y;
+        var pixelY = (byte)(y >> 8);
+
+        var address = (ushort)((DisplayWidth * pixelY) + pixelX);
+        _mobo.WriteVram(address, (byte)GetRegister(x));
     }
 
     private partial void Execute_GETSP(byte opcode, ref ushort pcDelta)
@@ -433,8 +458,7 @@ internal partial class Cpu
 
     private partial void Execute_JMP(byte opcode, ref ushort pcDelta)
     {
-        var target = _mobo.ReadWord(_pc + 1);
-        _pc = target;
+        _pc = _mobo.ReadWord(_pc + 1);
         pcDelta = 0;
     }
 
@@ -670,6 +694,19 @@ internal partial class Cpu
         var x = _mobo.ReadByte(_pc + 1);
         var id = (byte)GetRegister(x);
         _mobo.SetCurrentBank(id);
+    }
+
+    private partial void Execute_BLITMODE(byte opcode, ref ushort pcDelta)
+    {
+        var value = _mobo.ReadByte(_pc + 1);
+        var mode = value switch
+        {
+            0 => BlitterMode.Default,
+            1 => BlitterMode.NoText,
+            2 => BlitterMode.NoOam,
+            _ => BlitterMode.None,
+        };
+        _mobo.SetBlitterMode(mode);
     }
 
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta)

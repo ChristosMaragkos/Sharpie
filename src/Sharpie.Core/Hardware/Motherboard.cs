@@ -66,8 +66,8 @@ internal class Motherboard : IMotherboard
         _sequencer = new Sequencer(this);
 
         for (int i = 0; i < 32; i++)
-        for (int j = 0; j < 32; j++)
-            TextGrid[i, j] = 0xFF;
+            for (int j = 0; j < 32; j++)
+                TextGrid[i, j] = 0xFF;
 
         _displayDevice = display;
         _audioDevice = audio;
@@ -314,8 +314,8 @@ internal class Motherboard : IMotherboard
     private void ClearTextGrid()
     {
         for (int i = 0; i < 32; i++)
-        for (int j = 0; j < 32; j++)
-            TextGrid[i, j] = 0xFF;
+            for (int j = 0; j < 32; j++)
+                TextGrid[i, j] = 0xFF;
     }
 
     public void DrawChar(int x, int y, byte charCode)
@@ -530,5 +530,14 @@ internal class Motherboard : IMotherboard
     public int GetCurrentBank()
     {
         return _ram.GetBank();
+    }
+
+    public byte ReadVram(ushort address) => _ppu.ReadByte(address);
+
+    public void WriteVram(ushort address, byte value) => _ppu.WriteByte(address, value);
+
+    public void SetBlitterMode(BlitterMode mode)
+    {
+        _ppu.Mode = mode;
     }
 }
