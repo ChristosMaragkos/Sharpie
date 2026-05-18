@@ -40,6 +40,26 @@
         "alt": "Load single byte from [R2]."
     },
     {
+        "hex": "0x18",
+        "name": "LDV",
+        "len": 2,
+        "logic": null,
+        "words": 2,
+        "pattern": "RR",
+        "desc": "Interpret R2 as (byte Y, byte X) and read that pixel's data from VRAM into R1.",
+        "alt": ""
+    },
+    {
+        "hex": "0x19",
+        "name": "STV",
+        "len": 2,
+        "logic": null,
+        "words": 2,
+        "pattern": "RR",
+        "desc": "Interpret R2 as (byte Y, byte X) and write the low byte of R1 into that pixel in VRAM.",
+        "alt": ""
+    },
+    {
         "hex": "0x20",
         "name": "LDI",
         "len": 3,
@@ -784,6 +804,16 @@
         "pattern": "R",
         "desc": "Switch current bank to R1.",
         "alt": "Read current bank into R1."
+    },
+    {
+        "hex": "0xFB",
+        "name": "BLITMODE",
+        "len": 2,
+        "logic": null,
+        "words": 1,
+        "pattern": "B",
+        "desc": "Set the blitter mode. 0: default - PPU processes OAM and text grid. 1: OAM-only. PPU does not process text grid. 2: Text-only. 3: neither text nor OAM are processed. Values above 3 are treated as 3.",
+        "alt": ""
     },
     {
         "hex": "0xFC",
