@@ -98,15 +98,18 @@ internal partial class Ppu
 
     public void VBlank(OamBank oam)
     {
-        _totalHudEntries = 0;
         FillBuffer(BackgroundColorIndex);
 
-        if (Mode is not BlitterMode.NoOam and not BlitterMode.None)
+        if (Mode is BlitterMode.None)
+            return;
+
+        if (Mode is not BlitterMode.NoOam)
         {
+            _totalHudEntries = 0;
             ProcessOam(oam);
             ProcessHud();
         }
-        if (Mode is not BlitterMode.NoText and not BlitterMode.None)
+        if (Mode is not BlitterMode.NoText)
         {
             ProcessText();
         }
@@ -203,10 +206,12 @@ internal partial class Ppu
     )
     {
         for (int row = startY; row < endY; row++)
+        {
             for (int column = startX; column < endX; column++)
             {
                 WritePixel(x + column, y + row, _spriteBuffer[(row * 8) + column]);
             }
+        }
     }
 
     public void BlitCharacter(int x, int y, byte colorIndex, byte[] pixels)

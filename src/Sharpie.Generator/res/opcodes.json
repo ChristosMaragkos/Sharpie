@@ -811,7 +811,7 @@
         "len": 2,
         "logic": null,
         "words": 1,
-        "pattern": "B",
+        "pattern": "R",
         "desc": "Set the blitter mode. 0: default - PPU processes OAM and text grid. 1: OAM-only. PPU does not process text grid. 2: Text-only. 3: neither text nor OAM are processed. Values above 3 are treated as 3.",
         "alt": ""
     },

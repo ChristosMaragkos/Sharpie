@@ -86,7 +86,7 @@ public static class InstructionSet
         { "ATTR", (2, 248, 1, false, "B") },
         { "SWC", (2, 249, 2, false, "RR") },
         { "BANK", (2, 250, 1, false, "R") },
-        { "BLITMODE", (2, 251, 1, false, "B") },
+        { "BLITMODE", (2, 251, 1, false, "R") },
         { "MUTE", (1, 252, 0, false, "") },
         { "COL", (2, 253, 2, false, "RR") },
         { "ALT", (1, 254, 0, false, "") },
