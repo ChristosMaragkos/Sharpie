@@ -21,8 +21,7 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r8, 5
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r15
     MOV r2, r8
     MOV r1, r2
     CALL _func_square

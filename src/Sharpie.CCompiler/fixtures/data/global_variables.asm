@@ -58,8 +58,7 @@ Main:
     ADD r3, r4
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
-    LDP r2, r3
+    LDP r2, r15
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:
