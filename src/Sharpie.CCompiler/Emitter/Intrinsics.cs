@@ -53,6 +53,9 @@ public partial class SharpieEmitter
             case "__sharpie_blit_mode":
                 context.Emit("BLITMODE r1");
                 return true;
+            case "__sharpie_debug":
+                context.Emit("OUT_R r1");
+                return true;
 
             // --- Hardware Data (Returns to r0) ---
             case "__sharpie_input":
