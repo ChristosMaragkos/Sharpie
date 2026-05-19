@@ -80,8 +80,7 @@ _func_make_point:
     MOV r9, r2
     MOV r10, r3
     MOV r1, r9
-    MOV r2, r15
-    STA r1, r2
+    STA r1, r15
     MOV r1, r10
     MOV r2, r15
     IADD r2, 2
