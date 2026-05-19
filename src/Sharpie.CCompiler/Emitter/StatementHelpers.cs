@@ -1254,10 +1254,10 @@ public partial class SharpieEmitter
             }
         }
 
-        foreach (var (rargetReg, sourceTempReg) in regAssignments)
+        foreach (var (targetRegAbi, sourceTempReg) in regAssignments)
         {
-            if (rargetReg != sourceTempReg)
-                context.Emit($"MOV r{rargetReg}, r{sourceTempReg}");
+            if (targetRegAbi != sourceTempReg)
+                context.Emit($"MOV r{targetRegAbi}, r{sourceTempReg}");
         }
 
         if (needsDiscardSRetBuffer)
