@@ -40,81 +40,168 @@ const unsigned char CENTER = 128;
 
 const int FOV = 96;
 
-int dz = 0;
-
 typedef struct {
-  int x, y;
+    int x, y;
 } Vec2;
 
 typedef struct {
-  int x, y, z;
+    int x, y, z;
 } Vec3;
 
 /*
  *   Draws a single pixel at the X and Y points of a 2D vector.
  */
 void draw_point(Vec2 *p) {
-  if (p->x > WIDTH)
-    return;
-  if (p->x < 0)
-    return;
-  if (p->y > HEIGHT)
-    return;
-  if (p->y < 0)
-    return;
+    if (p->x > WIDTH || p->x < 0 || p->y > HEIGHT || p->y < 0)
+        return;
 
-  write_vram((unsigned char)p->x, (unsigned char)p->y, FOREGROUND);
+    write_vram((unsigned char)p->x, (unsigned char)p->y, FOREGROUND);
 }
 /*
  *   Converts a given 2D vector representing world coordinates to one
  *   representing screen coordinates.
  */
 Vec2 world_to_screen(Vec3 *p) {
-  Vec2 out;
+    Vec2 out;
 
-  if (p->z <= 0) {
-    out.x = -1;
-    out.y = -1;
+    if (p->z <= 0) {
+        out.x = -1;
+        out.y = -1;
+        return out;
+    }
+
+    out.x = CENTER + (p->x * FOV) / p->z;
+    out.y = CENTER + (p->y * FOV) / p->z;
     return out;
-  }
-
-  out.x = CENTER + (p->x * FOV) / p->z;
-  out.y = CENTER + (p->y * FOV) / p->z;
-  return out;
 }
 
-void translate_z(Vec3 *p) { p->z += dz; }
+void rotate_xz(Vec3 *p, unsigned char angle) {
+    // x' = x * cos - z * sin, z' = x * sin + z * cos
+    int s = sin(angle);
+    int c = cos(angle);
+
+    int old_x = p->x;
+    int old_z = p->z;
+    // our sine and cosine values are inflated to 256
+    // because of fixed point math. We gotta  back.
+
+    p->x = ((old_x * c) - (old_z * s)) / 256;
+    p->z = ((old_x * s) + (old_z * c)) / 256;
+}
+
+/*
+ * Shove our cube further down the "world" since Z is also centered on us
+ */
+void translate_z(Vec3 *p, int amount) { p->z += amount; }
+
+void line_bresenham(Vec2 *p1, Vec2 *p2) {
+    int stepX, stepY;
+    int dx = p2->x - p1->x;
+    if (dx > 0) {
+        stepX = 1;
+    } else {
+        stepX = -1;
+        dx = -dx;
+    }
+
+    int dy = p2->y - p1->y;
+    if (dy > 0) {
+        stepY = 1;
+    } else {
+        stepY = -1;
+        dy = -dy;
+    }
+
+    int error;
+    Vec2 v;
+
+    int x = p1->x;
+    int y = p1->y;
+
+    if (dx > dy) {
+        error = (2 * dy) - dx;
+
+        while (x != p2->x) {
+            v = (Vec2){x, y};
+            draw_point(&v);
+
+            if (error >= 0) { // comparing with an 8-bit literal emits ICMP,
+                              // saving us a register load. We NEED the cycles.
+                y += stepY;
+                error -= 2 * dx;
+            }
+
+            error += 2 * dy;
+            x += stepX;
+        }
+    } else {
+        error = (2 * dx) - dy;
+
+        while (y != p2->y) {
+            v = (Vec2){x, y};
+            draw_point(&v);
+
+            if (error >= 0) {
+                x += stepX;
+                error -= 2 * dy;
+            }
+
+            error += 2 * dx;
+            y += stepY;
+        }
+    }
+    v = (Vec2){x, y};
+    draw_point(&v);
+}
+
+Vec3 vertices[] = {
+    {-32, 32, 32},
+    {32, 32, 32},
+    {32, -32, 32},
+    {-32, -32, 32},
+
+    {-32, 32, -32},
+    {32, 32, -32},
+    {32, -32, -32},
+    {-32, -32, -32},
+};
+
+unsigned char angle = 0;
+unsigned char dAngle = 0;
 
 int main(void) {
-  set_blit_mode(NONE);
+    set_blit_mode(NONE);
 
-  Vec3 vertices[] = {
-      {-32, 32, 96},
-      {32, 32, 96},
-      {32, -32, 96},
-      {-32, -32, 96},
-  };
+    while (1) {
+        clear_screen(0);
 
-  while (1) {
-    clear_screen(0);
+        Vec3 v, v1;
+        Vec2 p, p1;
 
-    Vec3 v = vertices[0];
-    Vec2 p = world_to_screen(&v);
-    draw_point(&p);
+        // for (int i = 0; i < (sizeof(vertices) / sizeof(Vec3)); ++i) {
+        //     v = vertices[i];
+        //     rotate_xz(&v, angle);
+        //     translate_z(&v, 96);
+        //     p = world_to_screen(&v);
+        //     draw_point(&p);
+        // }
+        //
+        // if (++dAngle == 5) {
+        //     ++angle;
+        //     dAngle = 0;
+        // }
 
-    v = vertices[1];
-    p = world_to_screen(&v);
-    draw_point(&p);
+        v = vertices[0];
+        translate_z(&v, 96);
+        p = world_to_screen(&v);
 
-    v = vertices[2];
-    p = world_to_screen(&v);
-    draw_point(&p);
+        v1 = vertices[2];
+        translate_z(&v1, 96);
+        p1 = world_to_screen(&v1);
 
-    v = vertices[3];
-    p = world_to_screen(&v);
-    draw_point(&p);
+        line_bresenham(&p, &p1);
 
-    yield();
-  }
-  return 0;
+        yield();
+    }
+    return 0;
 }
