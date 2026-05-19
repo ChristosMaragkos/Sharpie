@@ -251,7 +251,7 @@ class Program
             byte[] machineCode;
             if (assemblySource != null)
             {
-                Console.WriteLine($"[ASM] Assembling emitted code...");
+                Console.WriteLine("[ASM] Assembling emitted code...");
                 var assembler = new SharpieAssembler(options.IsFirmware);
                 machineCode = assembler.AssembleFromText(assemblySource);
             }

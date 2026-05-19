@@ -212,23 +212,23 @@ public sealed partial class SharpieEmitter
                         }
                         else
                         {
-                            context.Emit($"MOV r6, r15");
+                            context.Emit("MOV r6, r15");
                             AccumulateOffset(6, space.Value, context);
-                            context.Emit($"STS r{currentReg}, r6");
+                            context.Emit($"STA r{currentReg}, r6");
                         }
                     }
                     else
                     {
                         // A multi-word struct was passed in registers
                         // We must reconstruct it in its local stack home
-                        context.Emit($"MOV r6, r15");
+                        context.Emit("MOV r6, r15");
                         AccumulateOffset(6, space.Value, context);
 
                         for (int s = 0; s < slotsNeeded; s++)
                         {
-                            context.Emit($"STS r{currentReg + s}, r6");
+                            context.Emit($"STA r{currentReg + s}, r6");
                             if (s < slotsNeeded - 1)
-                                context.Emit($"IADD r6, 2");
+                                context.Emit("IADD r6, 2");
                         }
                     }
                     currentReg += slotsNeeded;
@@ -326,7 +326,7 @@ public sealed partial class SharpieEmitter
                 long sizeBytes = global.Type.SizeOf <= 0 ? 2 : global.Type.SizeOf;
 
                 if (!isStatic)
-                    asm.AppendLine($".GLOBAL");
+                    asm.AppendLine(".GLOBAL");
                 asm.AppendLine($"_global_{name}:");
 
                 var children = GetChildren(global);

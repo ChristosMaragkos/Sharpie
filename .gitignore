@@ -13,3 +13,5 @@
 *.png
 !font_small.png
 !icon.png
+
+samples/include
