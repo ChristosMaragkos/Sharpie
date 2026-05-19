@@ -395,7 +395,8 @@ epilogue_L0:
 .GLOBAL
 _func_draw_point:
     PUSH r8
-    LDP r2, r1
+    MOV r8, r1
+    LDP r2, r8
     LDI r3, 255
     CMP r2, r3
     JGT rel_true_L16

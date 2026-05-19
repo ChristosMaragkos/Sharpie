@@ -557,23 +557,6 @@ public static class Optimizer
                     }
                 }
 
-                // MOV rTemp, rSrc -> LDP rDest, rTemp ==> LDP rDest, rSource
-                if (!current.IsAlt && current.Mnemonic == "MOV")
-                {
-                    var isLoadStore = next.Mnemonic is "LDP" or "STA" or "LDS" or "STS";
-
-                    // If the NEXT instruction uses our target register as its POINTER (Arg2)
-                    if (isLoadStore && current.Arg1 == next.Arg2)
-                    {
-                        next.Arg2 = current.Arg2; // Swap the pointer to the original source
-                        next.RebuildText();
-
-                        instructions.RemoveAt(i); // delete the MOV
-                        changed = true;
-                        continue;
-                    }
-                }
-
                 // JMP to the next line => Remove the JMP
                 if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel)
                 {
