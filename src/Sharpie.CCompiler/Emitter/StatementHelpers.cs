@@ -334,13 +334,6 @@ public partial class SharpieEmitter
             }
         }
 
-        // Memory assignment (for pointers, array indices, structs, or stack locals)
-        using var valReg = context.AcquireTempRegister();
-        EmitExpression(rhs, valReg.Value, context);
-
-        using var addrReg = context.AcquireTempRegister();
-        EmitLValueAddress(lhs, addrReg.Value, context);
-
         var assignSize = lhs.Type.SizeOf;
         if (assignSize > 2)
         {
@@ -366,12 +359,18 @@ public partial class SharpieEmitter
             context.Emit("POP r2");
             context.Emit($"LDI r3, {assignSize}");
             context.Emit("CALL SYS_MEM_MOVE");
+            return;
         }
-        else
-        {
-            var prefix = (assignSize == 1) ? "ALT " : "";
-            context.Emit($"{prefix}STA r{valReg.Value}, r{addrReg.Value}");
-        }
+
+        // Memory assignment (for pointers, array indices, or stack locals)
+        using var valReg = context.AcquireTempRegister();
+        EmitExpression(rhs, valReg.Value, context);
+
+        using var addrReg = context.AcquireTempRegister();
+        EmitLValueAddress(lhs, addrReg.Value, context);
+
+        var storePrefix = (assignSize == 1) ? "ALT " : "";
+        context.Emit($"{storePrefix}STA r{valReg.Value}, r{addrReg.Value}");
     }
 
     private static void EmitCompoundAssignment(
@@ -452,14 +451,23 @@ public partial class SharpieEmitter
             // If returning a struct, mutate the hidden pointer copy
             if (retSizeBytes > 2 && context.HiddenRetPtrReg >= 0)
             {
-                using var srcReg = context.AcquireTempRegister();
-                EmitLValueAddress(expr, srcReg.Value, context);
+                var peeled = PeelExpression(expr);
 
-                context.Emit($"PUSH r{srcReg.Value}"); // Save the struct's address safely to the stack
-                context.Emit($"MOV r1, r{context.HiddenRetPtrReg}"); // Overwrite r1 with the Hidden Pointer
-                context.Emit("POP r2"); // Retrieve the struct's address securely into r2
-                context.Emit($"LDI r3, {retSizeBytes}"); // Byte count
-                context.Emit("CALL SYS_MEM_MOVE");
+                if (peeled.Kind == CXCursorKind.CXCursor_CallExpr)
+                {
+                    EmitCallExpressionInto(peeled, context.HiddenRetPtrReg, context);
+                }
+                else
+                {
+                    using var srcReg = context.AcquireTempRegister();
+                    EmitExpression(expr, srcReg.Value, context);
+
+                    context.Emit($"PUSH r{srcReg.Value}");
+                    context.Emit($"MOV r1, r{context.HiddenRetPtrReg}");
+                    context.Emit("POP r2");
+                    context.Emit($"LDI r3, {retSizeBytes}");
+                    context.Emit("CALL SYS_MEM_MOVE");
+                }
             }
             else // Normal 16-bit return
             {
@@ -1124,10 +1132,16 @@ public partial class SharpieEmitter
 
         long retSize = callExpr.Type.SizeOf;
         bool hasHiddenPtr = retSize > 2;
+        bool needsDiscardSRetBuffer = hasHiddenPtr && targetReg < 0;
+        bool unsupportedAggregateRValue = hasHiddenPtr && targetReg >= 0;
 
-        // If this is a struct return and the caller wants a value (targetReg >= 0),
-        // we need somewhere to put it, so we allocate ephemeral stack space
-        bool needsStructResult = hasHiddenPtr && targetReg >= 0;
+        if (unsupportedAggregateRValue)
+        {
+            throw new InvalidOperationException(
+                "Struct-return call expressions cannot be used as rvalues directly. "
+                    + "Use variable initialization or aggregate assignment so the call can emit directly into a destination."
+            );
+        }
 
         var activeLeases = new List<EmissionContext.TempLease>();
         int indirectTargetSpillOffset = -1;
@@ -1246,18 +1260,10 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r{rargetReg}, r{sourceTempReg}");
         }
 
-        if (hasHiddenPtr)
+        if (needsDiscardSRetBuffer)
         {
-            if (!needsStructResult)
-            {
-                EmitAllocStackframe((int)retSize, context);
-                context.Emit("MOV r1, r0");
-            }
-            else
-            {
-                EmitAllocStackframe((int)retSize, context);
-                context.Emit("MOV r1, r0");
-            }
+            EmitAllocStackframe((int)retSize, context);
+            context.Emit("MOV r1, r0");
         }
 
         if (!TryEmitIntrinsic(funcName, context))
@@ -1324,6 +1330,9 @@ public partial class SharpieEmitter
             context.Emit($"LDI r1, {totalStackBytesToFree}");
             context.Emit("CALL SYS_FREE_STACKFRAME");
         }
+
+        if (needsDiscardSRetBuffer)
+            EmitFreeStackframe((int)retSize, context);
 
         if (tempsToProtect.Count > 0)
         {
@@ -1633,7 +1642,9 @@ public partial class SharpieEmitter
         // struct-returning function
         else if (peeled.Kind == CXCursorKind.CXCursor_CallExpr)
         {
-            EmitCallExpression(peeled, targetReg, context);
+            throw new InvalidOperationException(
+                "Call expressions are not lvalues. Aggregate call results must be consumed as expressions."
+            );
         }
         // array access
         else if (peeled.Kind == CXCursorKind.CXCursor_ArraySubscriptExpr)
