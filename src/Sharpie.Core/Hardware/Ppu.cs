@@ -24,10 +24,6 @@ internal partial class Ppu
     private readonly IMotherboard _mobo;
     private readonly Memory _vRam;
 
-    private bool _clearScheduled;
-
-    public void ScheduleClear() => _clearScheduled = true;
-
     public byte ReadByte(ushort address) => _vRam.ReadByte(address);
     public void WriteByte(ushort address, byte value) => _vRam.WriteByte(address, value);
 
@@ -102,15 +98,10 @@ internal partial class Ppu
 
     public void VBlank(OamBank oam)
     {
-        if (_clearScheduled || Mode is not BlitterMode.None)
-        {
-            FillBuffer(BackgroundColorIndex);
-            _clearScheduled = false;
-        }
-
         if (Mode is BlitterMode.None)
             return;
 
+        ClearBuffer();
         if (Mode is not BlitterMode.NoOam)
         {
             _totalHudEntries = 0;
@@ -121,6 +112,11 @@ internal partial class Ppu
         {
             ProcessText();
         }
+    }
+
+    public void ClearBuffer()
+    {
+        FillBuffer(BackgroundColorIndex);
     }
 
     private void ProcessOam(OamBank oam)
