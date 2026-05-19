@@ -18,7 +18,9 @@ Main:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    STA r1, r6
+    MOV r15, r6
+    MOV r0, r15
+    STA r1, r0
     LDI r2, 6
     PUSH r2
     LDI r2, 5
@@ -106,7 +108,9 @@ _func_test_memory:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    STA r1, r6
+    MOV r15, r6
+    MOV r0, r15
+    STA r1, r0
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     MOV r1, r0

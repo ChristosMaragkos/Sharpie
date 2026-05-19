@@ -327,7 +327,8 @@ while_start_L1:
 if_L3:
     MOV r1, r15
     LDI r2, 40
-    STA r2, r1
+    MOV r3, r1
+    STA r2, r3
     LDI r2, 40
     MOV r3, r1
     IADD r3, 2
@@ -351,7 +352,8 @@ if_L3:
     MOV r2, r15
     IADD r2, 12
     LDI r3, 50
-    STA r3, r2
+    MOV r4, r2
+    STA r3, r4
     LDI r3, 40
     MOV r4, r2
     IADD r4, 2
@@ -396,7 +398,8 @@ epilogue_L0:
 _func_draw_point:
     PUSH r8
     MOV r8, r1
-    LDP r2, r8
+    MOV r3, r8
+    LDP r2, r3
     LDI r3, 255
     CMP r2, r3
     JGT rel_true_L16
@@ -407,7 +410,8 @@ rel_true_L16:
 rel_end_L17:
     ICMP r1, 0
     JNE logical_true_L13
-    LDP r2, r8
+    MOV r3, r8
+    LDP r2, r3
     ICMP r2, 0
     JLT rel_true_L18
     XOR r1, r1
@@ -471,7 +475,8 @@ if_L6:
     IAND r1, 255
     LDI r2, 8
     SHL r1, r2
-    LDP r2, r8
+    MOV r3, r8
+    LDP r2, r3
     IAND r2, 255
     OR r1, r2
     LDI r2, 1
@@ -519,7 +524,8 @@ _func_world_to_screen:
     MOV r11, r1
     MOV r1, r15
     MOV r2, r10
-    STA r2, r1
+    MOV r3, r1
+    STA r2, r3
     MOV r2, r11
     MOV r3, r1
     IADD r3, 2

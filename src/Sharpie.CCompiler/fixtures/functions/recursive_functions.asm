@@ -33,7 +33,8 @@ _func_factorial:
     JMP epilogue_L1
 else_L3:
     MOV r1, r8
-    STA r1, r15
+    MOV r0, r15
+    STA r1, r0
     MOV r0, r15
     IADD r0, 2
     STA r2, r0
@@ -41,7 +42,10 @@ else_L3:
     DEC r3
     MOV r1, r3
     CALL _func_factorial
-    LDP r1, r15
+    PUSH r0
+    MOV r0, r15
+    LDP r1, r0
+    POP r0
     MOV r2, r0
     MUL r1, r2
     MOV r0, r1
