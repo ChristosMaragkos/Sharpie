@@ -20,8 +20,7 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r15
     LDI r1, 42
     PUSH r13
     PUSH r14
@@ -36,8 +35,7 @@ Main:
     MOV r6, r15
     IADD r6, 2
     STA r2, r6
-    MOV r0, r15
-    STA r1, r0
+    STA r1, r15
     LDI r2, 10
     LDI r3, 20
     MOV r1, r2

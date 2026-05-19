@@ -21,14 +21,12 @@ Main:
     MOV r15, r6
     LDI r1, 68
     INC r1
-    MOV r2, r15
-    ALT STA r1, r2
+    ALT STA r1, r15
     LDI r1, 99
     MOV r2, r15
     INC r2
     ALT STA r1, r2
-    MOV r2, r15
-    ALT LDP r1, r2
+    ALT LDP r1, r15
     MOV r3, r15
     INC r3
     ALT LDP r2, r3

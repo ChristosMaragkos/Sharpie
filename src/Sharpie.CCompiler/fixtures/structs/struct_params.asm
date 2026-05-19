@@ -44,8 +44,7 @@ Main:
     MOV r1, r0
     MOV r8, r1
     LDI r1, 100
-    MOV r2, r15
-    STA r1, r2
+    STA r1, r15
     LDI r1, 200
     MOV r2, r15
     IADD r2, 2
@@ -73,8 +72,7 @@ Main:
     MOV r1, r8
     MOV r2, r9
     ADD r1, r2
-    MOV r3, r15
-    LDP r2, r3
+    LDP r2, r15
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:
@@ -103,8 +101,7 @@ _func_test_registers:
     IADD r6, 2
     STA r3, r6
     MOV r1, r8
-    MOV r3, r15
-    LDP r2, r3
+    LDP r2, r15
     ADD r1, r2
     MOV r3, r15
     IADD r3, 2
@@ -148,8 +145,7 @@ _func_test_stack:
     ADD r1, r2
     MOV r2, r10
     ADD r1, r2
-    MOV r3, r15
-    LDP r2, r3
+    LDP r2, r15
     ADD r1, r2
     MOV r3, r15
     IADD r3, 2
@@ -172,8 +168,7 @@ _func_test_pointer:
     PUSH r8
     MOV r8, r1
     LDI r1, 30
-    MOV r2, r8
-    STA r1, r2
+    STA r1, r8
 epilogue_L3:
     POP r8
     RET

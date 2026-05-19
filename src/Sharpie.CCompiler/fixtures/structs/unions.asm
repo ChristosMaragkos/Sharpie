@@ -21,13 +21,10 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r1, 258
-    MOV r2, r15
-    STA r1, r2
+    STA r1, r15
     LDI r1, 10
-    MOV r2, r15
-    ALT STA r1, r2
-    MOV r1, r15
-    LDP r0, r1
+    ALT STA r1, r15
+    LDP r0, r15
 epilogue_L0:
     MOV r6, r15
     LDI r7, 2

@@ -71,17 +71,20 @@ int main(void) {
   set_blit_mode(NONE);
   while (1) {
     clear_screen(0);
-    if (++ddz == 60) {
-      ++dz;
-      ddz = 0;
-    }
-    Vec3 v = {40, 40, 1 + dz};
-    Vec2 projected = world_to_screen(&v);
-    draw_point(&projected);
-
-    v = (Vec3){50, 40, 1 + dz};
-    projected = world_to_screen(&v);
-    draw_point(&projected);
+    // if (++ddz == 60) {
+    //   ++dz;
+    //   ddz = 0;
+    // }
+    // Vec3 v = {40, 40, 80 + dz};
+    // Vec2 projected = world_to_screen(&v);
+    // draw_point(&projected);
+    //
+    // v = (Vec3){50, 40, 80 + dz};
+    // projected = world_to_screen(&v);
+    // draw_point(&projected);
+    Vec2 v = {40, 40};
+    // draw_point(&v);
+    write_vram(v.x, v.y, FOREGROUND);
     yield();
   }
 }

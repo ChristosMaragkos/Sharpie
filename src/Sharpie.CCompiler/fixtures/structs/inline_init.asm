@@ -21,16 +21,14 @@ Main:
     MOV r1, r15
     IADD r1, 6
     LDI r2, 30
-    MOV r3, r1
-    STA r2, r3
+    STA r2, r1
     LDI r2, 30
     MOV r3, r1
     IADD r3, 2
     STA r2, r3
     MOV r1, r15
     LDI r2, 1
-    MOV r3, r1
-    STA r2, r3
+    STA r2, r1
     LDI r2, 2
     MOV r3, r1
     IADD r3, 2
