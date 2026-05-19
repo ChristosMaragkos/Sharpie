@@ -20,7 +20,8 @@ Main:
     MOV r15, r6
     MOV r1, r15
     LDI r2, 1
-    STA r2, r1
+    MOV r3, r1
+    STA r2, r3
     LDI r2, 2
     MOV r3, r1
     IADD r3, 2
@@ -69,7 +70,8 @@ _func_do_stuff:
     MOV r8, r1
     MOV r1, r15
     LDI r2, 9
-    ALT STA r2, r1
+    MOV r3, r1
+    ALT STA r2, r3
     LDI r2, 10
     MOV r3, r1
     INC r3
@@ -104,8 +106,10 @@ _func_do_stuff:
     LDI r1, 8
     CALL SYS_ALLOC_STACKFRAME
     LDI r1, 99
-    ALT STA r1, r15
-    LDP r1, r8
+    MOV r2, r15
+    ALT STA r1, r2
+    MOV r2, r8
+    LDP r1, r2
     MOV r3, r15
     INC r3
     ALT LDP r2, r3

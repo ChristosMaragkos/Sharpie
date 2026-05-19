@@ -22,18 +22,21 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r9, 10
-    STA r1, r15
+    MOV r0, r15
+    STA r1, r0
     LDI r1, 100
     CALL SYS_ALLOC_STACKFRAME
     MOV r1, r0
     MOV r8, r1
     LDI r1, 42
-    STA r1, r8
+    MOV r2, r8
+    STA r1, r2
     LDI r10, 20
     MOV r1, r9
     MOV r2, r10
     ADD r1, r2
-    LDP r2, r8
+    MOV r2, r8
+    LDP r2, r2
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:

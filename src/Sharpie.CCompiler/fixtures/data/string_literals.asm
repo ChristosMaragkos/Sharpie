@@ -26,7 +26,8 @@ Main:
     XOR r2, r2
     XOR r3, r3
     CALL SYS_PRINT
-    STA r1, r15
+    MOV r0, r15
+    STA r1, r0
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     MOV r1, r0
