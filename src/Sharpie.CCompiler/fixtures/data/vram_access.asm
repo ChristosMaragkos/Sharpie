@@ -20,7 +20,7 @@ Main:
     MOV r8, r1
     LDI r1, 32639
     MOV r2, r9
-    STV r1, r2
+    STV r2, r1
 while_start_L1:
     MOV r1, r8
     ICMP r1, 0
