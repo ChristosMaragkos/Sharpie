@@ -194,21 +194,57 @@ public partial class SharpieEmitter
 
                 if (isArray)
                 {
-                    long stride = clang.getElementType(varDecl.Type).SizeOf;
+                    var elementType = clang.getElementType(varDecl.Type);
+                    var elementCanonical = elementType.CanonicalType;
+                    bool elementIsRecord =
+                        elementType.kind == CXTypeKind.CXType_Record
+                        || elementCanonical.kind == CXTypeKind.CXType_Record;
+                    long stride = elementType.SizeOf;
                     if (stride <= 0)
                         stride = 2; // Fallback
 
-                    for (int i = 0; i < initVals.Count; i++)
+                    if (elementIsRecord)
                     {
-                        using var valReg = context.AcquireTempRegister();
-                        EmitExpression(initVals[i], valReg.Value, context);
+                        var decl = clang.getTypeDeclaration(elementCanonical);
+                        var fields = GetChildren(decl)
+                            .Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl)
+                            .ToList();
 
-                        using var addrReg = context.AcquireTempRegister();
-                        context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
-                        AccumulateOffset(addrReg.Value, (int)(i * stride), context);
+                        for (int i = 0; i < initVals.Count; i++)
+                        {
+                            var fieldInitVals = GetAggregateInitializerValues(initVals[i]);
 
-                        string altPrefix = (stride == 1) ? "ALT " : "";
-                        context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                            for (int fieldIndex = 0; fieldIndex < fieldInitVals.Count && fieldIndex < fields.Count; fieldIndex++)
+                            {
+                                long fieldOffset = clang.Cursor_getOffsetOfField(fields[fieldIndex]) / 8;
+                                long fieldSize = fields[fieldIndex].Type.SizeOf <= 0 ? 2 : fields[fieldIndex].Type.SizeOf;
+
+                                using var valReg = context.AcquireTempRegister();
+                                EmitExpression(fieldInitVals[fieldIndex], valReg.Value, context);
+
+                                using var addrReg = context.AcquireTempRegister();
+                                context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+                                AccumulateOffset(addrReg.Value, (int)(i * stride + fieldOffset), context);
+
+                                string altPrefix = (fieldSize == 1) ? "ALT " : "";
+                                context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < initVals.Count; i++)
+                        {
+                            using var valReg = context.AcquireTempRegister();
+                            EmitExpression(initVals[i], valReg.Value, context);
+
+                            using var addrReg = context.AcquireTempRegister();
+                            context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+                            AccumulateOffset(addrReg.Value, (int)(i * stride), context);
+
+                            string altPrefix = (stride == 1) ? "ALT " : "";
+                            context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                        }
                     }
                 }
                 else // Structs
