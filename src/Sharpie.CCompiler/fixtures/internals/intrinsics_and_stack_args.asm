@@ -65,11 +65,11 @@ _func_add_six_numbers:
     GETSP r15
     MOV r6, r15
     IADD r6, 16
-    LDS r7, r6
+    LDP r7, r6
     MOV r12, r7
     MOV r6, r15
     IADD r6, 18
-    LDS r7, r6
+    LDP r7, r6
     MOV r13, r7
     MOV r8, r1
     MOV r9, r2

@@ -96,9 +96,9 @@ _func_test_registers:
     SETSP r6
     MOV r15, r6
     MOV r8, r1
-    STS r2, r15
+    STA r2, r15
     IADD r6, 2
-    STS r3, r6
+    STA r3, r6
     MOV r1, r8
     LDP r2, r15
     ADD r1, r2
@@ -130,12 +130,12 @@ _func_test_stack:
     MOV r15, r6
     IADD r6, 14
     MOV r5, r15
-    LDS r7, r6
-    STS r7, r5
+    LDP r7, r6
+    STA r7, r5
     IADD r6, 2
     IADD r5, 2
-    LDS r7, r6
-    STS r7, r5
+    LDP r7, r6
+    STA r7, r5
     MOV r8, r1
     MOV r9, r2
     MOV r10, r3
