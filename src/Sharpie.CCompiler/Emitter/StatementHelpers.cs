@@ -235,7 +235,7 @@ public partial class SharpieEmitter
                     }
                 }
             }
-            else if (initExprs.Count > 0)
+            else if (!isArray && initExprs.Count > 0)
             {
                 var initExpr = PeelExpression(initExprs[^1]);
 
