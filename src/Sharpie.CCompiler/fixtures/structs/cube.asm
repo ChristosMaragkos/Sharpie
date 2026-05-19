@@ -302,7 +302,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 4
+    LDI r7, 18
     SUB r6, r7
     SETSP r6
     MOV r15, r6
@@ -314,6 +314,17 @@ while_start_L1:
     JEQ while_end_L2
     XOR r1, r1
     CLS r1
+    ALT LDM r2, _global_ddz
+    INC r2
+    MOV r1, r2
+    ALT STM r2, _global_ddz
+    ICMP r1, 20
+    JNE if_L3
+    LDI r1, _global_dz
+    DINC r1
+    XOR r1, r1
+    ALT STM r1, _global_ddz
+if_L3:
     MOV r1, r15
     LDI r2, 40
     STA r2, r1
@@ -321,24 +332,61 @@ while_start_L1:
     MOV r3, r1
     IADD r3, 2
     STA r2, r3
+    LDI r2, 40
+    LDM r3, _global_dz
+    ADD r2, r3
+    MOV r3, r1
+    IADD r3, 4
+    STA r2, r3
+    MOV r1, r15
+    IADD r1, 6
+    MOV r0, r15
+    IADD r0, 10
+    STA r1, r0
     MOV r2, r15
-    IADD r2, 2
-    LDP r1, r2
-    IAND r1, 255
-    LDI r2, 8
-    SHL r1, r2
-    LDP r2, r15
-    IAND r2, 255
-    OR r1, r2
-    LDI r2, 1
-    STV r2, r1
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
+    CALL _func_draw_point
+    MOV r2, r15
+    IADD r2, 12
+    LDI r3, 80
+    STA r3, r2
+    LDI r3, 40
+    MOV r4, r2
+    IADD r4, 2
+    STA r3, r4
+    LDI r3, 40
+    LDM r4, _global_dz
+    ADD r3, r4
+    MOV r4, r2
+    IADD r4, 4
+    STA r3, r4
+    MOV r1, r15
+    IADD r1, 12
+    MOV r2, r15
+    PUSH r1
+    MOV r1, r2
+    POP r2
+    LDI r3, 6
+    CALL SYS_MEM_MOVE
+    MOV r1, r15
+    IADD r1, 6
+    MOV r0, r15
+    IADD r0, 10
+    STA r1, r0
+    MOV r2, r15
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
+    CALL _func_draw_point
     VBLNK
     JMP while_start_L1
 while_end_L2:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 4
+    LDI r7, 18
     ADD r6, r7
     SETSP r6
     POP r15
@@ -351,72 +399,72 @@ _func_draw_point:
     LDP r2, r8
     LDI r3, 255
     CMP r2, r3
-    JGT rel_true_L14
-    XOR r1, r1
-    JMP rel_end_L15
-rel_true_L14:
-    LDI r1, 1
-rel_end_L15:
-    ICMP r1, 0
-    JNE logical_true_L11
-    LDP r2, r8
-    ICMP r2, 0
-    JLT rel_true_L16
+    JGT rel_true_L16
     XOR r1, r1
     JMP rel_end_L17
 rel_true_L16:
     LDI r1, 1
 rel_end_L17:
     ICMP r1, 0
-    JNE logical_true_L11
-    XOR r1, r1
-    JMP logical_end_L13
-logical_true_L11:
-    LDI r1, 1
-logical_end_L13:
-    ICMP r1, 0
-    JNE logical_true_L8
-    MOV r3, r8
-    IADD r3, 2
-    LDP r2, r3
-    LDI r3, 255
-    CMP r2, r3
-    JGT rel_true_L18
+    JNE logical_true_L13
+    LDP r2, r8
+    ICMP r2, 0
+    JLT rel_true_L18
     XOR r1, r1
     JMP rel_end_L19
 rel_true_L18:
     LDI r1, 1
 rel_end_L19:
     ICMP r1, 0
-    JNE logical_true_L8
+    JNE logical_true_L13
     XOR r1, r1
-    JMP logical_end_L10
-logical_true_L8:
+    JMP logical_end_L15
+logical_true_L13:
     LDI r1, 1
-logical_end_L10:
+logical_end_L15:
     ICMP r1, 0
-    JNE logical_true_L5
+    JNE logical_true_L10
     MOV r3, r8
     IADD r3, 2
     LDP r2, r3
-    ICMP r2, 0
-    JLT rel_true_L20
+    LDI r3, 255
+    CMP r2, r3
+    JGT rel_true_L20
     XOR r1, r1
     JMP rel_end_L21
 rel_true_L20:
     LDI r1, 1
 rel_end_L21:
     ICMP r1, 0
-    JNE logical_true_L5
+    JNE logical_true_L10
     XOR r1, r1
-    JMP logical_end_L7
-logical_true_L5:
+    JMP logical_end_L12
+logical_true_L10:
     LDI r1, 1
-logical_end_L7:
+logical_end_L12:
     ICMP r1, 0
-    JEQ if_L4
-    JMP epilogue_L3
-if_L4:
+    JNE logical_true_L7
+    MOV r3, r8
+    IADD r3, 2
+    LDP r2, r3
+    ICMP r2, 0
+    JLT rel_true_L22
+    XOR r1, r1
+    JMP rel_end_L23
+rel_true_L22:
+    LDI r1, 1
+rel_end_L23:
+    ICMP r1, 0
+    JNE logical_true_L7
+    XOR r1, r1
+    JMP logical_end_L9
+logical_true_L7:
+    LDI r1, 1
+logical_end_L9:
+    ICMP r1, 0
+    JEQ if_L6
+    JMP epilogue_L5
+if_L6:
     MOV r2, r8
     IADD r2, 2
     LDP r1, r2
@@ -428,7 +476,7 @@ if_L4:
     OR r1, r2
     LDI r2, 1
     STV r2, r1
-epilogue_L3:
+epilogue_L5:
     POP r8
     RET
 .ENDGLOBAL
@@ -482,7 +530,7 @@ _func_world_to_screen:
     POP r2
     LDI r3, 4
     CALL SYS_MEM_MOVE
-epilogue_L22:
+epilogue_L24:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
