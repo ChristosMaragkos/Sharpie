@@ -18,7 +18,8 @@ Main:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    STA r1, r6
+    MOV r15, r6
+    STA r1, r15
     LDI r2, 6
     PUSH r2
     LDI r2, 5
@@ -65,11 +66,11 @@ _func_add_six_numbers:
     GETSP r15
     MOV r6, r15
     IADD r6, 16
-    LDS r7, r6
+    LDP r7, r6
     MOV r12, r7
     MOV r6, r15
     IADD r6, 18
-    LDS r7, r6
+    LDP r7, r6
     MOV r13, r7
     MOV r8, r1
     MOV r9, r2
@@ -106,7 +107,8 @@ _func_test_memory:
     LDI r7, 2
     SUB r6, r7
     SETSP r6
-    STA r1, r6
+    MOV r15, r6
+    STA r1, r15
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     MOV r1, r0

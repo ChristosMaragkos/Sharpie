@@ -33,7 +33,8 @@ Main:
     MOV r1, r9
     MOV r2, r10
     ADD r1, r2
-    LDP r2, r8
+    MOV r2, r8
+    LDP r2, r2
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:

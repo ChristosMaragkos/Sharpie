@@ -75,7 +75,6 @@ internal interface IMotherboard
     void WriteVram(ushort address, byte value);
 
     void SetBlitterMode(BlitterMode mode);
-    void RequestVideoBufferClear();
 
     public static ReadOnlySpan<byte> SmallFont =>
         [

@@ -557,18 +557,19 @@ public static class Optimizer
                     }
                 }
 
-                // MOV rTemp, rSrc -> LDP rDest, rTemp ==> LDP rDest, rSource
+                // MOV rTemp, rSrc -> LDP/STA/LDS/STS rX, rTemp ==> use rSrc directly
+                // but only when rTemp is not read again before being redefined.
                 if (!current.IsAlt && current.Mnemonic == "MOV")
                 {
                     var isLoadStore = next.Mnemonic is "LDP" or "STA" or "LDS" or "STS";
-
-                    // If the NEXT instruction uses our target register as its POINTER (Arg2)
                     if (isLoadStore && current.Arg1 == next.Arg2)
                     {
-                        next.Arg2 = current.Arg2; // Swap the pointer to the original source
-                        next.RebuildText();
+                        if (IsRegisterUsedBeforeRedefined(instructions, i + 2, current.Arg1))
+                            continue;
 
-                        instructions.RemoveAt(i); // delete the MOV
+                        next.Arg2 = current.Arg2;
+                        next.RebuildText();
+                        instructions.RemoveAt(i);
                         changed = true;
                         continue;
                     }
@@ -720,6 +721,30 @@ public static class Optimizer
     {
         return UseMnemonics.Contains(inst.Mnemonic)
             || inst.Mnemonic.StartsWith('J') && inst.Mnemonic.Length == 3;
+    }
+
+    private static bool IsRegisterUsedBeforeRedefined(
+        List<Instruction> instructions,
+        int startIndex,
+        string register
+    )
+    {
+        for (int i = startIndex; i < instructions.Count; i++)
+        {
+            var inst = instructions[i];
+            if (inst.IsDirective || inst.IsComment)
+                continue;
+
+            var uses = GetUses(inst);
+            if (uses.Contains(register))
+                return true;
+
+            var defs = GetDefs(inst);
+            if (defs.Contains(register))
+                return false;
+        }
+
+        return false;
     }
 
     public static Dictionary<BasicBlock, HashSet<string>> ComputeLiveOut(ControlFlowGraph cfg)

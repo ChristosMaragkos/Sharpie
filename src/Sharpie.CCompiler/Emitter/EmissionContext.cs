@@ -1,4 +1,4 @@
-namespace Sharpie.CCompiler.Emitter;
+namespace Sharpie.CCompiler;
 
 public enum StorageType
 {
