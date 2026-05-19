@@ -436,9 +436,7 @@ public partial class SharpieEmitter
                 asmString = asmString.Trim('"');
                 asmString = asmString.Replace("\\n", "\n").Replace("\\t", "\t");
 
-                var asmLines = asmString.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var line in asmLines)
+                foreach (var line in asmString.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
                     emitLine(line.Trim());
                 }

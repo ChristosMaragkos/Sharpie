@@ -16,34 +16,34 @@ typedef unsigned char uint8_t;
 #define ARAM_START ((volatile uint8_t *)0xF800)
 
 typedef enum {
-  ATTR_NONE = 0,
-  ATTR_HFLIP = 1 << 0,
-  ATTR_VFLIP = 1 << 1,
-  ATTR_HUD = 1 << 2,
-  ATTR_BG = 1 << 3,
-  ATTR_ALTPAL = 1 << 4
+    ATTR_NONE = 0,
+    ATTR_HFLIP = 1 << 0,
+    ATTR_VFLIP = 1 << 1,
+    ATTR_HUD = 1 << 2,
+    ATTR_BG = 1 << 3,
+    ATTR_ALTPAL = 1 << 4
 } SpriteAttr;
 
 typedef enum {
-  SQ_1,
-  SQ_2,
-  TR_1,
-  TR_2,
-  SAW_1,
-  SAW_2,
-  NS_1,
-  NS_2,
+    SQ_1,
+    SQ_2,
+    TR_1,
+    TR_2,
+    SAW_1,
+    SAW_2,
+    NS_1,
+    NS_2,
 } AudioChannel;
 
 typedef enum {
-  UP = 1 << 0,
-  DOWN = 1 << 1,
-  LEFT = 1 << 2,
-  RIGHT = 1 << 3,
-  A = 1 << 4,
-  B = 1 << 5,
-  START = 1 << 6,
-  OPTION = 1 << 7
+    UP = 1 << 0,
+    DOWN = 1 << 1,
+    LEFT = 1 << 2,
+    RIGHT = 1 << 3,
+    A = 1 << 4,
+    B = 1 << 5,
+    START = 1 << 6,
+    OPTION = 1 << 7
 } Button;
 
 typedef enum { DEFAULT = 0, NO_TEXT = 1, NO_OAM = 2, NONE = 3 } BlitMode;
@@ -87,6 +87,7 @@ void __sharpie_move_cursor(int x, int y);
 char __sharpie_read_vram(unsigned int yxPacked);
 void __sharpie_write_vram(unsigned int yxPacked, char value);
 void __sharpie_blit_mode(BlitMode mode);
+void __sharpie_debug(int value_to_print);
 
 // --- Standard C Aliases ---
 #define alloca(size) __sharpie_alloca(size)
@@ -98,7 +99,7 @@ void __sharpie_blit_mode(BlitMode mode);
 // --- Sharpie Macros & Aliases ---
 // Automatically packs Attr (Low Byte) and Type (High Byte)
 #define draw_sprite(x, y, id, attr, type)                                      \
-  __sharpie_draw(x, y, id, (attr) | ((type) << 8))
+    __sharpie_draw(x, y, id, (attr) | ((type) << 8))
 
 #define yield() __sharpie_vblnk()
 #define delay(frames) __sharpie_delay(frames)
@@ -116,10 +117,11 @@ void __sharpie_blit_mode(BlitMode mode);
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
+#define print_breadcrumb(value) __sharpie_debug(value)
 
 #define read_vram(x, y) __sharpie_read_vram((((y) & 0xFF) << 8) | ((x) & 0xFF))
 #define write_vram(x, y, value)                                                \
-  __sharpie_write_vram((((y) & 0xFF) << 8) | ((x) & 0xFF), (value))
+    __sharpie_write_vram((((y) & 0xFF) << 8) | ((x) & 0xFF), (value))
 
 #define set_blit_mode(mode) __sharpie_blit_mode(mode)
 
