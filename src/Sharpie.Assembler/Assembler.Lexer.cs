@@ -17,7 +17,7 @@ public partial class SharpieRomEmitter
     {
         if (CurrentRegion == null)
             throw new AssemblySyntaxException(
-                $"Only enum, label and constant definitions are allowed outside of regions.",
+                "Only enum, label and constant definitions are allowed outside of regions.",
                 token.SourceLine!.Value
             );
 
@@ -155,7 +155,7 @@ public partial class SharpieRomEmitter
                     lineNum
                 );
             if (CurrentRegion != null)
-                throw new AssemblySyntaxException($"Cannot create nested regions.", lineNum);
+                throw new AssemblySyntaxException("Cannot create nested regions.", lineNum);
 
             var parts = cleanLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2)

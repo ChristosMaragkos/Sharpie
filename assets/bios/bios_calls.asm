@@ -297,7 +297,7 @@ Alloca:
 ; Parameters:
 ; byte amount (expected in r1)
 ;
-; The opposite to SYS_ALLOC_STACKFRAME. This subroutine simply frees N bytes from the stack and returns nothing.
+; The opposite to SYS_ALLOC_STACKFRAME. This subroutine simply frees N bytes from the stack and returns the new stack pointer.
 ;
 ; This subroutine overwrites these registers:
 ; - R1
@@ -315,6 +315,8 @@ FreeFrame:
 
     PUSH r2
     Return:
+        GETSP r0
+        IADD r0, 2
         RET
 .ENDSCOPE
 

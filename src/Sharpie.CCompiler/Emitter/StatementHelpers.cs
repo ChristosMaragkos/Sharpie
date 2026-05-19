@@ -234,6 +234,34 @@ public partial class SharpieEmitter
                     }
                 }
             }
+            else if (initExprs.Count > 0)
+            {
+                var initExpr = PeelExpression(initExprs[^1]);
+
+                // If it's a struct-returning call, write directly into the variable's stack home
+                if (isRecord && initExpr.Kind == CXCursorKind.CXCursor_CallExpr && initExpr.Type.SizeOf > 2)
+                {
+                    using var dest = context.AcquireTempRegister();
+                    context.Emit($"MOV r{dest.Value}, r15");
+                    AccumulateOffset(dest.Value, space.Value, context);
+
+                    EmitCallExpressionInto(initExpr, dest.Value, context);
+                    return;
+                }
+
+                using var srcReg = context.AcquireTempRegister();
+                EmitExpression(initExprs[^1], srcReg.Value, context);
+
+                using var destReg = context.AcquireTempRegister();
+                context.Emit($"MOV r{destReg.Value}, r15");
+                AccumulateOffset(destReg.Value, space.Value, context);
+
+                context.Emit($"PUSH r{srcReg.Value}");
+                context.Emit($"MOV r1, r{destReg.Value}");
+                context.Emit("POP r2");
+                context.Emit($"LDI r3, {sizeBytes}");
+                context.Emit("CALL SYS_MEM_MOVE");
+            }
             return; // done initializing
         }
 
@@ -242,7 +270,7 @@ public partial class SharpieEmitter
         if (initExprs.Count == 0)
             context.Emit($"LDI r{valRegPrimitive.Value}, 0");
         else
-            EmitExpression(initExprs.Last(), valRegPrimitive.Value, context);
+            EmitExpression(initExprs[^1], valRegPrimitive.Value, context);
 
         if (space.Type == StorageType.Register)
         {
@@ -316,11 +344,26 @@ public partial class SharpieEmitter
         var assignSize = lhs.Type.SizeOf;
         if (assignSize > 2)
         {
-            // Delegate to BIOS memcpy
-            // PUSH and POP to prevent overlapping register mapping bugs (e.g., if valReg=1 and addrReg=2)
-            context.Emit($"PUSH r{valReg.Value}");
-            context.Emit($"MOV r1, r{addrReg.Value}"); // Dest
-            context.Emit("POP r2"); // Source
+            // If RHS is a struct-returning call, write directly into destination (no temp buffers means no leaks)
+            var peeledRhs = PeelExpression(rhs);
+            if (peeledRhs.Kind == CXCursorKind.CXCursor_CallExpr && peeledRhs.Type.SizeOf > 2)
+            {
+                using var destAddrReg = context.AcquireTempRegister();
+                EmitLValueAddress(lhs, destAddrReg.Value, context);
+
+                EmitCallExpressionInto(peeledRhs, destAddrReg.Value, context);
+                return;
+            }
+
+            using var srcAddrReg = context.AcquireTempRegister();
+            EmitExpression(rhs, srcAddrReg.Value, context); // must yield address for aggregates
+
+            using var destAddrReg2 = context.AcquireTempRegister();
+            EmitLValueAddress(lhs, destAddrReg2.Value, context);
+
+            context.Emit($"PUSH r{srcAddrReg.Value}");
+            context.Emit($"MOV r1, r{destAddrReg2.Value}");
+            context.Emit("POP r2");
             context.Emit($"LDI r3, {assignSize}");
             context.Emit("CALL SYS_MEM_MOVE");
         }
@@ -441,6 +484,9 @@ public partial class SharpieEmitter
 
         switch (node.Kind)
         {
+            case 0:
+                return;
+
             case CXCursorKind.CXCursor_StringLiteral:
                 if (targetReg >= 0)
                 {
@@ -508,14 +554,15 @@ public partial class SharpieEmitter
 
                         if (allocatedSpace.Type == StorageType.Stack)
                         {
-                            using var offsetReg = context.AcquireTempRegister();
-                            context.Emit($"LDI r{offsetReg.Value}, {allocatedSpace}");
-                            context.Emit($"{prefix}LDS r{targetReg}, r{offsetReg.Value}");
+                            using var addrReg = context.AcquireTempRegister();
+                            context.Emit($"MOV r{addrReg.Value}, r15");
+                            AccumulateOffset(addrReg.Value, allocatedSpace.Value, context);
+
+                            context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
                         }
-                        else
+                        else if (targetReg != allocatedSpace.Value)
                         {
-                            if (targetReg != allocatedSpace.Value)
-                                context.Emit($"MOV r{targetReg}, r{allocatedSpace.Value}");
+                            context.Emit($"MOV r{targetReg}, r{allocatedSpace.Value}");
                         }
                     }
                     return;
@@ -566,6 +613,26 @@ public partial class SharpieEmitter
                     EmitLValueAddress(node, addrReg.Value, context);
                     context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
                 }
+                return;
+
+            case CXCursorKind.CXCursor_UnexposedExpr:
+                var children = GetChildren(node);
+                if (children.Count > 0)
+                {
+                    // Recursively process the child
+                    EmitExpression(children[0], targetReg, context);
+                }
+                else
+                {
+                    // If no children, it's an empty expression. 
+                    // Emit a zero-value to prevent the register from being uninitialized.
+                    if (targetReg >= 0)
+                        context.Emit($"LDI r{targetReg}, 0");
+                }
+                return;
+
+            case CXCursorKind.CXCursor_CompoundLiteralExpr:
+                EmitCompoundLiteral(node, targetReg, context);
                 return;
         }
 
@@ -651,7 +718,7 @@ public partial class SharpieEmitter
                     // --- LOCAL VARIABLE ---
                     int mathReg;
                     EmissionContext.TempLease valRegLease = default;
-                    EmissionContext.TempLease offsetRegLease = default;
+                    EmissionContext.TempLease addrLease = default;
 
                     if (loc.Type == StorageType.Register)
                     {
@@ -660,11 +727,12 @@ public partial class SharpieEmitter
                     else
                     {
                         valRegLease = context.AcquireTempRegister();
-                        offsetRegLease = context.AcquireTempRegister();
+                        addrLease = context.AcquireTempRegister();
                         mathReg = valRegLease.Value;
 
-                        context.Emit($"LDI r{offsetRegLease.Value}, {loc.Value}");
-                        context.Emit($"LDS r{mathReg}, r{offsetRegLease.Value}");
+                        context.Emit($"MOV r{addrLease.Value}, r15");
+                        AccumulateOffset(addrLease.Value, loc.Value, context);
+                        context.Emit($"LDP r{mathReg}, r{addrLease.Value}");
                     }
 
                     if (isPost)
@@ -682,9 +750,9 @@ public partial class SharpieEmitter
 
                     if (loc.Type == StorageType.Stack)
                     {
-                        context.Emit($"STS r{mathReg}, r{offsetRegLease.Value}");
+                        context.Emit($"STA r{mathReg}, r{addrLease.Value}");
                         valRegLease.Dispose();
-                        offsetRegLease.Dispose();
+                        addrLease.Dispose();
                     }
                 }
                 else if (context.Globals.Contains(name))
@@ -776,9 +844,11 @@ public partial class SharpieEmitter
 
         var operands = GetChildren(binaryExpr);
         if (operands.Count != 2)
+        {
             throw new InvalidOperationException(
                 "Binary expression must have exactly two operands."
             );
+        }
 
         var lhs = PeelExpression(operands[0]);
         var rhs = PeelExpression(operands[1]);
@@ -811,7 +881,9 @@ public partial class SharpieEmitter
             EmitExpression(lhs, leftReg.Value, context);
 
             if (TryGetByteLiteral(rhs, out var immValue))
+            {
                 context.Emit($"ICMP r{leftReg.Value}, {immValue}");
+            }
             else
             {
                 using var rightReg = context.AcquireTempRegister();
@@ -994,7 +1066,9 @@ public partial class SharpieEmitter
                 EmitExpression(lhs, leftReg.Value, context);
 
                 if (TryGetByteLiteral(rhs, out var immValue))
+                {
                     context.Emit($"ICMP r{leftReg.Value}, {immValue}");
+                }
                 else
                 {
                     using var rightReg = context.AcquireTempRegister();
@@ -1050,18 +1124,10 @@ public partial class SharpieEmitter
 
         long retSize = callExpr.Type.SizeOf;
         bool hasHiddenPtr = retSize > 2;
-        StorageLocation tempRetSpace = default;
 
-        if (hasHiddenPtr)
-        {
-            // Allocate a temporary local variable to hold the returned struct
-            // Because we stitch the Prologue at the end, TotalStackBytes will cleanly account for this.
-            tempRetSpace = context.AllocateStorage(
-                EmissionContext.GenerateLabel("tmp_ret"),
-                true,
-                (int)retSize
-            );
-        }
+        // If this is a struct return and the caller wants a value (targetReg >= 0),
+        // we need somewhere to put it, so we allocate ephemeral stack space
+        bool needsStructResult = hasHiddenPtr && targetReg >= 0;
 
         var activeLeases = new List<EmissionContext.TempLease>();
         int indirectTargetSpillOffset = -1;
@@ -1084,7 +1150,7 @@ public partial class SharpieEmitter
         foreach (var reg in tempsToProtect)
         {
             int offset = context.GetSpillOffset(reg);
-            context.Emit($"MOV r0, r15");
+            context.Emit("MOV r0, r15");
             AccumulateOffset(0, offset, context);
             context.Emit($"STA r{reg}, r0");
         }
@@ -1182,8 +1248,16 @@ public partial class SharpieEmitter
 
         if (hasHiddenPtr)
         {
-            context.Emit("MOV r1, r15");
-            AccumulateOffset(1, tempRetSpace.Value, context);
+            if (!needsStructResult)
+            {
+                EmitAllocStackframe((int)retSize, context);
+                context.Emit("MOV r1, r0");
+            }
+            else
+            {
+                EmitAllocStackframe((int)retSize, context);
+                context.Emit("MOV r1, r0");
+            }
         }
 
         if (!TryEmitIntrinsic(funcName, context))
@@ -1232,19 +1306,16 @@ public partial class SharpieEmitter
                 context.Emit("POP r14");
                 context.Emit("POP r13");
             }
+            else if (isDirectCall)
+            {
+                context.Emit($"CALL _func_{funcName}");
+            }
             else
             {
-                if (isDirectCall)
-                {
-                    context.Emit($"CALL _func_{funcName}");
-                }
-                else
-                {
-                    context.Emit("MOV r6, r15");
-                    AccumulateOffset(6, indirectTargetSpillOffset, context);
-                    context.Emit("LDP r0, r6");
-                    context.Emit("ALT CALL r0");
-                }
+                context.Emit("MOV r6, r15");
+                AccumulateOffset(6, indirectTargetSpillOffset, context);
+                context.Emit("LDP r0, r6");
+                context.Emit("ALT CALL r0");
             }
         }
 
@@ -1261,26 +1332,240 @@ public partial class SharpieEmitter
             foreach (var reg in tempsToProtect)
             {
                 int offset = context.GetSpillOffset(reg);
-                context.Emit($"MOV r0, r15");
+                context.Emit("MOV r0, r15");
                 AccumulateOffset(0, offset, context);
                 context.Emit($"LDP r{reg}, r0");
             }
 
-            context.Emit($"POP r0");
+            context.Emit("POP r0");
         }
 
-        if (targetReg > 0)
+        if (targetReg >= 0)
         {
-            // Yield the address of the struct, not r0
             if (hasHiddenPtr)
             {
-                context.Emit($"MOV r{targetReg}, r15");
-                AccumulateOffset(targetReg, tempRetSpace.Value, context);
+                if (targetReg != 1)
+                    context.Emit($"MOV r{targetReg}, r1");
             }
-            else
+            else if (targetReg != 0)
             {
                 context.Emit($"MOV r{targetReg}, r0");
             }
+        }
+
+        foreach (var lease in activeLeases)
+            lease.Dispose();
+    }
+
+    private static void EmitCallExpressionInto(
+    CXCursor callExpr,
+    int destAddrReg,
+    EmissionContext context
+)
+    {
+        var children = GetChildren(callExpr);
+        var callee = PeelExpression(children[0]);
+
+        var referenced = clang.getCursorReferenced(callee);
+        bool isDirectCall = referenced.Kind == CXCursorKind.CXCursor_FunctionDecl;
+        var funcName = isDirectCall ? children[0].Spelling.ToString() : "";
+
+        long retSize = callExpr.Type.SizeOf;
+        if (retSize <= 2)
+            throw new InvalidOperationException("EmitCallExpressionInto called for non-aggregate return.");
+
+        int indirectTargetSpillOffset = -1;
+
+        if (!isDirectCall)
+        {
+            using var calleeRegLease = context.AcquireTempRegister();
+            EmitExpression(callee, calleeRegLease.Value, context);
+
+            var loc = context.AllocateStorage("__hidden_indirect", true, 2);
+            context.Emit("MOV r6, r15");
+            AccumulateOffset(6, loc.Value, context);
+            context.Emit($"STA r{calleeRegLease.Value}, r6");
+            indirectTargetSpillOffset = loc.Value;
+        }
+
+        var tempsToProtect = context.GetActiveTempRegisters();
+        foreach (var reg in tempsToProtect)
+        {
+            int offset = context.GetSpillOffset(reg);
+            context.Emit("MOV r0, r15");
+            AccumulateOffset(0, offset, context);
+            context.Emit($"STA r{reg}, r0");
+        }
+
+        // Partition args into reg/stack, with sret for r1
+        var regArgs = new List<(CXCursor Expr, int Slots)>();
+        var stackArgs = new List<(CXCursor Expr, int Slots)>();
+
+        int currentReg = 2;
+
+        for (int i = 1; i < children.Count; i++)
+        {
+            var arg = children[i];
+            int slots = GetRegistersNeededForVariable(arg.Type);
+
+            if (currentReg + slots - 1 <= 4)
+            {
+                regArgs.Add((arg, slots));
+                currentReg += slots;
+            }
+            else
+            {
+                stackArgs.Add((arg, slots));
+            }
+        }
+
+        // stack args right to left
+        int totalStackBytesToFree = 0;
+        for (int i = stackArgs.Count - 1; i >= 0; i--)
+        {
+            var (arg, slots) = stackArgs[i];
+            totalStackBytesToFree += slots * 2;
+
+            if (slots == 1)
+            {
+                using var lease = context.AcquireTempRegister();
+                EmitExpression(arg, lease.Value, context);
+                context.Emit($"PUSH r{lease.Value}");
+            }
+            else
+            {
+                using var addrReg = context.AcquireTempRegister();
+                EmitLValueAddress(arg, addrReg.Value, context);
+
+                if (addrReg.Value == 2)
+                    context.Emit("MOV r1, r2");
+                else if (addrReg.Value != 1)
+                    context.Emit($"MOV r1, r{addrReg.Value}");
+
+                context.Emit($"LDI r2, {slots * 2}");
+                context.Emit("CALL SYS_STACKALLOC");
+            }
+        }
+
+        // reg args left-to-right
+        var activeLeases = new List<EmissionContext.TempLease>();
+        var regAssignments = new List<(int TargetReg, int SourceTempReg)>();
+
+        int abiReg = 2;
+
+        foreach (var (arg, slots) in regArgs)
+        {
+            if (slots == 1)
+            {
+                var lease = context.AcquireTempRegister();
+                activeLeases.Add(lease);
+                EmitExpression(arg, lease.Value, context);
+                regAssignments.Add((abiReg, lease.Value));
+                abiReg++;
+            }
+            else
+            {
+                using var addrReg = context.AcquireTempRegister();
+                EmitLValueAddress(arg, addrReg.Value, context);
+
+                for (int s = 0; s < slots; s++)
+                {
+                    var lease = context.AcquireTempRegister();
+                    activeLeases.Add(lease);
+
+                    context.Emit($"LDP r{lease.Value}, r{addrReg.Value}");
+                    if (s < slots - 1)
+                        context.Emit($"IADD r{addrReg.Value}, 2");
+
+                    regAssignments.Add((abiReg, lease.Value));
+                    abiReg++;
+                }
+            }
+        }
+
+        foreach (var (target, src) in regAssignments)
+        {
+            if (target != src)
+                context.Emit($"MOV r{target}, r{src}");
+        }
+
+        // Set hidden sret pointer: r1 = destAddrReg
+        if (destAddrReg != 1)
+            context.Emit($"MOV r1, r{destAddrReg}");
+
+        // Call (intrinsic or normal)
+        if (!TryEmitIntrinsic(funcName, context))
+        {
+            string? targetBank = null;
+            unsafe
+            {
+                referenced.VisitChildren(
+                    (child, _, _) =>
+                    {
+                        if (child.Kind == CXCursorKind.CXCursor_AnnotateAttr)
+                        {
+                            var annotation = child.Spelling.ToString();
+                            if (annotation.StartsWith("bank_"))
+                                targetBank = annotation.Substring(5);
+                        }
+                        return CXChildVisitResult.CXChildVisit_Continue;
+                    },
+                    new CXClientData(IntPtr.Zero)
+                );
+            }
+
+            if (targetBank != null)
+            {
+                context.Emit("PUSH r13");
+                context.Emit("PUSH r14");
+                context.Emit($"LDI r14, {targetBank}");
+
+                if (isDirectCall)
+                {
+                    context.Emit($"LDI r13, _func_{funcName}");
+                }
+                else
+                {
+                    context.Emit("MOV r6, r15");
+                    AccumulateOffset(6, indirectTargetSpillOffset, context);
+                    context.Emit("LDP r13, r6");
+                }
+
+                context.Emit("CALL SYS_FAR_CALL");
+                context.Emit("POP r14");
+                context.Emit("POP r13");
+            }
+            else if (isDirectCall)
+            {
+                context.Emit($"CALL _func_{funcName}");
+            }
+            else
+            {
+                context.Emit("MOV r6, r15");
+                AccumulateOffset(6, indirectTargetSpillOffset, context);
+                context.Emit("LDP r0, r6");
+                context.Emit("ALT CALL r0");
+            }
+
+            if (totalStackBytesToFree > 0)
+            {
+                context.Emit($"LDI r1, {totalStackBytesToFree}");
+                context.Emit("CALL SYS_FREE_STACKFRAME");
+            }
+        }
+
+        // restore temps
+        if (tempsToProtect.Count > 0)
+        {
+            context.Emit("PUSH r0");
+            foreach (var reg in tempsToProtect)
+            {
+                int offset = context.GetSpillOffset(reg);
+                context.Emit("MOV r0, r15");
+                AccumulateOffset(0, offset, context);
+                context.Emit($"LDP r{reg}, r0");
+            }
+            context.Emit("POP r0");
         }
 
         foreach (var lease in activeLeases)
@@ -1393,6 +1678,24 @@ public partial class SharpieEmitter
         }
     }
 
+    private static void EmitAllocStackframe(int byteCount, EmissionContext context)
+    {
+        if (byteCount < 0 || byteCount > 255)
+            throw new InvalidOperationException($"SYS_ALLOC_STACKFRAME expects a byte count 0-255, got {byteCount}");
+
+        context.Emit($"LDI r1, {byteCount}");
+        context.Emit("CALL SYS_ALLOC_STACKFRAME"); // returns ptr in r0
+    }
+
+    private static void EmitFreeStackframe(int byteCount, EmissionContext context)
+    {
+        if (byteCount < 0 || byteCount > 255)
+            throw new InvalidOperationException($"SYS_FREE_STACKFRAME expects a byte count 0-255, got {byteCount}");
+
+        context.Emit($"LDI r1, {byteCount}");
+        context.Emit("CALL SYS_FREE_STACKFRAME");
+    }
+
     private static string GetOrAddStringLiteral(CXCursor stringLiteralNode, EmissionContext context)
     {
         string rawString = "";
@@ -1423,5 +1726,43 @@ public partial class SharpieEmitter
         }
 
         return existingLabel;
+    }
+
+    private static void EmitCompoundLiteral(CXCursor expr, int targetReg, EmissionContext context)
+    {
+        long size = expr.Type.SizeOf;
+        var space = context.AllocateStorage(EmissionContext.GenerateLabel("anon_lit"), true, (int)size);
+
+        var initList = GetChildren(expr).FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
+        var initVals = GetChildren(initList);
+
+        using var baseReg = context.AcquireTempRegister();
+        context.Emit($"MOV r{baseReg.Value}, r15");
+        AccumulateOffset(baseReg.Value, space.Value, context);
+
+        var decl = clang.getTypeDeclaration(expr.Type.CanonicalType);
+        var fields = GetChildren(decl).Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl).ToList();
+
+        for (int i = 0; i < initVals.Count && i < fields.Count; i++)
+        {
+            long offsetBytes = clang.Cursor_getOffsetOfField(fields[i]) / 8;
+            long fieldSize = fields[i].Type.SizeOf;
+
+            using var valReg = context.AcquireTempRegister();
+            EmitExpression(initVals[i], valReg.Value, context);
+
+            using var addrReg = context.AcquireTempRegister();
+            context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+            AccumulateOffset(addrReg.Value, (int)offsetBytes, context);
+
+            string altPrefix = (fieldSize == 1) ? "ALT " : "";
+            context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+        }
+
+        if (targetReg >= 0)
+        {
+            context.Emit($"MOV r{targetReg}, r15");
+            AccumulateOffset(targetReg, space.Value, context);
+        }
     }
 }
