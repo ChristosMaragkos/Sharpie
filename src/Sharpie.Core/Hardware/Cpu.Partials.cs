@@ -142,6 +142,8 @@ internal partial class Cpu
         var dataLost = result > ushort.MaxValue;
         SetFlag(dataLost, CpuFlags.Carry);
         SetFlag(dataLost, CpuFlags.Overflow);
+
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_DIV(byte opcode, ref ushort pcDelta)
