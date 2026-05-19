@@ -179,10 +179,11 @@ public partial class SharpieEmitter
         // Identify actual inline initialization for arrays/structs
         var initList = GetChildren(varDecl)
             .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
+        var hasInitList = initList.Kind == CXCursorKind.CXCursor_InitListExpr;
 
         if (isRecord || isArray)
         {
-            if (initList.Kind != CXCursorKind.CXCursor_NoDeclFound)
+            if (hasInitList)
             {
                 var initVals = GetChildren(initList);
 

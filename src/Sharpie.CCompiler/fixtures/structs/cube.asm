@@ -340,9 +340,16 @@ if_L3:
     STA r2, r3
     MOV r1, r15
     IADD r1, 6
+    MOV r0, r15
+    IADD r0, 10
+    STA r1, r0
+    MOV r2, r15
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
     CALL _func_draw_point
     MOV r2, r15
-    IADD r2, 10
+    IADD r2, 12
     LDI r3, 50
     STA r3, r2
     LDI r3, 40
@@ -356,7 +363,7 @@ if_L3:
     IADD r4, 4
     STA r3, r4
     MOV r1, r15
-    IADD r1, 10
+    IADD r1, 12
     MOV r2, r15
     PUSH r1
     MOV r1, r2
@@ -366,7 +373,7 @@ if_L3:
     MOV r1, r15
     IADD r1, 6
     MOV r0, r15
-    IADD r0, 16
+    IADD r0, 10
     STA r1, r0
     MOV r2, r15
     CALL _func_world_to_screen
