@@ -614,6 +614,9 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_ArraySubscriptExpr:
                 if (targetReg >= 0)
                 {
+                    if (TryEmitMemberReadFromStructReturnCall(node, targetReg, context))
+                        return;
+
                     var isByte = node.Type.SizeOf == 1;
                     var prefix = isByte ? "ALT " : "";
 
@@ -645,6 +648,50 @@ public partial class SharpieEmitter
         }
 
         throw new InvalidOperationException($"Unsupported expression kind: {node.Kind}");
+    }
+
+    private static bool TryEmitMemberReadFromStructReturnCall(
+        CXCursor node,
+        int targetReg,
+        EmissionContext context
+    )
+    {
+        if (node.Kind != CXCursorKind.CXCursor_MemberRefExpr)
+            return false;
+
+        var children = GetChildren(node);
+        if (children.Count == 0)
+            return false;
+
+        var baseExpr = PeelExpression(children[0]);
+        if (baseExpr.Kind != CXCursorKind.CXCursor_CallExpr || baseExpr.Type.SizeOf <= 2)
+            return false;
+
+        var retSize = (int)baseExpr.Type.SizeOf;
+
+        using var retAddrReg = context.AcquireTempRegister();
+        EmitAllocStackframe(retSize, context);
+        context.Emit($"MOV r{retAddrReg.Value}, r0");
+        EmitCallExpressionInto(baseExpr, retAddrReg.Value, context);
+
+        var fieldDecl = clang.getCursorReferenced(node);
+        long offsetBits = clang.Cursor_getOffsetOfField(fieldDecl);
+        if (offsetBits < 0)
+        {
+            throw new InvalidOperationException(
+                $"Could not determine offset for struct field '{node.Spelling}'"
+            );
+        }
+
+        long offsetBytes = offsetBits / 8;
+        AccumulateOffset(retAddrReg.Value, (int)offsetBytes, context);
+
+        var isByte = node.Type.SizeOf == 1;
+        var prefix = isByte ? "ALT " : "";
+        context.Emit($"{prefix}LDP r{targetReg}, r{retAddrReg.Value}");
+        EmitFreeStackframe(retSize, context);
+
+        return true;
     }
 
     private static void EmitUnaryExpression(
