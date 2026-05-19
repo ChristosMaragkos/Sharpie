@@ -141,10 +141,13 @@ internal partial class Cpu
                     var imm = _mobo.ReadByte(_pc + 2);
                     var ptr = GetRegister(x);
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old * imm);
-                    UpdateLogicFlags(result);
-                    _mobo.WriteWord(ptr, result);
+                    var oldWord = _mobo.ReadWord(ptr);
+                    var old = (short)oldWord;
+                    var simm = (sbyte)imm;
+
+                    var result = old * simm;
+                    UpdateFlags(result, oldWord, imm);
+                    _mobo.WriteWord(ptr, (ushort)result);
                     break;
                 }
 
@@ -161,11 +164,17 @@ internal partial class Cpu
                         SetFlag(true, CpuFlags.Zero);
                         SetFlag(true, CpuFlags.Overflow);
                         _mobo.WriteWord(ptr, 0);
+                        break;
                     }
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old / imm);
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old / simm);
+
                     UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
                     _mobo.WriteWord(ptr, result);
                     break;
                 }
@@ -183,11 +192,17 @@ internal partial class Cpu
                         SetFlag(true, CpuFlags.Zero);
                         SetFlag(true, CpuFlags.Overflow);
                         _mobo.WriteWord(ptr, 0);
+                        break;
                     }
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old % imm);
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old % simm);
+
                     UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
                     _mobo.WriteWord(ptr, result);
                     break;
                 }
