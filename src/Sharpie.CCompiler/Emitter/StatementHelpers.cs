@@ -653,14 +653,7 @@ public partial class SharpieEmitter
                     if (TryEmitMemberReadFromStructReturnCall(node, targetReg, context))
                         return;
 
-                    var memberCanonical = node.Type.CanonicalType.kind;
-                    bool memberIsAggregate =
-                        memberCanonical == CXTypeKind.CXType_Record
-                        || memberCanonical == CXTypeKind.CXType_ConstantArray
-                        || memberCanonical == CXTypeKind.CXType_IncompleteArray
-                        || memberCanonical == CXTypeKind.CXType_VariableArray;
-
-                    if (memberIsAggregate)
+                    if (IsAggregateType(node.Type))
                     {
                         EmitLValueAddress(node, targetReg, context);
                         return;
@@ -677,14 +670,7 @@ public partial class SharpieEmitter
             case CXCursorKind.CXCursor_ArraySubscriptExpr:
                 if (targetReg >= 0)
                 {
-                    var subscriptCanonical = node.Type.CanonicalType.kind;
-                    bool subscriptIsAggregate =
-                        subscriptCanonical == CXTypeKind.CXType_Record
-                        || subscriptCanonical == CXTypeKind.CXType_ConstantArray
-                        || subscriptCanonical == CXTypeKind.CXType_IncompleteArray
-                        || subscriptCanonical == CXTypeKind.CXType_VariableArray;
-
-                    if (subscriptIsAggregate)
+                    if (IsAggregateType(node.Type))
                     {
                         EmitLValueAddress(node, targetReg, context);
                         return;
@@ -1817,6 +1803,15 @@ public partial class SharpieEmitter
             context.Emit($"IADD r{targetReg}, {chunk}");
             offset -= chunk;
         }
+    }
+
+    private static bool IsAggregateType(CXType type)
+    {
+        var canonicalKind = type.CanonicalType.kind;
+        return canonicalKind == CXTypeKind.CXType_Record
+            || canonicalKind == CXTypeKind.CXType_ConstantArray
+            || canonicalKind == CXTypeKind.CXType_IncompleteArray
+            || canonicalKind == CXTypeKind.CXType_VariableArray;
     }
 
     private static void EmitAllocStackframe(int byteCount, EmissionContext context)
