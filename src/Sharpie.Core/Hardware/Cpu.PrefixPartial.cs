@@ -141,9 +141,11 @@ internal partial class Cpu
                     var imm = _mobo.ReadByte(_pc + 2);
                     var ptr = GetRegister(x);
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old * imm);
-                    UpdateLogicFlags(result);
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+
+                    var result = (ushort)(old * simm);
+                    UpdateFlags(result, GetRegister(x), imm);
                     _mobo.WriteWord(ptr, result);
                     break;
                 }
@@ -163,9 +165,14 @@ internal partial class Cpu
                         _mobo.WriteWord(ptr, 0);
                     }
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old / imm);
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old / simm);
+
                     UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
                     _mobo.WriteWord(ptr, result);
                     break;
                 }
@@ -185,9 +192,14 @@ internal partial class Cpu
                         _mobo.WriteWord(ptr, 0);
                     }
 
-                    var old = _mobo.ReadWord(ptr);
-                    var result = (ushort)(old % imm);
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old % simm);
+
                     UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
                     _mobo.WriteWord(ptr, result);
                     break;
                 }
