@@ -119,12 +119,10 @@ _func_do_math:
     MOV r9, r2
     MOV r10, r3
     MOV r1, r8
-    MOV r6, r15
-    STA r1, r6
+    STA r1, r15
     MOV r1, r9
     MOV r2, r10
-    MOV r6, r15
-    LDP r0, r6
+    LDP r0, r15
     ALT CALL r0
 epilogue_L3:
     MOV r6, r15
