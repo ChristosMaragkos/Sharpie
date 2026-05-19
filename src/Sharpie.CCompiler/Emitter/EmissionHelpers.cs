@@ -263,12 +263,34 @@ public partial class SharpieEmitter
                 is CXCursorKind.CXCursor_UnexposedExpr
                     or CXCursorKind.CXCursor_ParenExpr
                     or CXCursorKind.CXCursor_CStyleCastExpr
+                    or CXCursorKind.CXCursor_CXXStaticCastExpr
+                    or CXCursorKind.CXCursor_CXXReinterpretCastExpr
+                    or CXCursorKind.CXCursor_CXXConstCastExpr
+                    or CXCursorKind.CXCursor_CXXFunctionalCastExpr
         )
         {
-            var next = GetChildren(current).FirstOrDefault();
+            var children = GetChildren(current);
+            if (children.Count == 0)
+                break;
+
+            var next = children.FirstOrDefault(c =>
+                c.Kind is not CXCursorKind.CXCursor_TypeRef
+                    and not CXCursorKind.CXCursor_TemplateRef
+                    and not CXCursorKind.CXCursor_NamespaceRef
+            );
+
             if (next.Kind == CXCursorKind.CXCursor_NoDeclFound)
                 break;
+
             current = next;
+        }
+
+        if (current.Kind == CXCursorKind.CXCursor_TypeRef)
+        {
+            var children = GetChildren(current);
+            var next = children.FirstOrDefault();
+            if (next.Kind != CXCursorKind.CXCursor_NoDeclFound)
+                current = next;
         }
 
         return current;
