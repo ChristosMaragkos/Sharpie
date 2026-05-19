@@ -11,26 +11,6 @@
 .REGION FIXED
 ; Global Variables
 .GLOBAL
-_global_FOREGROUND:
-    .DB 1
-.ENDGLOBAL
-.GLOBAL
-_global_WIDTH:
-    .DB 255
-.ENDGLOBAL
-.GLOBAL
-_global_HEIGHT:
-    .DB 255
-.ENDGLOBAL
-.GLOBAL
-_global_CENTER:
-    .DB 128
-.ENDGLOBAL
-.GLOBAL
-_global_FOV:
-    .DB 128
-.ENDGLOBAL
-.GLOBAL
 _global_sin_table:
     .DW 0
     .DW 6
@@ -290,80 +270,100 @@ _global_sin_table:
     .DW -6
 .ENDGLOBAL
 .GLOBAL
-_global_dz:
-    .DW 0
+_global_FOREGROUND:
+    .DB 1
 .ENDGLOBAL
 .GLOBAL
-_global_ddz:
-    .DB 0
+_global_WIDTH:
+    .DB 255
+.ENDGLOBAL
+.GLOBAL
+_global_HEIGHT:
+    .DB 255
+.ENDGLOBAL
+.GLOBAL
+_global_CENTER:
+    .DB 128
+.ENDGLOBAL
+.GLOBAL
+_global_FOV:
+    .DW 96
+.ENDGLOBAL
+.GLOBAL
+_global_dz:
+    .DW 0
 .ENDGLOBAL
 .GLOBAL
 Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 18
+    LDI r7, 36
     SUB r6, r7
     SETSP r6
     MOV r15, r6
     LDI r1, 3
     BLITMODE r1
+    MOV r1, r15
+    IADD r1, 10
+    LDI r2, 65504
+    STA r2, r1
+    LDI r2, 32
+    MOV r3, r1
+    IADD r3, 2
+    STA r2, r3
+    LDI r2, 96
+    MOV r3, r1
+    IADD r3, 4
+    STA r2, r3
+    LDI r2, 32
+    MOV r3, r1
+    IADD r3, 6
+    STA r2, r3
+    LDI r2, 32
+    MOV r3, r1
+    IADD r3, 8
+    STA r2, r3
+    LDI r2, 96
+    MOV r3, r1
+    IADD r3, 10
+    STA r2, r3
+    LDI r2, 32
+    MOV r3, r1
+    IADD r3, 12
+    STA r2, r3
+    LDI r2, 65504
+    MOV r3, r1
+    IADD r3, 14
+    STA r2, r3
+    LDI r2, 96
+    MOV r3, r1
+    IADD r3, 16
+    STA r2, r3
+    LDI r2, 65504
+    MOV r3, r1
+    IADD r3, 18
+    STA r2, r3
+    LDI r2, 65504
+    MOV r3, r1
+    IADD r3, 20
+    STA r2, r3
+    LDI r2, 96
+    MOV r3, r1
+    IADD r3, 22
+    STA r2, r3
 while_start_L1:
     LDI r1, 1
     ICMP r1, 0
     JEQ while_end_L2
     XOR r1, r1
     CLS r1
-    ALT LDM r2, _global_ddz
-    INC r2
-    MOV r1, r2
-    ALT STM r2, _global_ddz
-    ICMP r1, 20
-    JNE if_L3
-    LDI r1, _global_dz
-    DINC r1
-    XOR r1, r1
-    ALT STM r1, _global_ddz
-if_L3:
     MOV r1, r15
-    LDI r2, 40
-    STA r2, r1
-    LDI r2, 40
-    MOV r3, r1
-    IADD r3, 2
-    STA r2, r3
-    LDI r2, 40
-    LDM r3, _global_dz
-    ADD r2, r3
-    MOV r3, r1
-    IADD r3, 4
-    STA r2, r3
-    MOV r1, r15
-    IADD r1, 6
-    MOV r0, r15
-    IADD r0, 10
-    STA r1, r0
-    MOV r2, r15
-    CALL _func_world_to_screen
-    MOV r1, r15
-    IADD r1, 6
-    CALL _func_draw_point
-    MOV r2, r15
-    IADD r2, 12
-    LDI r3, 80
-    STA r3, r2
-    LDI r3, 40
-    MOV r4, r2
-    IADD r4, 2
-    STA r3, r4
-    LDI r3, 40
-    LDM r4, _global_dz
-    ADD r3, r4
-    MOV r4, r2
-    IADD r4, 4
-    STA r3, r4
-    MOV r1, r15
-    IADD r1, 12
+    IADD r1, 10
+    XOR r2, r2
+    LDI r3, 6
+    MUL r2, r3
+    ADD r1, r2
     MOV r2, r15
     PUSH r1
     MOV r1, r2
@@ -373,7 +373,67 @@ if_L3:
     MOV r1, r15
     IADD r1, 6
     MOV r0, r15
-    IADD r0, 10
+    IADD r0, 34
+    STA r1, r0
+    MOV r2, r15
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
+    CALL _func_draw_point
+    MOV r1, r15
+    IADD r1, 10
+    LDI r2, 6
+    ADD r1, r2
+    MOV r2, r15
+    PUSH r1
+    MOV r1, r2
+    POP r2
+    LDI r3, 6
+    CALL SYS_MEM_MOVE
+    MOV r1, r15
+    IADD r1, 6
+    MOV r0, r15
+    IADD r0, 34
+    STA r1, r0
+    MOV r2, r15
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
+    CALL _func_draw_point
+    MOV r1, r15
+    IADD r1, 10
+    LDI r2, 12
+    ADD r1, r2
+    MOV r2, r15
+    PUSH r1
+    MOV r1, r2
+    POP r2
+    LDI r3, 6
+    CALL SYS_MEM_MOVE
+    MOV r1, r15
+    IADD r1, 6
+    MOV r0, r15
+    IADD r0, 34
+    STA r1, r0
+    MOV r2, r15
+    CALL _func_world_to_screen
+    MOV r1, r15
+    IADD r1, 6
+    CALL _func_draw_point
+    MOV r1, r15
+    IADD r1, 10
+    LDI r2, 18
+    ADD r1, r2
+    MOV r2, r15
+    PUSH r1
+    MOV r1, r2
+    POP r2
+    LDI r3, 6
+    CALL SYS_MEM_MOVE
+    MOV r1, r15
+    IADD r1, 6
+    MOV r0, r15
+    IADD r0, 34
     STA r1, r0
     MOV r2, r15
     CALL _func_world_to_screen
@@ -386,7 +446,7 @@ while_end_L2:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 18
+    LDI r7, 36
     ADD r6, r7
     SETSP r6
     POP r15
@@ -396,75 +456,32 @@ epilogue_L0:
 _func_draw_point:
     PUSH r8
     MOV r8, r1
-    LDP r2, r8
-    LDI r3, 255
-    CMP r2, r3
-    JGT rel_true_L16
-    XOR r1, r1
-    JMP rel_end_L17
-rel_true_L16:
-    LDI r1, 1
-rel_end_L17:
+    LDP r1, r8
+    LDI r2, 255
+    CMP r1, r2
+    JLE if_L4
+    JMP epilogue_L3
+if_L4:
+    LDP r1, r8
     ICMP r1, 0
-    JNE logical_true_L13
-    LDP r2, r8
-    ICMP r2, 0
-    JLT rel_true_L18
-    XOR r1, r1
-    JMP rel_end_L19
-rel_true_L18:
-    LDI r1, 1
-rel_end_L19:
-    ICMP r1, 0
-    JNE logical_true_L13
-    XOR r1, r1
-    JMP logical_end_L15
-logical_true_L13:
-    LDI r1, 1
-logical_end_L15:
-    ICMP r1, 0
-    JNE logical_true_L10
-    MOV r3, r8
-    IADD r3, 2
-    LDP r2, r3
-    LDI r3, 255
-    CMP r2, r3
-    JGT rel_true_L20
-    XOR r1, r1
-    JMP rel_end_L21
-rel_true_L20:
-    LDI r1, 1
-rel_end_L21:
-    ICMP r1, 0
-    JNE logical_true_L10
-    XOR r1, r1
-    JMP logical_end_L12
-logical_true_L10:
-    LDI r1, 1
-logical_end_L12:
-    ICMP r1, 0
-    JNE logical_true_L7
-    MOV r3, r8
-    IADD r3, 2
-    LDP r2, r3
-    ICMP r2, 0
-    JLT rel_true_L22
-    XOR r1, r1
-    JMP rel_end_L23
-rel_true_L22:
-    LDI r1, 1
-rel_end_L23:
-    ICMP r1, 0
-    JNE logical_true_L7
-    XOR r1, r1
-    JMP logical_end_L9
-logical_true_L7:
-    LDI r1, 1
-logical_end_L9:
-    ICMP r1, 0
-    JEQ if_L6
-    JMP epilogue_L5
+    JGE if_L5
+    JMP epilogue_L3
+if_L5:
+    MOV r2, r8
+    IADD r2, 2
+    LDP r1, r2
+    LDI r2, 255
+    CMP r1, r2
+    JLE if_L6
+    JMP epilogue_L3
 if_L6:
+    MOV r2, r8
+    IADD r2, 2
+    LDP r1, r2
+    ICMP r1, 0
+    JGE if_L7
+    JMP epilogue_L3
+if_L7:
     MOV r2, r8
     IADD r2, 2
     LDP r1, r2
@@ -476,7 +493,7 @@ if_L6:
     OR r1, r2
     LDI r2, 1
     STV r2, r1
-epilogue_L5:
+epilogue_L3:
     POP r8
     RET
 .ENDGLOBAL
@@ -484,8 +501,6 @@ epilogue_L5:
 _func_world_to_screen:
     PUSH r8
     PUSH r9
-    PUSH r10
-    PUSH r11
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -495,50 +510,77 @@ _func_world_to_screen:
     MOV r15, r6
     MOV r8, r1
     MOV r9, r2
+    IADD r2, 4
     LDP r1, r2
-    LDI r2, 128
-    MUL r1, r2
-    MOV r3, r9
-    IADD r3, 4
-    LDP r2, r3
-    DIV r1, r2
-    LDI r2, 128
-    ADD r1, r2
-    MOV r10, r1
-    MOV r2, r9
+    ICMP r1, 0
+    JGT if_L9
+    LDI r1, 65535
+    STA r1, r15
+    LDI r1, 65535
+    MOV r2, r15
     IADD r2, 2
-    LDP r1, r2
-    LDI r2, 128
-    MUL r1, r2
-    MOV r3, r9
-    IADD r3, 4
-    LDP r2, r3
-    DIV r1, r2
-    LDI r2, 128
-    ADD r1, r2
-    MOV r11, r1
-    MOV r1, r15
-    MOV r2, r10
-    STA r2, r1
-    MOV r2, r11
-    MOV r3, r1
-    IADD r3, 2
-    STA r2, r3
+    STA r1, r2
     MOV r1, r15
     PUSH r1
     MOV r1, r8
     POP r2
     LDI r3, 4
     CALL SYS_MEM_MOVE
-epilogue_L24:
+    JMP epilogue_L8
+if_L9:
+    LDI r1, 128
+    LDP r2, r9
+    LDI r3, 96
+    MUL r2, r3
+    MOV r4, r9
+    IADD r4, 4
+    LDP r3, r4
+    DIV r2, r3
+    ADD r1, r2
+    STA r1, r15
+    LDI r1, 128
+    MOV r3, r9
+    IADD r3, 2
+    LDP r2, r3
+    LDI r3, 96
+    MUL r2, r3
+    MOV r4, r9
+    IADD r4, 4
+    LDP r3, r4
+    DIV r2, r3
+    ADD r1, r2
+    MOV r2, r15
+    IADD r2, 2
+    STA r1, r2
+    MOV r1, r15
+    PUSH r1
+    MOV r1, r8
+    POP r2
+    LDI r3, 4
+    CALL SYS_MEM_MOVE
+epilogue_L8:
     MOV r6, r15
     LDI r7, 4
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r11
-    POP r10
     POP r9
+    POP r8
+    RET
+.ENDGLOBAL
+.GLOBAL
+_func_translate_z:
+    PUSH r8
+    MOV r8, r1
+    MOV r2, r8
+    IADD r2, 4
+    LDP r1, r2
+    LDM r2, _global_dz
+    ADD r1, r2
+    MOV r2, r8
+    IADD r2, 4
+    STA r1, r2
+epilogue_L10:
     POP r8
     RET
 .ENDGLOBAL

@@ -1,6 +1,5 @@
 namespace Sharpie.Core.Hardware;
 
-// TODO: Fixed signedness for (ALT) IMUL/IMOD/IDIV
 internal partial class Cpu
 {
     private partial void Execute_MOV(byte opcode, ref ushort pcDelta)
@@ -161,8 +160,7 @@ internal partial class Cpu
         }
 
         short sx = (short)GetRegister(x);
-        int result = sx / sy;
-        var truncated = (ushort)result;
+        var truncated = (ushort)(sx / sy);
 
         UpdateLogicFlags(truncated);
         SetFlag(false, CpuFlags.Carry);
@@ -353,9 +351,14 @@ internal partial class Cpu
         var x = _mobo.ReadByte(_pc + 1);
         var imm = _mobo.ReadByte(_pc + 2);
 
-        var result = (ushort)(GetRegister(x) * imm);
-        UpdateLogicFlags(result);
-        GetRegister(x) = result;
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+
+        int result = sx * simm;
+        var truncated = (ushort)result;
+
+        UpdateFlags(result, GetRegister(x), imm);
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_IDIV(byte opcode, ref ushort pcDelta)
@@ -372,8 +375,14 @@ internal partial class Cpu
             return;
         }
 
-        var result = (ushort)(GetRegister(x) / imm);
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+        ushort result = (ushort)(sx / simm);
+
         UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+
         GetRegister(x) = result;
     }
 
@@ -391,8 +400,14 @@ internal partial class Cpu
             return;
         }
 
-        var result = (ushort)(GetRegister(x) % imm);
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+        ushort result = (ushort)(sx % simm);
+
         UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+
         GetRegister(x) = result;
     }
 
