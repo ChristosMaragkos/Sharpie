@@ -611,12 +611,22 @@ public partial class SharpieEmitter
                 return;
 
             case CXCursorKind.CXCursor_MemberRefExpr:
-            case CXCursorKind.CXCursor_ArraySubscriptExpr:
                 if (targetReg >= 0)
                 {
                     if (TryEmitMemberReadFromStructReturnCall(node, targetReg, context))
                         return;
 
+                    var isByte = node.Type.SizeOf == 1;
+                    var prefix = isByte ? "ALT " : "";
+
+                    using var addrReg = context.AcquireTempRegister();
+                    EmitLValueAddress(node, addrReg.Value, context);
+                    context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
+                }
+                return;
+            case CXCursorKind.CXCursor_ArraySubscriptExpr:
+                if (targetReg >= 0)
+                {
                     var isByte = node.Type.SizeOf == 1;
                     var prefix = isByte ? "ALT " : "";
 
@@ -663,8 +673,13 @@ public partial class SharpieEmitter
         if (children.Count == 0)
             return false;
 
+        const int RegisterReturnByteWidth = 2;
+
         var baseExpr = PeelExpression(children[0]);
-        if (baseExpr.Kind != CXCursorKind.CXCursor_CallExpr || baseExpr.Type.SizeOf <= 2)
+        if (
+            baseExpr.Kind != CXCursorKind.CXCursor_CallExpr
+            || baseExpr.Type.SizeOf <= RegisterReturnByteWidth
+        )
             return false;
 
         var retSize = (int)baseExpr.Type.SizeOf;
@@ -680,6 +695,12 @@ public partial class SharpieEmitter
         {
             throw new InvalidOperationException(
                 $"Could not determine offset for struct field '{node.Spelling}'"
+            );
+        }
+        if ((offsetBits % 8) != 0)
+        {
+            throw new InvalidOperationException(
+                $"Unsupported non-byte-aligned struct field '{node.Spelling}' at bit offset {offsetBits}."
             );
         }
 
