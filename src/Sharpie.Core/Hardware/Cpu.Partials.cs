@@ -614,7 +614,6 @@ internal partial class Cpu
         var idx = _mobo.ReadByte(_pc + 1) & 0x0F;
         var color = (byte)(GetRegister(idx) & 0xF);
         _mobo.ClearScreen(color);
-        _mobo.RequestVideoBufferClear();
     }
 
     private partial void Execute_VBLNK(byte opcode, ref ushort pcDelta)
