@@ -21,7 +21,6 @@ Main:
     MOV r15, r6
     LDI r1, 68
     INC r1
-    MOV r8, r1
     ALT STA r1, r15
     LDI r1, 99
     MOV r2, r15

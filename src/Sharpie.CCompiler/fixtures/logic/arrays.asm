@@ -18,6 +18,13 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
+    LDI r1, 3
+    MOV r2, r15
+    PUSH r1
+    MOV r1, r2
+    POP r2
+    LDI r3, 6
+    CALL SYS_MEM_MOVE
     MOV r1, r15
     LDI r2, 3
     CALL _func_fill_array
