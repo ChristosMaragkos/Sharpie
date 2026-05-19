@@ -1,5 +1,6 @@
 namespace Sharpie.Core.Hardware;
 
+// TODO: Fixed signedness for (ALT) IMUL/IMOD/IDIV
 internal partial class Cpu
 {
     private partial void Execute_MOV(byte opcode, ref ushort pcDelta)
@@ -135,64 +136,64 @@ internal partial class Cpu
     {
         var (x, y) = ReadRegisterArgs();
 
-        int result = GetRegister(x) * GetRegister(y);
+        short sx = (short)GetRegister(x);
+        short sy = (short)GetRegister(y);
+
+        int result = sx * sy;
         var truncated = (ushort)result;
 
-        UpdateLogicFlags(truncated);
-        var dataLost = result > ushort.MaxValue;
-        SetFlag(dataLost, CpuFlags.Carry);
-        SetFlag(dataLost, CpuFlags.Overflow);
-
+        UpdateFlags(result, GetRegister(x), GetRegister(y));
         GetRegister(x) = truncated;
     }
 
     private partial void Execute_DIV(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
-        ushort valY = GetRegister(y);
+        short sy = (short)GetRegister(y);
 
-        if (valY == 0)
+        if (sy == 0)
         {
             GetRegister(x) = 0;
-
             FlagRegister &= 0xFFF0;
             SetFlag(true, CpuFlags.Zero);
             SetFlag(true, CpuFlags.Overflow);
             return;
         }
 
-        var result = (ushort)(GetRegister(x) / valY);
+        short sx = (short)GetRegister(x);
+        int result = sx / sy;
+        var truncated = (ushort)result;
 
-        UpdateLogicFlags(result);
-
+        UpdateLogicFlags(truncated);
         SetFlag(false, CpuFlags.Carry);
         SetFlag(false, CpuFlags.Overflow);
 
-        GetRegister(x) = result;
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_MOD(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
-        ushort valY = GetRegister(y);
+        short sy = (short)GetRegister(y);
 
-        if (valY == 0)
+        if (sy == 0)
         {
             GetRegister(x) = 0;
-
             FlagRegister &= 0xFFF0;
             SetFlag(true, CpuFlags.Zero);
             SetFlag(true, CpuFlags.Overflow);
             return;
         }
 
-        var result = (ushort)(GetRegister(x) % valY);
-        UpdateLogicFlags(result);
+        short sx = (short)GetRegister(x);
+        int result = sx % sy;
+        var truncated = (ushort)result;
 
+        UpdateLogicFlags(truncated);
         SetFlag(false, CpuFlags.Carry);
         SetFlag(false, CpuFlags.Overflow);
 
-        GetRegister(x) = result;
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_AND(byte opcode, ref ushort pcDelta)
