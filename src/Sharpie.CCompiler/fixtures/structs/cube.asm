@@ -664,7 +664,7 @@ _func_line_bresenham:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 20
+    LDI r7, 8
     SUB r6, r7
     SETSP r6
     MOV r15, r6
@@ -737,30 +737,18 @@ while_start_L37:
     LDP r2, r14
     CMP r1, r2
     JEQ while_end_L38
-    MOV r2, r15
-    IADD r2, 8
-    MOV r3, r11
-    STA r3, r2
-    MOV r3, r12
-    MOV r4, r2
-    IADD r4, 2
-    STA r3, r4
     MOV r1, r15
-    IADD r1, 8
-    MOV r2, r15
+    MOV r2, r11
+    STA r2, r1
+    MOV r2, r12
     MOV r3, r1
-    MOV r4, r2
-    LDP r5, r3
-    STA r5, r4
     IADD r3, 2
-    IADD r4, 2
-    LDP r5, r3
-    STA r5, r4
+    STA r2, r3
     MOV r1, r15
     CALL _func_draw_point
     MOV r1, r10
     ICMP r1, 0
-    JLT if_L40
+    JLT if_L39
     MOV r1, r12
     MOV r3, r15
     IADD r3, 6
@@ -773,7 +761,7 @@ while_start_L37:
     MUL r2, r3
     SUB r1, r2
     MOV r10, r1
-if_L40:
+if_L39:
     MOV r1, r10
     LDI r2, 2
     MOV r3, r9
@@ -796,37 +784,25 @@ else_L36:
     MOV r2, r9
     SUB r1, r2
     MOV r10, r1
-while_start_L41:
+while_start_L40:
     MOV r1, r12
     MOV r3, r14
     IADD r3, 2
     LDP r2, r3
     CMP r1, r2
-    JEQ while_end_L42
-    MOV r2, r15
-    IADD r2, 12
-    MOV r3, r11
-    STA r3, r2
-    MOV r3, r12
-    MOV r4, r2
-    IADD r4, 2
-    STA r3, r4
+    JEQ while_end_L41
     MOV r1, r15
-    IADD r1, 12
-    MOV r2, r15
+    MOV r2, r11
+    STA r2, r1
+    MOV r2, r12
     MOV r3, r1
-    MOV r4, r2
-    LDP r5, r3
-    STA r5, r4
     IADD r3, 2
-    IADD r4, 2
-    LDP r5, r3
-    STA r5, r4
+    STA r2, r3
     MOV r1, r15
     CALL _func_draw_point
     MOV r1, r10
     ICMP r1, 0
-    JLT if_L44
+    JLT if_L42
     MOV r1, r11
     MOV r3, r15
     IADD r3, 4
@@ -839,7 +815,7 @@ while_start_L41:
     MUL r2, r3
     SUB r1, r2
     MOV r10, r1
-if_L44:
+if_L42:
     MOV r1, r10
     LDI r2, 2
     MOV r3, r8
@@ -852,33 +828,21 @@ if_L44:
     LDP r2, r3
     ADD r1, r2
     MOV r12, r1
-    JMP while_start_L41
-while_end_L42:
+    JMP while_start_L40
+while_end_L41:
 if_L35:
-    MOV r2, r15
-    IADD r2, 16
-    MOV r3, r11
-    STA r3, r2
-    MOV r3, r12
-    MOV r4, r2
-    IADD r4, 2
-    STA r3, r4
     MOV r1, r15
-    IADD r1, 16
-    MOV r2, r15
+    MOV r2, r11
+    STA r2, r1
+    MOV r2, r12
     MOV r3, r1
-    MOV r4, r2
-    LDP r5, r3
-    STA r5, r4
     IADD r3, 2
-    IADD r4, 2
-    LDP r5, r3
-    STA r5, r4
+    STA r2, r3
     MOV r1, r15
     CALL _func_draw_point
 epilogue_L30:
     MOV r6, r15
-    LDI r7, 20
+    LDI r7, 8
     ADD r6, r7
     SETSP r6
     POP r15

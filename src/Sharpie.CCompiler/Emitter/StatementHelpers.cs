@@ -385,6 +385,16 @@ public partial class SharpieEmitter
                 return;
             }
 
+            // Compound literals are already field-wise expressions; writing them directly avoids
+            // introducing temporary aggregate buffers and an additional copy step.
+            if (peeledRhs.Kind == CXCursorKind.CXCursor_CompoundLiteralExpr)
+            {
+                using var destAddrReg = context.AcquireTempRegister();
+                EmitLValueAddress(lhs, destAddrReg.Value, context);
+                EmitCompoundLiteralIntoAddress(peeledRhs, destAddrReg.Value, context);
+                return;
+            }
+
             using var srcAddrReg = context.AcquireTempRegister();
             EmitExpression(rhs, srcAddrReg.Value, context); // must yield address for aggregates
 
@@ -1895,19 +1905,19 @@ public partial class SharpieEmitter
         return existingLabel;
     }
 
-    private static void EmitCompoundLiteral(CXCursor expr, int targetReg, EmissionContext context)
+    private static void EmitCompoundLiteralIntoAddress(
+        CXCursor compoundLiteralExpr,
+        int destinationAddressRegister,
+        EmissionContext context
+    )
     {
-        long size = expr.Type.SizeOf;
-        var space = context.AllocateStorage(EmissionContext.GenerateLabel("anon_lit"), true, (int)size);
+        var initList = GetChildren(compoundLiteralExpr)
+            .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
+        if (initList.Kind != CXCursorKind.CXCursor_InitListExpr)
+            return;
 
-        var initList = GetChildren(expr).FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
         var initVals = GetChildren(initList);
-
-        using var baseReg = context.AcquireTempRegister();
-        context.Emit($"MOV r{baseReg.Value}, r15");
-        AccumulateOffset(baseReg.Value, space.Value, context);
-
-        var decl = clang.getTypeDeclaration(expr.Type.CanonicalType);
+        var decl = clang.getTypeDeclaration(compoundLiteralExpr.Type.CanonicalType);
         var fields = GetChildren(decl).Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl).ToList();
 
         for (int i = 0; i < initVals.Count && i < fields.Count; i++)
@@ -1919,12 +1929,23 @@ public partial class SharpieEmitter
             EmitExpression(initVals[i], valReg.Value, context);
 
             using var addrReg = context.AcquireTempRegister();
-            context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+            context.Emit($"MOV r{addrReg.Value}, r{destinationAddressRegister}");
             AccumulateOffset(addrReg.Value, (int)offsetBytes, context);
 
             string altPrefix = (fieldSize == 1) ? "ALT " : "";
             context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
         }
+    }
+
+    private static void EmitCompoundLiteral(CXCursor expr, int targetReg, EmissionContext context)
+    {
+        long size = expr.Type.SizeOf;
+        var space = context.AllocateStorage(EmissionContext.GenerateLabel("anon_lit"), true, (int)size);
+
+        using var baseReg = context.AcquireTempRegister();
+        context.Emit($"MOV r{baseReg.Value}, r15");
+        AccumulateOffset(baseReg.Value, space.Value, context);
+        EmitCompoundLiteralIntoAddress(expr, baseReg.Value, context);
 
         if (targetReg >= 0)
         {
