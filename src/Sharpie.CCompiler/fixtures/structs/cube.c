@@ -178,18 +178,29 @@ int main(void) {
         Vec3 v, v1;
         Vec2 p, p1;
 
-        for (int i = 0; i < (sizeof(vertices) / sizeof(Vec3)); ++i) {
-            v = vertices[i];
-            rotate_xz(&v, angle);
-            translate_z(&v, 96);
-            p = world_to_screen(&v);
-            draw_point(&p);
-        }
+        v = vertices[0];
+        v1 = vertices[2];
 
-        if (++dAngle == 5) {
-            ++angle;
-            dAngle = 0;
-        }
+        translate_z(&v, 96);
+        translate_z(&v1, 96);
+
+        p = world_to_screen(&v);
+        p1 = world_to_screen(&v1);
+
+        line_bresenham(&p, &p1);
+
+        // for (int i = 0; i < (sizeof(vertices) / sizeof(Vec3)); ++i) {
+        //     v = vertices[i];
+        //     rotate_xz(&v, angle);
+        //     translate_z(&v, 96);
+        //     p = world_to_screen(&v);
+        //     draw_point(&p);
+        // }
+        //
+        // if (++dAngle == 5) {
+        //     ++angle;
+        //     dAngle = 0;
+        // }
 
         yield();
     }
