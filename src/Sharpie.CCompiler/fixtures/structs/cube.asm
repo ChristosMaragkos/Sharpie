@@ -355,11 +355,18 @@ for_start_L3:
     MUL r2, r3
     ADD r1, r2
     MOV r2, r15
-    PUSH r1
-    MOV r1, r2
-    POP r2
-    LDI r3, 6
-    CALL SYS_MEM_MOVE
+    MOV r3, r1
+    MOV r4, r2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
     MOV r1, r15
     ALT LDM r2, _global_angle
     CALL _func_rotate_xz
@@ -741,11 +748,14 @@ while_start_L37:
     MOV r1, r15
     IADD r1, 8
     MOV r2, r15
-    PUSH r1
-    MOV r1, r2
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r3, r1
+    MOV r4, r2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
     MOV r1, r15
     CALL _func_draw_point
     MOV r1, r10
@@ -804,11 +814,14 @@ while_start_L41:
     MOV r1, r15
     IADD r1, 12
     MOV r2, r15
-    PUSH r1
-    MOV r1, r2
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r3, r1
+    MOV r4, r2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
     MOV r1, r15
     CALL _func_draw_point
     MOV r1, r10
@@ -853,11 +866,14 @@ if_L35:
     MOV r1, r15
     IADD r1, 16
     MOV r2, r15
-    PUSH r1
-    MOV r1, r2
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r3, r1
+    MOV r4, r2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
     MOV r1, r15
     CALL _func_draw_point
 epilogue_L30:

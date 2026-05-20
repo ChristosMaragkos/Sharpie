@@ -391,11 +391,7 @@ public partial class SharpieEmitter
             using var destAddrReg2 = context.AcquireTempRegister();
             EmitLValueAddress(lhs, destAddrReg2.Value, context);
 
-            context.Emit($"PUSH r{srcAddrReg.Value}");
-            context.Emit($"MOV r1, r{destAddrReg2.Value}");
-            context.Emit("POP r2");
-            context.Emit($"LDI r3, {assignSize}");
-            context.Emit("CALL SYS_MEM_MOVE");
+            EmitInlineAggregateCopy(srcAddrReg.Value, destAddrReg2.Value, (int)assignSize, context);
             return;
         }
 
@@ -408,6 +404,41 @@ public partial class SharpieEmitter
 
         var storePrefix = (assignSize == 1) ? "ALT " : "";
         context.Emit($"{storePrefix}STA r{valReg.Value}, r{addrReg.Value}");
+    }
+
+    private static void EmitInlineAggregateCopy(
+        int srcAddrReg,
+        int destAddrReg,
+        int sizeBytes,
+        EmissionContext context
+    )
+    {
+        using var srcPtr = context.AcquireTempRegister();
+        using var dstPtr = context.AcquireTempRegister();
+        using var valReg = context.AcquireTempRegister();
+
+        context.Emit($"MOV r{srcPtr.Value}, r{srcAddrReg}");
+        context.Emit($"MOV r{dstPtr.Value}, r{destAddrReg}");
+
+        var remaining = sizeBytes;
+        while (remaining >= 2)
+        {
+            context.Emit($"LDP r{valReg.Value}, r{srcPtr.Value}");
+            context.Emit($"STA r{valReg.Value}, r{dstPtr.Value}");
+
+            remaining -= 2;
+            if (remaining > 0)
+            {
+                context.Emit($"IADD r{srcPtr.Value}, 2");
+                context.Emit($"IADD r{dstPtr.Value}, 2");
+            }
+        }
+
+        if (remaining == 1)
+        {
+            context.Emit($"ALT LDP r{valReg.Value}, r{srcPtr.Value}");
+            context.Emit($"ALT STA r{valReg.Value}, r{dstPtr.Value}");
+        }
     }
 
     private static void EmitCompoundAssignment(
