@@ -1246,11 +1246,12 @@ public partial class SharpieEmitter
                     context.Emit("ALT CALL r0");
                 }
             }
-            if (totalStackBytesToFree > 0)
-            {
-                context.Emit($"LDI r1, {totalStackBytesToFree}");
-                context.Emit("CALL SYS_FREE_STACKFRAME");
-            }
+        }
+
+        if (totalStackBytesToFree > 0)
+        {
+            context.Emit($"LDI r1, {totalStackBytesToFree}");
+            context.Emit("CALL SYS_FREE_STACKFRAME");
         }
 
         if (tempsToProtect.Count > 0)
