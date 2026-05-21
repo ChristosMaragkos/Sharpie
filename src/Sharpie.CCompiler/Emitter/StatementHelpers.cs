@@ -688,6 +688,23 @@ public partial class SharpieEmitter
                 EmitBinaryExpression(node, targetReg, context);
                 return;
 
+            case CXCursorKind.CXCursor_CompoundAssignOperator:
+                var assignChildren = GetChildren(node);
+                if (assignChildren.Count != 2)
+                    throw new InvalidOperationException("Expected compound assignment to have exactly 2 operands.");
+
+                var lhsAssign = PeelExpression(assignChildren[0]);
+                var rhsAssign = PeelExpression(assignChildren[1]);
+
+                EmitCompoundAssignment(node, lhsAssign, rhsAssign, context);
+
+                if (targetReg >= 0)
+                {
+                    EmitExpression(lhsAssign, targetReg, context);
+                }
+                return;
+
+
             case CXCursorKind.CXCursor_MemberRefExpr:
                 if (targetReg >= 0)
                 {
