@@ -22,6 +22,7 @@ internal class Motherboard : IMotherboard
 
     public byte[] ControllerStates { get; } = new byte[2];
     public byte[,] TextGrid { get; } = new byte[32, 32];
+    public bool IsForcedYield { get; set; }
 
     private readonly IDisplayOutput _displayDevice;
     private readonly IAudioOutput _audioDevice;
@@ -300,7 +301,6 @@ internal class Motherboard : IMotherboard
 
     public void VBlank()
     {
-        GetInputState();
         _ppu.VBlank(_oam);
     }
 
@@ -508,6 +508,7 @@ internal class Motherboard : IMotherboard
     {
         try
         {
+            IsForcedYield = false;
             for (var i = 0; i < 16000; i++)
             {
                 if (_cpu.IsAwaitingVBlank || _cpu.IsHalted)
@@ -515,7 +516,11 @@ internal class Motherboard : IMotherboard
                 _cpu.Cycle();
             }
 
-            VBlank();
+            GetInputState();
+            if (!IsForcedYield)
+            {
+                VBlank();
+            }
             _cpu.IsAwaitingVBlank = false;
         }
         catch (Exception e)

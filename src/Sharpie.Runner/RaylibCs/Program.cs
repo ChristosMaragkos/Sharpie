@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Raylib_cs;
+using Sharpie.Core;
 using Sharpie.Runner.RaylibCs.Impl;
 
 var video = new RaylibVideoOutput();
@@ -64,7 +65,7 @@ while (!video.ShouldCloseWindow())
         try
         {
             var filePath = FileDialog.OpenFileDialog();
-            if (filePath != null && filePath.EndsWith(".shr"))
+            if (filePath?.EndsWith(".shr") == true)
             {
                 romBytes = File.ReadAllBytes(filePath);
                 TryLoadCart();
@@ -100,7 +101,10 @@ while (!video.ShouldCloseWindow())
         }
     }
     emulator.Step();
-    video.HandleFramebuffer(emulator.GetVideoBuffer());
+    if (!emulator.IsForcedUpdate)
+    {
+        video.HandleFramebuffer(emulator.GetVideoBuffer());
+    }
     logger.LogAll();
 }
 

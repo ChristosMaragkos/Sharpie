@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Raylib_cs;
+using Sharpie.Core;
 using Sharpie.Core.Drivers;
 
 namespace Sharpie.Runner.RaylibCs.Impl;

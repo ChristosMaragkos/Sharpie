@@ -315,9 +315,11 @@ public partial class SharpieEmitter
             .Any(c => c.Kind == CXCursorKind.CXCursor_ParmDecl);
 
         if (hasParameters)
+        {
             throw new InvalidOperationException(
                 "Only zero-parameter `main` is currently supported."
             );
+        }
     }
 
     private static List<CXCursor> GetChildren(CXCursor cursor)
@@ -356,7 +358,7 @@ public partial class SharpieEmitter
                 return GetChildren(initList);
         }
 
-        return new List<CXCursor>();
+        return [];
     }
 
     private static int CountLocals(CXCursor functionCursor)

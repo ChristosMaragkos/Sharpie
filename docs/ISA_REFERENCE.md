@@ -72,7 +72,7 @@
 | `0xC2` | **SAVE** | `-` | 1 | Alerts the motherboard that a save was requested. |  |
 | `0xF0` | **OAMTAG** | `R, R` | 2 | Pack Attribute and Type bytes of OAM`[R1]` into R2. Low Endian. | Set R2 to the Tile ID of OAM`[R1]` |
 | `0xF1` | **CLS** | `R` | 2 | Clear screen with color in R and invalidate OAM entries from the current OAM cursor position. | Hard Clear: Wipe screen and reset OAM. |
-| `0xF2` | **VBLNK** | `-` | 1 | Yield CPU until next V-Blank. |  |
+| `0xF2` | **VBLNK** | `-` | 1 | Yield CPU until next V-Blank. | Yield CPU and immediately proceed to next frame (PPU does not blit). |
 | `0xF3` | **PLAY** | `R, R, R` | 3 | Play note: Channel, Note, Instrument. Cannot be retriggered by the sequencer until the note is over. |  |
 | `0xF4` | **STOP** | `R` | 2 | Stop sound on channel in R. |  |
 | `0xF5` | **INPUT** | `R, R` | 2 | Read Controller `[R1]` into R2. |  |

@@ -77,6 +77,7 @@ void __sharpie_stop(int channel);
 void __sharpie_mute(void);
 void __sharpie_hard_mute(void);
 void __sharpie_vblnk(void);
+void __sharpie_force_vblnk(void);
 void __sharpie_bank(int bank);
 void __sharpie_save(void);
 void __sharpie_halt(void);
@@ -102,6 +103,7 @@ void __sharpie_debug(int value_to_print);
     __sharpie_draw(x, y, id, (attr) | ((type) << 8))
 
 #define yield() __sharpie_vblnk()
+#define restart_frame() __sharpie_force_vblnk()
 #define delay(frames) __sharpie_delay(frames)
 #define clear_screen(color) __sharpie_cls(color)
 #define set_camera(x, y) __sharpie_set_cam(x, y)

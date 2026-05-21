@@ -388,6 +388,11 @@ internal partial class Cpu
                 GetRegister(rDest) = entry.TileId;
                 break;
 
+            case 0xF2: // VBLNK
+                pcDelta = 1;
+                AwaitVBlank();
+                _mobo.IsForcedYield = true;
+                break;
 
             case 0xF7: // TEXT
                 {

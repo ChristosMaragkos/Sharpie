@@ -75,6 +75,7 @@ internal interface IMotherboard
     void WriteVram(ushort address, byte value);
 
     void SetBlitterMode(BlitterMode mode);
+    bool IsForcedYield { get; set; }
 
     public static ReadOnlySpan<byte> SmallFont =>
         [

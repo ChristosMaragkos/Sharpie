@@ -1,10 +1,13 @@
 using Sharpie.Core.Drivers;
 using Sharpie.Core.Hardware;
 
+namespace Sharpie.Core;
+
 public class SharpieConsole
 {
     private readonly Motherboard _motherboard;
     public bool IsInBootMode => _motherboard.IsInBootMode;
+    public bool IsForcedUpdate => _motherboard.IsForcedYield;
 
     public SharpieConsole(
         IDisplayOutput display,

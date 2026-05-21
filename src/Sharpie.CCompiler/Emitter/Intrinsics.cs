@@ -107,6 +107,9 @@ public partial class SharpieEmitter
             case "__sharpie_vblnk":
                 context.Emit("VBLNK");
                 return true;
+            case "__sharpie_force_vblnk":
+                context.Emit("ALT VBLNK");
+                return true;
             case "__sharpie_bank":
                 context.Emit("BANK r1");
                 return true;

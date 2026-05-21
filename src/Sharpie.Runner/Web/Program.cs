@@ -12,7 +12,7 @@ public partial class Program
     private static RaylibInputHandler input = null!;
     private static RaylibDebugOutpug logger = null!;
     private static SharpieConsole emulator = null!;
-    private static byte[]? romBytes = null;
+    private static byte[]? romBytes;
 
     public static void Main()
     {
@@ -31,7 +31,10 @@ public partial class Program
     public static void UpdateFrame()
     {
         emulator.Step();
-        video.HandleFramebuffer(emulator.GetVideoBuffer());
+        if (!emulator.IsForcedUpdate)
+        {
+            video.HandleFramebuffer(emulator.GetVideoBuffer());
+        }
         logger.LogAll();
     }
 
@@ -46,7 +49,7 @@ public partial class Program
     {
         try
         {
-            if (data != null && data.Length > 0)
+            if (data?.Length > 0)
             {
                 romBytes = data;
                 emulator.LoadCartridge(romBytes);
