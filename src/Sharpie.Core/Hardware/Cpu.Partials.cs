@@ -317,7 +317,7 @@ internal partial class Cpu
 
     private partial void Execute_NEG(byte opcode, ref ushort pcDelta)
     {
-        var x = IndexFromOpcode(opcode);
+        var x = _mobo.ReadByte(_pc + 1) & 0xF;
 
         var result = 0 - GetRegister(x);
 
