@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices.JavaScript;
 using Raylib_cs;
+using Sharpie.Core;
 using Sharpie.Runner.RaylibCs.Impl;
 
 namespace Sharpie.Runner.Web;
