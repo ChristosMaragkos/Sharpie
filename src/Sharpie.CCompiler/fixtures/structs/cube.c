@@ -33,7 +33,7 @@ const int sin_table[256] = {
     -97,  -92,  -86,  -80,  -74,  -68,  -62,  -56,  -49,  -43,  -37,  -31,
     -25,  -18,  -12,  -6};
 
-const unsigned char FOREGROUND = 1;
+const unsigned char FOREGROUND = 4;
 const unsigned char WIDTH = 255;
 const unsigned char HEIGHT = 255;
 const unsigned char CENTER = 128;
@@ -122,11 +122,10 @@ void line_bresenham(Vec2 *p1, Vec2 *p2) {
         error = (2 * dy) - dx;
 
         while (x != p2->x) {
-            v = (Vec2){x, y};
-            draw_point(&v);
+            if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
+                write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
 
-            if (error >= 0) { // comparing with an 8-bit literal emits ICMP,
-                              // saving us a register load. We NEED the cycles.
+            if (error >= 0) {
                 y += stepY;
                 error -= 2 * dx;
             }
@@ -138,8 +137,8 @@ void line_bresenham(Vec2 *p1, Vec2 *p2) {
         error = (2 * dx) - dy;
 
         while (y != p2->y) {
-            v = (Vec2){x, y};
-            draw_point(&v);
+            if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
+                write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
 
             if (error >= 0) {
                 x += stepX;
@@ -150,11 +149,11 @@ void line_bresenham(Vec2 *p1, Vec2 *p2) {
             y += stepY;
         }
     }
-    v = (Vec2){x, y};
-    draw_point(&v);
+    if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
+        write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
 }
 
-Vec3 vertices[] = {
+Vec3 vertices[8] = {
     {-32, 32, 32},
     {32, 32, 32},
     {32, -32, 32},
@@ -166,43 +165,45 @@ Vec3 vertices[] = {
     {-32, -32, -32},
 };
 
+unsigned char edges[24] = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
+                           6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
+
 unsigned char angle = 0;
 unsigned char dAngle = 0;
 
 int main(void) {
     set_blit_mode(NONE);
 
+    Vec3 v, v1;
+    Vec2 p, p1;
+
     while (1) {
         clear_screen(0);
 
-        Vec3 v, v1;
-        Vec2 p, p1;
+        for (int i = 0; i < sizeof(edges); i += 2) {
+            v = vertices[edges[i]];
+            v1 = vertices[edges[i + 1]];
 
-        v = vertices[0];
-        v1 = vertices[2];
+            rotate_xz(&v, angle);
+            rotate_xz(&v1, angle);
+            v.z += 96;
+            v1.z += 96;
 
-        translate_z(&v, 96);
-        translate_z(&v1, 96);
+            p = world_to_screen(&v);
+            p1 = world_to_screen(&v1);
 
-        p = world_to_screen(&v);
-        p1 = world_to_screen(&v1);
+            line_bresenham(&p, &p1);
+            restart_frame();
+        }
 
-        line_bresenham(&p, &p1);
-
-        // for (int i = 0; i < (sizeof(vertices) / sizeof(Vec3)); ++i) {
-        //     v = vertices[i];
-        //     rotate_xz(&v, angle);
-        //     translate_z(&v, 96);
-        //     p = world_to_screen(&v);
-        //     draw_point(&p);
-        // }
-        //
-        // if (++dAngle == 5) {
-        //     ++angle;
-        //     dAngle = 0;
-        // }
-
-        yield();
+        if (++dAngle == 30) {
+            ++angle;
+            dAngle = 0;
+            yield();
+        }
+        if (angle == 192) {
+            angle = 0;
+        }
     }
     return 0;
 }

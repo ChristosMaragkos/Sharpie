@@ -389,6 +389,8 @@ internal partial class Cpu
                 break;
 
             case 0xF2: // VBLNK
+                // NOTE: I initially intended for this to incur a slight performance hit. However, I accidentally optimized it to the point where
+                // it's actually *more* performant than the actual VBLNK opcode itself. That said, overuse can lead to input-to-display latency.
                 pcDelta = 1;
                 AwaitVBlank();
                 _mobo.IsForcedYield = true;
