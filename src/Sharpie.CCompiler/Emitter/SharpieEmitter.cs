@@ -319,6 +319,13 @@ public sealed partial class SharpieEmitter
             foreach (var global in globalVars)
             {
                 var name = global.Spelling.ToString();
+
+                // Skip const-qualified scalar globals. clang evaluates all value references
+                // at compile time, so the global storage is never
+                // accessed. This avoids emitting globals for constants which are never referenced, thus saving space.
+                if (global.Type.IsConstQualified && !IsAggregateType(global.Type))
+                    continue;
+
                 globalNames.Add(name);
 
                 var linkage = clang.getCursorLinkage(global);

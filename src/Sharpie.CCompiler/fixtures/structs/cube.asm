@@ -270,26 +270,6 @@ _global_sin_table:
     .DW -6
 .ENDGLOBAL
 .GLOBAL
-_global_FOREGROUND:
-    .DB 4
-.ENDGLOBAL
-.GLOBAL
-_global_WIDTH:
-    .DB 255
-.ENDGLOBAL
-.GLOBAL
-_global_HEIGHT:
-    .DB 255
-.ENDGLOBAL
-.GLOBAL
-_global_CENTER:
-    .DB 128
-.ENDGLOBAL
-.GLOBAL
-_global_FOV:
-    .DW 96
-.ENDGLOBAL
-.GLOBAL
 _global_vertices:
     .DW -32
     .DW 32
