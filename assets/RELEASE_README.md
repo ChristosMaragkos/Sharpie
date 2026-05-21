@@ -12,7 +12,7 @@ All necessary assets are included either in the package you just downloaded or e
 
 ## Controls (Keyboard/Joypad)
 
-Currently, the keyboard controls Player 1, and the first detected controller controls Player 2.
+Currently, the keyboard controls Player 1, and the first detected controller controls Player 2. The second detected controller also controls player 1.
 
 - **D-pad:** Arrow Keys / Left Joystick or Controller D-pad
 - **A:** Z / Xbox B / PlayStation Circle / Nintendo A
