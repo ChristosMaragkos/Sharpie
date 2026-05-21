@@ -363,6 +363,9 @@ public sealed partial class SharpieEmitter
                         bool elementIsRecord =
                             elementType.kind == CXTypeKind.CXType_Record
                             || elementCanonical.kind == CXTypeKind.CXType_Record;
+                        bool elementIsArray =
+                            elementType.kind == CXTypeKind.CXType_ConstantArray
+                            || elementType.kind == CXTypeKind.CXType_IncompleteArray;
 
                         if (elementIsRecord)
                         {
@@ -404,6 +407,24 @@ public sealed partial class SharpieEmitter
                                 }
 
                                 bytesWritten += elementBytesWritten;
+                            }
+                        }
+                        else if (elementIsArray)
+                        {
+                            // Handle global arrays of arrays (multidimensional arrays).
+                            var innerElementType = clang.getElementType(elementType);
+                            long innerStride = innerElementType.SizeOf <= 0 ? 2 : innerElementType.SizeOf;
+
+                            foreach (var rowVal in initVals)
+                            {
+                                var colInitVals = GetAggregateInitializerValues(rowVal);
+
+                                foreach (var colVal in colInitVals)
+                                {
+                                    long v = PeelExpression(colVal).Evaluate.AsLongLong;
+                                    asm.AppendLine(innerStride == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                                    bytesWritten += innerStride;
+                                }
                             }
                         }
                         else

@@ -199,6 +199,9 @@ public partial class SharpieEmitter
                     bool elementIsRecord =
                         elementType.kind == CXTypeKind.CXType_Record
                         || elementCanonical.kind == CXTypeKind.CXType_Record;
+                    bool elementIsArray =
+                        elementType.kind == CXTypeKind.CXType_ConstantArray
+                        || elementType.kind == CXTypeKind.CXType_IncompleteArray;
                     long stride = elementType.SizeOf;
                     if (stride <= 0)
                         stride = 2; // Fallback
@@ -227,6 +230,31 @@ public partial class SharpieEmitter
                                 AccumulateOffset(addrReg.Value, (int)(i * stride + fieldOffset), context);
 
                                 string altPrefix = (fieldSize == 1) ? "ALT " : "";
+                                context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                            }
+                        }
+                    }
+                    else if (elementIsArray)
+                    {
+                        // Handle arrays of arrays (multidimensional arrays) by recursively
+                        // unpacking the nested InitListExpr nodes.
+                        var innerElementType = clang.getElementType(elementType);
+                        long innerStride = innerElementType.SizeOf <= 0 ? 2 : innerElementType.SizeOf;
+
+                        for (int i = 0; i < initVals.Count; i++)
+                        {
+                            var innerInitVals = GetAggregateInitializerValues(initVals[i]);
+
+                            for (int j = 0; j < innerInitVals.Count; j++)
+                            {
+                                using var valReg = context.AcquireTempRegister();
+                                EmitExpression(innerInitVals[j], valReg.Value, context);
+
+                                using var addrReg = context.AcquireTempRegister();
+                                context.Emit($"MOV r{addrReg.Value}, r{baseReg.Value}");
+                                AccumulateOffset(addrReg.Value, (int)(i * stride + j * innerStride), context);
+
+                                string altPrefix = (innerStride == 1) ? "ALT " : "";
                                 context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
                             }
                         }
