@@ -1,0 +1,23 @@
+# BIOS Syscall Reference
+
+This document lists every BIOS call available to Sharpie cartridges at runtime.
+They may be invoked using their assigned name (e.g., `CALL SYS_IDX_READ_VAL`).
+The absolute addresses below are the actual values baked into the assembler's symbol table
+(see `BiosCallAddresses` in `src/Sharpie.Assembler/Assembler.Helpers.cs`).
+
+| Syscall Name | Address | Calling Convention | Function |
+|---|---|---|---|
+| `SYS_IDX_READ_VAL` | `$FA2A` | **R1** = Start address of LUT/struct<br>**R2** = Zero-based index<br>**R3** = Stride (element size in bytes)<br>**R4** = Destination address<br>**Clobbers:** R0–R4 | Loads a value from an indexed element of a lookup table (or struct) and copies it to memory. Computes `address = start + (index × stride)` and reads `stride` consecutive bytes. |
+| `SYS_STACKALLOC` | `$FA41` | **R1** = Source address of block to copy<br>**R2** = Number of bytes to copy to stack<br>**Clobbers:** R0–R4 | Copies `byteAmount` bytes from the given address onto the stack (in reverse order so structs remain accessible in the correct direction). The return address is preserved internally. After the call, values can be popped off the stack. |
+| `SYS_FRAME_DELAY` | `$FA67` | **R1** = Number of frames to wait<br>**Clobbers:** R15 | Halts execution for the specified number of frames by repeatedly forcing V-Blank. |
+| `SYS_IDX_WRITE_VAL` | `$FA6E` | **R1** = Start address of LUT/struct<br>**R2** = Zero-based index<br>**R3** = Element size in bytes<br>**R4** = Source address of data to copy<br>**Clobbers:** R0–R4 | Writes data from a source buffer into a specific indexed element of a lookup table (or struct). Computes `address = start + (index × stride)` and copies `stride` bytes from the source. |
+| `SYS_IDX_READ_REF` | `$FA85` | **R1** = Start address of LUT/struct<br>**R2** = Zero-based index<br>**R3** = Stride (element size in bytes)<br>**Returns:** R0 = Calculated pointer<br>**Clobbers:** R0–R3 | Calculates a pointer to an element within a lookup table without dereferencing it (reference-type semantics). Equivalent to `&lut[index]`. |
+| `SYS_MEM_COPY` | `$FA8C` | **R1** = Destination start address<br>**R2** = Source start address<br>**R3** = Number of bytes to copy<br>**Clobbers:** R0–R3 | Copies `byteAmount` bytes from source to destination. Does **not** handle overlapping regions safely (use `SYS_MEM_MOVE` for that). |
+| `SYS_PAL_RESET` | `$FAA4` | **No parameters**<br>**Clobbers:** None (R4 saved/restored) | Resets the colour palette to its default identity mapping (colour entry N points to colour value N for all 32 entries). |
+| `SYS_ALLOC_STACKFRAME` | `$FAB6` | **R1** = Number of bytes to allocate<br>**Returns:** R0 = New stack pointer (pointer to allocated space)<br>**Clobbers:** R0–R2 | Allocates N bytes on the stack (downward-growing). The allocated space is **uninitialised**. Primarily intended for C compiler stack frames. |
+| `SYS_FREE_STACKFRAME` | `$FACC` | **R1** = Number of bytes to free<br>**Returns:** R0 = New stack pointer<br>**Clobbers:** R1–R2 | Frees N bytes from the stack (the inverse of `SYS_ALLOC_STACKFRAME`). |
+| `SYS_MEM_SET` | `$FAE2` | **R1** = Start address<br>**R2** = Value to write (byte)<br>**R3** = Number of bytes to set<br>**Clobbers:** R0–R3 | Fills `count` bytes starting at `address` with the given 8-bit value. |
+| `SYS_MEM_CMP` | `$FAF3` | **R1** = First memory region<br>**R2** = Second memory region<br>**R3** = Number of bytes to compare<br>**Returns:** R0 = 0 if equal, or the difference `byte1 - byte2` of the first mismatching byte<br>**Clobbers:** R0, R4–R5 | Compares two memory regions byte-by-byte. Returns zero if they match, or the signed difference of the first mismatching pair. |
+| `SYS_PRINT` | `$FB18` | **R1** = Address of null-terminated (zero-terminated) string<br>**R2** = Grid column (X coordinate)<br>**R3** = Grid row (Y coordinate)<br>**Clobbers:** R4 | Prints a null-terminated string to the screen at the specified grid coordinates using the `PRNT` instruction. |
+| `SYS_MEM_MOVE` | `$FB2B` | **R1** = Destination start address<br>**R2** = Source start address<br>**R3** = Number of bytes to move<br>**Clobbers:** R0–R4 | Safely copies a memory region even when source and destination overlap. Chooses forward or backward copy direction automatically. |
+| `SYS_FAR_CALL` | `$FB4E` | **R13** = Function address to call<br>**R14** = Target bank ID<br>**Clobbers:** R12 (saved/restored internally) | Calls a function located in another ROM bank without clobbering any registers. Saves the current bank, switches to the target bank, calls the function, then restores the original bank. |
