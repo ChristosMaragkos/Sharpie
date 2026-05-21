@@ -263,12 +263,34 @@ public partial class SharpieEmitter
                 is CXCursorKind.CXCursor_UnexposedExpr
                     or CXCursorKind.CXCursor_ParenExpr
                     or CXCursorKind.CXCursor_CStyleCastExpr
+                    or CXCursorKind.CXCursor_CXXStaticCastExpr
+                    or CXCursorKind.CXCursor_CXXReinterpretCastExpr
+                    or CXCursorKind.CXCursor_CXXConstCastExpr
+                    or CXCursorKind.CXCursor_CXXFunctionalCastExpr
         )
         {
-            var next = GetChildren(current).FirstOrDefault();
+            var children = GetChildren(current);
+            if (children.Count == 0)
+                break;
+
+            var next = children.FirstOrDefault(c =>
+                c.Kind is not CXCursorKind.CXCursor_TypeRef
+                    and not CXCursorKind.CXCursor_TemplateRef
+                    and not CXCursorKind.CXCursor_NamespaceRef
+            );
+
             if (next.Kind == CXCursorKind.CXCursor_NoDeclFound)
                 break;
+
             current = next;
+        }
+
+        if (current.Kind == CXCursorKind.CXCursor_TypeRef)
+        {
+            var children = GetChildren(current);
+            var next = children.FirstOrDefault();
+            if (next.Kind != CXCursorKind.CXCursor_NoDeclFound)
+                current = next;
         }
 
         return current;
@@ -293,9 +315,11 @@ public partial class SharpieEmitter
             .Any(c => c.Kind == CXCursorKind.CXCursor_ParmDecl);
 
         if (hasParameters)
+        {
             throw new InvalidOperationException(
                 "Only zero-parameter `main` is currently supported."
             );
+        }
     }
 
     private static List<CXCursor> GetChildren(CXCursor cursor)
@@ -315,6 +339,26 @@ public partial class SharpieEmitter
         }
 
         return children;
+    }
+
+    private static List<CXCursor> GetAggregateInitializerValues(CXCursor initializer)
+    {
+        if (initializer.Kind == CXCursorKind.CXCursor_InitListExpr)
+            return GetChildren(initializer);
+
+        var peeled = PeelExpression(initializer);
+        if (peeled.Kind == CXCursorKind.CXCursor_InitListExpr)
+            return GetChildren(peeled);
+
+        if (peeled.Kind == CXCursorKind.CXCursor_CompoundLiteralExpr)
+        {
+            var initList = GetChildren(peeled)
+                .FirstOrDefault(c => c.Kind == CXCursorKind.CXCursor_InitListExpr);
+            if (initList.Kind == CXCursorKind.CXCursor_InitListExpr)
+                return GetChildren(initList);
+        }
+
+        return [];
     }
 
     private static int CountLocals(CXCursor functionCursor)
@@ -394,9 +438,7 @@ public partial class SharpieEmitter
                 asmString = asmString.Trim('"');
                 asmString = asmString.Replace("\\n", "\n").Replace("\\t", "\t");
 
-                var asmLines = asmString.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var line in asmLines)
+                foreach (var line in asmString.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
                     emitLine(line.Trim());
                 }

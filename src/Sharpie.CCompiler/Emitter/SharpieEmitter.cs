@@ -212,23 +212,23 @@ public sealed partial class SharpieEmitter
                         }
                         else
                         {
-                            context.Emit($"MOV r6, r15");
+                            context.Emit("MOV r6, r15");
                             AccumulateOffset(6, space.Value, context);
-                            context.Emit($"STS r{currentReg}, r6");
+                            context.Emit($"STA r{currentReg}, r6");
                         }
                     }
                     else
                     {
                         // A multi-word struct was passed in registers
                         // We must reconstruct it in its local stack home
-                        context.Emit($"MOV r6, r15");
+                        context.Emit("MOV r6, r15");
                         AccumulateOffset(6, space.Value, context);
 
                         for (int s = 0; s < slotsNeeded; s++)
                         {
-                            context.Emit($"STS r{currentReg + s}, r6");
+                            context.Emit($"STA r{currentReg + s}, r6");
                             if (s < slotsNeeded - 1)
-                                context.Emit($"IADD r6, 2");
+                                context.Emit("IADD r6, 2");
                         }
                     }
                     currentReg += slotsNeeded;
@@ -326,7 +326,7 @@ public sealed partial class SharpieEmitter
                 long sizeBytes = global.Type.SizeOf <= 0 ? 2 : global.Type.SizeOf;
 
                 if (!isStatic)
-                    asm.AppendLine($".GLOBAL");
+                    asm.AppendLine(".GLOBAL");
                 asm.AppendLine($"_global_{name}:");
 
                 var children = GetChildren(global);
@@ -357,16 +357,63 @@ public sealed partial class SharpieEmitter
                         || typeKind == CXTypeKind.CXType_IncompleteArray
                     )
                     {
-                        long stride =
-                            clang.getElementType(global.Type).SizeOf <= 0
-                                ? 2
-                                : clang.getElementType(global.Type).SizeOf;
+                        var elementType = clang.getElementType(global.Type);
+                        long stride = elementType.SizeOf <= 0 ? 2 : elementType.SizeOf;
+                        var elementCanonical = elementType.CanonicalType;
+                        bool elementIsRecord =
+                            elementType.kind == CXTypeKind.CXType_Record
+                            || elementCanonical.kind == CXTypeKind.CXType_Record;
 
-                        foreach (var val in initVals)
+                        if (elementIsRecord)
                         {
-                            long v = PeelExpression(val).Evaluate.AsLongLong;
-                            asm.AppendLine(stride == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                            bytesWritten += stride;
+                            var decl = clang.getTypeDeclaration(elementCanonical);
+                            var fields = GetChildren(decl)
+                                .Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl)
+                                .ToList();
+
+                            foreach (var val in initVals)
+                            {
+                                long elementBytesWritten = 0;
+                                var fieldInitVals = GetAggregateInitializerValues(val);
+
+                                for (int i = 0; i < fields.Count; i++)
+                                {
+                                    long fieldOffset = clang.Cursor_getOffsetOfField(fields[i]) / 8;
+                                    long fieldSize = fields[i].Type.SizeOf <= 0 ? 2 : fields[i].Type.SizeOf;
+
+                                    var gap = fieldOffset - elementBytesWritten;
+                                    if (gap > 0)
+                                    {
+                                        asm.AppendLine($"    .PAD {gap}");
+                                        elementBytesWritten += gap;
+                                    }
+
+                                    long value = 0;
+                                    if (i < fieldInitVals.Count)
+                                        value = PeelExpression(fieldInitVals[i]).Evaluate.AsLongLong;
+
+                                    asm.AppendLine(fieldSize == 1 ? $"    .DB {value}" : $"    .DW {value}");
+                                    elementBytesWritten += fieldSize;
+                                }
+
+                                var tailPadding = stride - elementBytesWritten;
+                                if (tailPadding > 0)
+                                {
+                                    asm.AppendLine($"    .PAD {tailPadding}");
+                                    elementBytesWritten += tailPadding;
+                                }
+
+                                bytesWritten += elementBytesWritten;
+                            }
+                        }
+                        else
+                        {
+                            foreach (var val in initVals)
+                            {
+                                long v = PeelExpression(val).Evaluate.AsLongLong;
+                                asm.AppendLine(stride == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                                bytesWritten += stride;
+                            }
                         }
                     }
                     else // Structs

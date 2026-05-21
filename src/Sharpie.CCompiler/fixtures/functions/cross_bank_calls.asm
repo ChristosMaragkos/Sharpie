@@ -19,7 +19,8 @@ Main:
     LDI r7, 4
     SUB r6, r7
     SETSP r6
-    STA r1, r6
+    MOV r15, r6
+    STA r1, r15
     LDI r1, 42
     PUSH r13
     PUSH r14

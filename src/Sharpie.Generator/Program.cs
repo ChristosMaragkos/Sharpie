@@ -198,29 +198,29 @@ string vscodeSyntax =
 File.WriteAllText("./ext/vscode/sharpie.tmLanguage.json", vscodeSyntax);
 
 var vscodePackage =
-    $@"{{
+    @"{
   ""name"": ""sharpie-lang"",
   ""displayName"": ""Sharpie Assembly"",
   ""description"": ""Syntax highlighting for the Sharpie Fantasy Console"",
   ""version"": ""0.1.0"",
-  ""engines"": {{
+  ""engines"": {
     ""vscode"": ""^1.50.0""
-  }},
+  },
   ""categories"": [ ""Programming Languages"" ],
-  ""contributes"": {{
-    ""languages"": [{{
+  ""contributes"": {
+    ""languages"": [{
       ""id"": ""sharpie"",
       ""aliases"": [""Sharpie Assembly"", ""sharpie""],
       ""extensions"": ["".asm""],
       ""configuration"": ""./language-configuration.json""
-    }}],
-    ""grammars"": [{{
+    }],
+    ""grammars"": [{
       ""language"": ""sharpie"",
       ""scopeName"": ""source.sharpie"",
       ""path"": ""./sharpie.tmLanguage.json""
-    }}]
-  }}
-}}"; // holy mess of double quotes
+    }]
+  }
+}"; // holy mess of double quotes
 
 File.WriteAllText("./ext/vscode/package.json", vscodePackage);
 

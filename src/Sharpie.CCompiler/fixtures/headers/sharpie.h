@@ -16,35 +16,37 @@ typedef unsigned char uint8_t;
 #define ARAM_START ((volatile uint8_t *)0xF800)
 
 typedef enum {
-  ATTR_NONE = 0,
-  ATTR_HFLIP = 1 << 0,
-  ATTR_VFLIP = 1 << 1,
-  ATTR_HUD = 1 << 2,
-  ATTR_BG = 1 << 3,
-  ATTR_ALTPAL = 1 << 4
+    ATTR_NONE = 0,
+    ATTR_HFLIP = 1 << 0,
+    ATTR_VFLIP = 1 << 1,
+    ATTR_HUD = 1 << 2,
+    ATTR_BG = 1 << 3,
+    ATTR_ALTPAL = 1 << 4
 } SpriteAttr;
 
 typedef enum {
-  SQ_1,
-  SQ_2,
-  TR_1,
-  TR_2,
-  SAW_1,
-  SAW_2,
-  NS_1,
-  NS_2,
+    SQ_1,
+    SQ_2,
+    TR_1,
+    TR_2,
+    SAW_1,
+    SAW_2,
+    NS_1,
+    NS_2,
 } AudioChannel;
 
 typedef enum {
-  UP = 1 << 0,
-  DOWN = 1 << 1,
-  LEFT = 1 << 2,
-  RIGHT = 1 << 3,
-  A = 1 << 4,
-  B = 1 << 5,
-  START = 1 << 6,
-  OPTION = 1 << 7
+    UP = 1 << 0,
+    DOWN = 1 << 1,
+    LEFT = 1 << 2,
+    RIGHT = 1 << 3,
+    A = 1 << 4,
+    B = 1 << 5,
+    START = 1 << 6,
+    OPTION = 1 << 7
 } Button;
+
+typedef enum { DEFAULT = 0, NO_TEXT = 1, NO_OAM = 2, NONE = 3 } BlitMode;
 
 // BIOS
 void *__sharpie_alloca(size_t byteAmount);
@@ -75,6 +77,7 @@ void __sharpie_stop(int channel);
 void __sharpie_mute(void);
 void __sharpie_hard_mute(void);
 void __sharpie_vblnk(void);
+void __sharpie_force_vblnk(void);
 void __sharpie_bank(int bank);
 void __sharpie_save(void);
 void __sharpie_halt(void);
@@ -82,6 +85,10 @@ void __sharpie_crash(void);
 int __sharpie_random(int maxExclusive);
 void __sharpie_set_cursor(int x, int y);
 void __sharpie_move_cursor(int x, int y);
+char __sharpie_read_vram(unsigned int yxPacked);
+void __sharpie_write_vram(unsigned int yxPacked, char value);
+void __sharpie_blit_mode(BlitMode mode);
+void __sharpie_debug(int value_to_print);
 
 // --- Standard C Aliases ---
 #define alloca(size) __sharpie_alloca(size)
@@ -93,9 +100,10 @@ void __sharpie_move_cursor(int x, int y);
 // --- Sharpie Macros & Aliases ---
 // Automatically packs Attr (Low Byte) and Type (High Byte)
 #define draw_sprite(x, y, id, attr, type)                                      \
-  __sharpie_draw(x, y, id, (attr) | ((type) << 8))
+    __sharpie_draw(x, y, id, (attr) | ((type) << 8))
 
 #define yield() __sharpie_vblnk()
+#define restart_frame() __sharpie_force_vblnk()
 #define delay(frames) __sharpie_delay(frames)
 #define clear_screen(color) __sharpie_cls(color)
 #define set_camera(x, y) __sharpie_set_cam(x, y)
@@ -111,5 +119,12 @@ void __sharpie_move_cursor(int x, int y);
 #define print(str, x, y) __sharpie_print(str, x, y)
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
+#define print_breadcrumb(value) __sharpie_debug(value)
+
+#define read_vram(x, y) __sharpie_read_vram((((y) & 0xFF) << 8) | ((x) & 0xFF))
+#define write_vram(x, y, value)                                                \
+    __sharpie_write_vram((((y) & 0xFF) << 8) | ((x) & 0xFF), (value))
+
+#define set_blit_mode(mode) __sharpie_blit_mode(mode)
 
 #define button_down(state, btn) (((state) & (btn)))

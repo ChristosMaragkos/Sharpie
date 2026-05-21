@@ -37,9 +37,9 @@ public static class SharpieCC
 
             var emitter = new SharpieEmitter(optimize);
 
-            masterAssembly.AppendLine($"; ----------------------------------");
+            masterAssembly.AppendLine("; ----------------------------------");
             masterAssembly.AppendLine($"; SOURCE: {Path.GetFileName(file)}");
-            masterAssembly.AppendLine($"; ----------------------------------");
+            masterAssembly.AppendLine("; ----------------------------------");
             masterAssembly.AppendLine("");
             masterAssembly.AppendLine(emitter.EmitTranslationUnit(tu.Cursor));
         }

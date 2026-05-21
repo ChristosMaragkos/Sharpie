@@ -23,7 +23,7 @@ internal static class SegfaultExtensions
                 "The call stack underflowed (RET or POP was executed without any values on the stack).",
             SegfaultType.StackOverflow =>
                 "The call stack overflowed (CALL or PUSH was executed while the stack was full).",
-            _ => $"A manual segfault was triggered.",
+            _ => "A manual segfault was triggered.",
         };
     }
 }

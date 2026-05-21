@@ -2,6 +2,14 @@ using SpriteFlags = Sharpie.Core.Hardware.OamBank.SpriteFlags;
 
 namespace Sharpie.Core.Hardware;
 
+internal enum BlitterMode
+{
+    Default = 0,
+    NoText,
+    NoOam,
+    None
+}
+
 internal partial class Ppu
 {
     private const int DisplayHeight = 256;
@@ -16,7 +24,12 @@ internal partial class Ppu
     private readonly IMotherboard _mobo;
     private readonly Memory _vRam;
 
+    public byte ReadByte(ushort address) => _vRam.ReadByte(address);
+    public void WriteByte(ushort address, byte value) => _vRam.WriteByte(address, value);
+
     private readonly byte[] _spriteBuffer = new byte[64]; // here so the GC doesn't cry
+
+    public BlitterMode Mode = BlitterMode.Default;
 
     private readonly (byte X, byte Y, byte TileId, byte Attr)[] _hudSprites = new (
         byte,
@@ -25,7 +38,7 @@ internal partial class Ppu
         byte
     )[OamBank.MaxHudEntries];
 
-    private int _totalHudEntries = 0;
+    private int _totalHudEntries;
 
     public ushort CamX
     {
@@ -63,10 +76,10 @@ internal partial class Ppu
                 var pixel1 = (byte)((packed >> 4) & 0x0F);
                 var pixel2 = (byte)(packed & 0x0F);
 
-                var realColumn1 = flipH ? (7 - column * 2) : (column * 2); // pemdas amirite
-                var realColumn2 = flipH ? (7 - (column * 2 + 1)) : (column * 2 + 1);
-                _spriteBuffer[realRow * 8 + realColumn1] = (byte)(pixel1 + colorOffset);
-                _spriteBuffer[realRow * 8 + realColumn2] = (byte)(pixel2 + colorOffset);
+                var realColumn1 = flipH ? (7 - (column * 2)) : (column * 2); // pemdas amirite
+                var realColumn2 = flipH ? (7 - ((column * 2) + 1)) : ((column * 2) + 1);
+                _spriteBuffer[(realRow * 8) + realColumn1] = (byte)(pixel1 + colorOffset);
+                _spriteBuffer[(realRow * 8) + realColumn2] = (byte)(pixel2 + colorOffset);
             }
         }
     }
@@ -78,19 +91,32 @@ internal partial class Ppu
         if (colorIndex == 0)
             return;
 
-        var pixelIndex = y * DisplayWidth + x;
+        var pixelIndex = (y * DisplayWidth) + x;
 
         _vRam.WriteByte(pixelIndex, colorIndex);
     }
 
     public void VBlank(OamBank oam)
     {
-        _totalHudEntries = 0;
-        FillBuffer(BackgroundColorIndex);
+        if (Mode is BlitterMode.None)
+            return;
 
-        ProcessOam(oam);
-        ProcessHud();
-        ProcessText();
+        ClearBuffer();
+        if (Mode is not BlitterMode.NoOam)
+        {
+            _totalHudEntries = 0;
+            ProcessOam(oam);
+            ProcessHud();
+        }
+        if (Mode is not BlitterMode.NoText)
+        {
+            ProcessText();
+        }
+    }
+
+    public void ClearBuffer()
+    {
+        FillBuffer(BackgroundColorIndex);
     }
 
     private void ProcessOam(OamBank oam)
@@ -106,7 +132,9 @@ internal partial class Ppu
                 && attributes == 0xFF
                 && type == 0xFF
             )
+            {
                 continue;
+            }
 
             if ((attributes & (byte)SpriteFlags.Hud) != 0)
             {
@@ -182,9 +210,11 @@ internal partial class Ppu
     )
     {
         for (int row = startY; row < endY; row++)
-        for (int column = startX; column < endX; column++)
         {
-            WritePixel(x + column, y + row, _spriteBuffer[row * 8 + column]);
+            for (int column = startX; column < endX; column++)
+            {
+                WritePixel(x + column, y + row, _spriteBuffer[(row * 8) + column]);
+            }
         }
     }
 

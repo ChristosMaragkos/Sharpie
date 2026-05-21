@@ -69,11 +69,16 @@ internal interface IMotherboard
     void TriggerSegfault(SegfaultType segfaultType);
 
     void DefineInstrument(int index, byte a, byte d, byte s, byte r);
-    public (byte Attack, byte Decay, byte Sustain, byte Release) ReadInstrument(int index);
+    (byte Attack, byte Decay, byte Sustain, byte Release) ReadInstrument(int index);
+
+    byte ReadVram(ushort address);
+    void WriteVram(ushort address, byte value);
+
+    void SetBlitterMode(BlitterMode mode);
+    bool IsForcedYield { get; set; }
 
     public static ReadOnlySpan<byte> SmallFont =>
-        new byte[]
-        {
+        [
             0x18,
             0x24,
             0x42,
@@ -530,7 +535,7 @@ internal interface IMotherboard
             0x00,
             0x00,
             0x00, // Char Index 56 - SPACE
-        };
+        ];
 
     internal static byte[] GetCharacter(int index)
     {
@@ -540,7 +545,7 @@ internal interface IMotherboard
         var pixels = new byte[8];
         for (var i = 0; i < 8; i++)
         {
-            pixels[i] = SmallFont[8 * index + i];
+            pixels[i] = SmallFont[(8 * index) + i];
         }
         return pixels;
     }

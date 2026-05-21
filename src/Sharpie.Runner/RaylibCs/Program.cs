@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Raylib_cs;
+using Sharpie.Core;
 using Sharpie.Runner.RaylibCs.Impl;
 
 var video = new RaylibVideoOutput();
@@ -64,7 +65,7 @@ while (!video.ShouldCloseWindow())
         try
         {
             var filePath = FileDialog.OpenFileDialog();
-            if (filePath != null && filePath.EndsWith(".shr"))
+            if (filePath?.EndsWith(".shr") == true)
             {
                 romBytes = File.ReadAllBytes(filePath);
                 TryLoadCart();
@@ -87,7 +88,7 @@ while (!video.ShouldCloseWindow())
                 var cartridgeFile = PointerToString(droppedFiles.Paths[0]);
                 saveHandler.SavePath = Path.ChangeExtension(cartridgeFile, ".sav");
                 if (!cartridgeFile.EndsWith(".shr"))
-                    Console.WriteLine($"Sharpie ROM files must end with the .shr extension.");
+                    Console.WriteLine("Sharpie ROM files must end with the .shr extension.");
 
                 Raylib.UnloadDroppedFiles(droppedFiles);
                 romBytes = File.ReadAllBytes(cartridgeFile);
@@ -100,7 +101,10 @@ while (!video.ShouldCloseWindow())
         }
     }
     emulator.Step();
-    video.HandleFramebuffer(emulator.GetVideoBuffer());
+    if (!emulator.IsForcedUpdate)
+    {
+        video.HandleFramebuffer(emulator.GetVideoBuffer());
+    }
     logger.LogAll();
 }
 
@@ -124,4 +128,4 @@ void TryLoadCart()
 
 unsafe string PointerToString(byte* ptr) =>
     Marshal.PtrToStringUTF8((IntPtr)ptr)
-    ?? throw new Exception($"I don't even know what exception to throw here");
+    ?? throw new Exception("I don't even know what exception to throw here");

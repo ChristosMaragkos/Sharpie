@@ -4,6 +4,8 @@
 | `0x01` | **MOV** | `R, R` | 2 | Copy value from R2 to R1. |  |
 | `0x10` | **LDM** | `R, W` | 4 | Load 16-bit word from address W to R. | Load single byte from address W. |
 | `0x11` | **LDP** | `R, R` | 2 | Load word from `[R2]` into R1. | Load single byte from `[R2]`. |
+| `0x18` | **LDV** | `R, R` | 2 | Interpret R2 as (byte Y, byte X) and read that pixel's data from VRAM into R1. |  |
+| `0x19` | **STV** | `R, R` | 2 | Interpret R2 as (byte Y, byte X) and write the low byte of R1 into that pixel in VRAM. |  |
 | `0x20n` | **LDI** | `R, W` | 3 | Load immediate word W into Rn. |  |
 | `0x30n` | **STM** | `R, W` | 3 | Store word from R to address W. | Store the low byte of R to W. |
 | `0x12` | **STP** | `R, R` | 2 | Save word from `[R1]` in the address within R2. | Store the low byte of `[R1]` in the address within R2. |
@@ -70,7 +72,7 @@
 | `0xC2` | **SAVE** | `-` | 1 | Alerts the motherboard that a save was requested. |  |
 | `0xF0` | **OAMTAG** | `R, R` | 2 | Pack Attribute and Type bytes of OAM`[R1]` into R2. Low Endian. | Set R2 to the Tile ID of OAM`[R1]` |
 | `0xF1` | **CLS** | `R` | 2 | Clear screen with color in R and invalidate OAM entries from the current OAM cursor position. | Hard Clear: Wipe screen and reset OAM. |
-| `0xF2` | **VBLNK** | `-` | 1 | Yield CPU until next V-Blank. |  |
+| `0xF2` | **VBLNK** | `-` | 1 | Yield CPU until next V-Blank. | Yield CPU and immediately proceed to next frame (PPU does not blit). |
 | `0xF3` | **PLAY** | `R, R, R` | 3 | Play note: Channel, Note, Instrument. Cannot be retriggered by the sequencer until the note is over. |  |
 | `0xF4` | **STOP** | `R` | 2 | Stop sound on channel in R. |  |
 | `0xF5` | **INPUT** | `R, R` | 2 | Read Controller `[R1]` into R2. |  |
@@ -78,6 +80,7 @@
 | `0xF8` | **ATTR** | `B` | 2 | Set global text color/attributes. |  |
 | `0xF9` | **SWC** | `R, R` | 2 | Swap Palette: Active`[R1]` = Master`[R2]`. |  |
 | `0xFA` | **BANK** | `R` | 2 | Switch current bank to R1. | Read current bank into R1. |
+| `0xFB` | **BLITMODE** | `R` | 2 | Set the blitter mode. 0: default - PPU processes OAM and text grid. 1: OAM-only. PPU does not process text grid. 2: Text-only. 3: neither text nor OAM are processed. Values above 3 are treated as 3. |  |
 | `0xFC` | **MUTE** | `-` | 1 | Toggle music sequencer. | Hard Silence: Stop all sound output. |
 | `0xFD` | **COL** | `R, R` | 2 | Check Collision for OAM`[R1]`, store in R2. |  |
 | `0xFE` | **ALT** | `-` | 1 | Prefix. Modifies next opcode logic. |  |

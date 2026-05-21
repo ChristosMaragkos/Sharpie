@@ -280,6 +280,7 @@ PleaseInsertCart:
 BootIntoRom:
     LDI r0, 0
     ALT CLS r0
+    VBLNK
     LDI r0, 1
     ALT STM r0, MAGICADDR::CART_OK_ADDR
     JMP $0

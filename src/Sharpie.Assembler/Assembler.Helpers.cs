@@ -17,11 +17,11 @@ public partial class SharpieRomEmitter
         { "SYS_PAL_RESET", 64164 },
         { "SYS_ALLOC_STACKFRAME", 64182 },
         { "SYS_FREE_STACKFRAME", 64204 },
-        { "SYS_MEM_SET", 64221 },
-        { "SYS_MEM_CMP", 64238 },
-        { "SYS_PRINT", 64275 },
-        { "SYS_MEM_MOVE", 64294 },
-        { "SYS_FAR_CALL", 64329 },
+        { "SYS_MEM_SET", 64226 },
+        { "SYS_MEM_CMP", 64243 },
+        { "SYS_PRINT", 64280 },
+        { "SYS_MEM_MOVE", 64299 },
+        { "SYS_FAR_CALL", 64334 },
     };
 
     private ScopeLevel GetCurrentScope() =>

@@ -26,6 +26,8 @@ Main:
     LDI r8, 1000
     LDI r1, 42
     STA r1, r8
+    MOV r1, r8
+    LDP r1, r1
     MOV r9, r1
     MOV r0, r9
 epilogue_L0:

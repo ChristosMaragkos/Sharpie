@@ -10,314 +10,324 @@ internal partial class Cpu
         switch (prefixed)
         {
             case 0x10: // LDM
-            {
-                pcDelta = 4;
-                var x = _mobo.ReadByte(_pc + 1);
-                var address = _mobo.ReadWord(_pc + 2);
-                GetRegister(x) = _mobo.ReadByte(address);
-                break;
-            }
+                {
+                    pcDelta = 4;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var address = _mobo.ReadWord(_pc + 2);
+                    GetRegister(x) = _mobo.ReadByte(address);
+                    break;
+                }
 
             case 0x11: // LDP
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                var address = GetRegister(y);
-                GetRegister(x) = _mobo.ReadByte(address);
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var address = GetRegister(y);
+                    GetRegister(x) = _mobo.ReadByte(address);
+                    break;
+                }
 
             case >= 0x30
             and <= 0x3F: // STM
-            {
-                pcDelta = 3;
-                var x = IndexFromOpcode(prefixed);
-                var lowByte = (byte)(GetRegister(x) & 0x00FF);
-                var address = _mobo.ReadWord(_pc + 1);
-                _mobo.WriteByte(address, lowByte);
-                break;
-            }
+                {
+                    pcDelta = 3;
+                    var x = IndexFromOpcode(prefixed);
+                    var lowByte = (byte)(GetRegister(x) & 0x00FF);
+                    var address = _mobo.ReadWord(_pc + 1);
+                    _mobo.WriteByte(address, lowByte);
+                    break;
+                }
 
             case 0x12: // STP
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                var value = _mobo.ReadByte(GetRegister(x));
-                _mobo.WriteByte(GetRegister(y), value);
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var value = _mobo.ReadByte(GetRegister(x));
+                    _mobo.WriteByte(GetRegister(y), value);
+                    break;
+                }
 
             case 0x13: // STA
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                var value = (byte)GetRegister(x);
-                var addr = GetRegister(y);
-                _mobo.WriteByte(addr, value);
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var value = (byte)GetRegister(x);
+                    var addr = GetRegister(y);
+                    _mobo.WriteByte(addr, value);
+                    break;
+                }
 
             case 0x14: // LDS
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                var addr = _sp + (short)GetRegister(y);
-                GetRegister(x) = _mobo.ReadByte(addr);
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var addr = _sp + (short)GetRegister(y);
+                    GetRegister(x) = _mobo.ReadByte(addr);
+                    break;
+                }
 
             case 0x15: // STS
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                var value = (byte)GetRegister(x);
-                var addr = _sp + (short)GetRegister(y);
-                _mobo.WriteByte(addr, value);
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var value = (byte)GetRegister(x);
+                    var addr = _sp + (short)GetRegister(y);
+                    _mobo.WriteByte(addr, value);
+                    break;
+                }
 
             case 0xF1: // CLS
-            {
                 pcDelta = 2;
                 _mobo.SetOamCursor(0); // just set to 0 so we clear from the start
                 Execute_CLS(prefixed, ref pcDelta);
                 break;
-            }
+
 
             case 0xC0: // SETCRS
-            {
-                pcDelta = 3;
-                var xDelta = (sbyte)_mobo.ReadByte(_pc + 1);
-                var yDelta = (sbyte)_mobo.ReadByte(_pc + 2);
-                CursorPosX += xDelta;
-                CursorPosY += yDelta;
-                break;
-            }
+                {
+                    pcDelta = 3;
+                    var xDelta = (sbyte)_mobo.ReadByte(_pc + 1);
+                    var yDelta = (sbyte)_mobo.ReadByte(_pc + 2);
+                    CursorPosX += xDelta;
+                    CursorPosY += yDelta;
+                    break;
+                }
 
             case 0xC1: // CRSPOS
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
 
-                var xDelta = GetRegister(x);
-                var yDelta = GetRegister(y);
+                    var xDelta = GetRegister(x);
+                    var yDelta = GetRegister(y);
 
-                CursorPosX += xDelta;
-                CursorPosY += yDelta;
-                break;
-            }
+                    CursorPosX += xDelta;
+                    CursorPosY += yDelta;
+                    break;
+                }
 
             case 0x60: // IADD
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = old + imm;
-                UpdateFlags(result, old, imm);
-                _mobo.WriteWord(ptr, (ushort)result);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = old + imm;
+                    UpdateFlags(result, old, imm);
+                    _mobo.WriteWord(ptr, (ushort)result);
+                    break;
+                }
 
             case 0x61: // ISUB
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = old - imm;
-                UpdateFlags(result, old, imm, true);
-                _mobo.WriteWord(ptr, (ushort)result);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = old - imm;
+                    UpdateFlags(result, old, imm, true);
+                    _mobo.WriteWord(ptr, (ushort)result);
+                    break;
+                }
 
             case 0x62: // IMUL
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old * imm);
-                UpdateLogicFlags(result);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
+                    var oldWord = _mobo.ReadWord(ptr);
+                    var old = (short)oldWord;
+                    var simm = (sbyte)imm;
+
+                    var result = old * simm;
+                    UpdateFlags(result, oldWord, imm);
+                    _mobo.WriteWord(ptr, (ushort)result);
+                    break;
+                }
 
             case 0x63: // IDIV
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
-
-                if (imm == 0)
                 {
-                    FlagRegister &= 0xFFF0;
-                    SetFlag(true, CpuFlags.Zero);
-                    SetFlag(true, CpuFlags.Overflow);
-                    _mobo.WriteWord(ptr, 0);
-                }
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old / imm);
-                UpdateLogicFlags(result);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
+                    if (imm == 0)
+                    {
+                        FlagRegister &= 0xFFF0;
+                        SetFlag(true, CpuFlags.Zero);
+                        SetFlag(true, CpuFlags.Overflow);
+                        _mobo.WriteWord(ptr, 0);
+                        break;
+                    }
+
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old / simm);
+
+                    UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
+                    _mobo.WriteWord(ptr, result);
+                    break;
+                }
 
             case 0x64: // IMOD
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
-
-                if (imm == 0)
                 {
-                    FlagRegister &= 0xFFF0;
-                    SetFlag(true, CpuFlags.Zero);
-                    SetFlag(true, CpuFlags.Overflow);
-                    _mobo.WriteWord(ptr, 0);
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
+
+                    if (imm == 0)
+                    {
+                        FlagRegister &= 0xFFF0;
+                        SetFlag(true, CpuFlags.Zero);
+                        SetFlag(true, CpuFlags.Overflow);
+                        _mobo.WriteWord(ptr, 0);
+                        break;
+                    }
+
+                    var old = (short)_mobo.ReadWord(ptr);
+                    var simm = (sbyte)imm;
+                    var result = (ushort)(old % simm);
+
+                    UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+
+                    _mobo.WriteWord(ptr, result);
+                    break;
                 }
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old % imm);
-                UpdateLogicFlags(result);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
-
             case 0x65: // IAND
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old & imm);
-                UpdateLogicFlags(result);
-                SetFlag(false, CpuFlags.Overflow);
-                SetFlag(false, CpuFlags.Carry);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = (ushort)(old & imm);
+                    UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Overflow);
+                    SetFlag(false, CpuFlags.Carry);
+                    _mobo.WriteWord(ptr, result);
+                    break;
+                }
 
             case 0x66: // IOR
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old | imm);
-                UpdateLogicFlags(result);
-                SetFlag(false, CpuFlags.Overflow);
-                SetFlag(false, CpuFlags.Carry);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = (ushort)(old | imm);
+                    UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Overflow);
+                    SetFlag(false, CpuFlags.Carry);
+                    _mobo.WriteWord(ptr, result);
+                    break;
+                }
 
             case 0x67: // IXOR
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = (ushort)(old ^ imm);
-                UpdateLogicFlags(result);
-                SetFlag(false, CpuFlags.Overflow);
-                SetFlag(false, CpuFlags.Carry);
-                _mobo.WriteWord(ptr, result);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = (ushort)(old ^ imm);
+                    UpdateLogicFlags(result);
+                    SetFlag(false, CpuFlags.Overflow);
+                    SetFlag(false, CpuFlags.Carry);
+                    _mobo.WriteWord(ptr, result);
+                    break;
+                }
 
             case 0x68: // ICMP
-            {
-                pcDelta = 3;
-                var x = _mobo.ReadByte(_pc + 1);
-                var imm = _mobo.ReadByte(_pc + 2);
-                var ptr = GetRegister(x);
+                {
+                    pcDelta = 3;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    var imm = _mobo.ReadByte(_pc + 2);
+                    var ptr = GetRegister(x);
 
-                var old = _mobo.ReadWord(ptr);
-                var result = old - imm;
-                UpdateFlags(result, old, imm, true);
-                break;
-            }
+                    var old = _mobo.ReadWord(ptr);
+                    var result = old - imm;
+                    UpdateFlags(result, old, imm, true);
+                    break;
+                }
 
             case 0x70: // JMP
-            {
                 ComputeAndJump(ref pcDelta);
                 break;
-            }
+
 
             case 0x71: // JEQ
-            {
                 if (IsFlagOn(CpuFlags.Zero))
                     ComputeAndJump(ref pcDelta);
                 break;
-            }
+
 
             case 0x72: // JNE
-            {
                 if (!IsFlagOn(CpuFlags.Zero))
                     ComputeAndJump(ref pcDelta);
                 break;
-            }
+
 
             case 0x73: // JGT
-            {
-                var zero = IsFlagOn(CpuFlags.Zero);
-                var negative = IsFlagOn(CpuFlags.Negative);
-                var overflow = IsFlagOn(CpuFlags.Overflow);
+                {
+                    var zero = IsFlagOn(CpuFlags.Zero);
+                    var negative = IsFlagOn(CpuFlags.Negative);
+                    var overflow = IsFlagOn(CpuFlags.Overflow);
 
-                if (!zero && negative == overflow)
-                    ComputeAndJump(ref pcDelta);
-                break;
-            }
+                    if (!zero && negative == overflow)
+                        ComputeAndJump(ref pcDelta);
+                    break;
+                }
 
             case 0x74: // JLT
-            {
-                var negative = IsFlagOn(CpuFlags.Negative);
-                var overflow = IsFlagOn(CpuFlags.Overflow);
+                {
+                    var negative = IsFlagOn(CpuFlags.Negative);
+                    var overflow = IsFlagOn(CpuFlags.Overflow);
 
-                if (negative != overflow)
-                    ComputeAndJump(ref pcDelta);
-                break;
-            }
+                    if (negative != overflow)
+                        ComputeAndJump(ref pcDelta);
+                    break;
+                }
 
             case 0x75: // JGE
-            {
-                var negative = IsFlagOn(CpuFlags.Negative);
-                var overflow = IsFlagOn(CpuFlags.Overflow);
+                {
+                    var negative = IsFlagOn(CpuFlags.Negative);
+                    var overflow = IsFlagOn(CpuFlags.Overflow);
 
-                if (negative == overflow)
-                    ComputeAndJump(ref pcDelta);
-                break;
-            }
+                    if (negative == overflow)
+                        ComputeAndJump(ref pcDelta);
+                    break;
+                }
 
             case 0x76: // JLE
-            {
-                var zero = IsFlagOn(CpuFlags.Zero);
-                var negative = IsFlagOn(CpuFlags.Negative);
-                var overflow = IsFlagOn(CpuFlags.Overflow);
+                {
+                    var zero = IsFlagOn(CpuFlags.Zero);
+                    var negative = IsFlagOn(CpuFlags.Negative);
+                    var overflow = IsFlagOn(CpuFlags.Overflow);
 
-                if (zero || negative != overflow)
-                    ComputeAndJump(ref pcDelta);
-                break;
-            }
+                    if (zero || negative != overflow)
+                        ComputeAndJump(ref pcDelta);
+                    break;
+                }
 
             case 0x77: // CALL
-            {
                 pcDelta = 0;
                 if (_sp <= Memory.SpriteAtlasStart + 1)
                 {
@@ -331,98 +341,101 @@ internal partial class Cpu
                 _mobo.WriteWord(_sp, returnAddress);
                 _pc = target;
                 break;
-            }
+
 
             case 0x79: // PUSH
-            {
-                if (_sp <= Memory.SpriteAtlasStart)
                 {
-                    _mobo.TriggerSegfault(SegfaultType.StackOverflow);
-                    return;
+                    if (_sp <= Memory.SpriteAtlasStart)
+                    {
+                        _mobo.TriggerSegfault(SegfaultType.StackOverflow);
+                        return;
+                    }
+                    pcDelta = 2;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    _sp--;
+                    _mobo.WriteByte(_sp, (byte)GetRegister(x));
+                    break;
                 }
-                pcDelta = 2;
-                var x = _mobo.ReadByte(_pc + 1);
-                _sp--;
-                _mobo.WriteByte(_sp, (byte)GetRegister(x));
-                break;
-            }
 
             case 0x7A: // POP
-            {
-                if (_sp >= Memory.AudioRamStart)
                 {
-                    _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
-                    return;
+                    if (_sp >= Memory.AudioRamStart)
+                    {
+                        _mobo.TriggerSegfault(SegfaultType.StackUnderflow);
+                        return;
+                    }
+                    pcDelta = 2;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    GetRegister(x) = _mobo.ReadByte(_sp);
+                    _sp++;
+                    break;
                 }
-                pcDelta = 2;
-                var x = _mobo.ReadByte(_pc + 1);
-                GetRegister(x) = _mobo.ReadByte(_sp);
-                _sp++;
-                break;
-            }
 
             case >= 0x80
             and <= 0x8F: // RND
-            {
-                pcDelta = 3;
-                var x = IndexFromOpcode(opcode);
-                var max = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F);
-                GetRegister(x) = (ushort)_rng.Next(max);
-                break;
-            }
+                {
+                    pcDelta = 3;
+                    var x = IndexFromOpcode(opcode);
+                    var max = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F);
+                    GetRegister(x) = (ushort)_rng.Next(max);
+                    break;
+                }
 
             case 0xF0: // OAMTAG
-            {
                 pcDelta = 2;
                 var (rSource, rDest) = ReadRegisterArgs();
                 var entry = _mobo.ReadSpriteEntry(GetRegister(rSource));
                 GetRegister(rDest) = entry.TileId;
                 break;
-            }
+
+            case 0xF2: // VBLNK
+                // NOTE: I initially intended for this to incur a slight performance hit. However, I accidentally optimized it to the point where
+                // it's actually *more* performant than the actual VBLNK opcode itself. That said, overuse can lead to input-to-display latency.
+                pcDelta = 1;
+                AwaitVBlank();
+                _mobo.IsForcedYield = true;
+                break;
 
             case 0xF7: // TEXT
-            {
-                pcDelta = 2;
-                var x = _mobo.ReadByte(_pc + 1) & 0x0F; // truncate to register index since we tokenize it as a byte
-                var digits = GetRegister(x).ToString();
-                foreach (var c in digits)
                 {
-                    var glyph = IMotherboard.AsciiToGlyphIndex((byte)c);
-                    _mobo.DrawChar(CursorPosX, CursorPosY, glyph);
-                    CursorPosX++;
+                    pcDelta = 2;
+                    var x = _mobo.ReadByte(_pc + 1) & 0x0F; // truncate to register index since we tokenize it as a byte
+                    foreach (var c in GetRegister(x).ToString())
+                    {
+                        var glyph = IMotherboard.AsciiToGlyphIndex((byte)c);
+                        _mobo.DrawChar(CursorPosX, CursorPosY, glyph);
+                        CursorPosX++;
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
             case 0xFC: // MUTE
-            {
                 pcDelta = 1;
                 _mobo.StopAllSounds();
                 break;
-            }
+
 
             case 0x91: // CAM
-            {
-                pcDelta = 2;
-                var (x, y) = ReadRegisterArgs();
-                _mobo.SetCamera(GetRegister(x), GetRegister(y));
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    _mobo.SetCamera(GetRegister(x), GetRegister(y));
+                    break;
+                }
 
             case 0xFA: // BANK
-            {
-                pcDelta = 2;
-                var x = _mobo.ReadByte(_pc + 1);
-                GetRegister(x) = (ushort)_mobo.GetCurrentBank();
-                break;
-            }
+                {
+                    pcDelta = 2;
+                    var x = _mobo.ReadByte(_pc + 1);
+                    GetRegister(x) = (ushort)_mobo.GetCurrentBank();
+                    break;
+                }
 
             case 0xFF: // HALT
-            {
                 _mobo.TriggerSegfault(SegfaultType.ManualTrigger);
                 break;
-            }
+
 
             default:
                 _mobo.PushDebug($"Unknown ALT opcode @ {_pc:X2}: {prefixed}");
@@ -435,8 +448,7 @@ internal partial class Cpu
     private void ComputeAndJump(ref ushort pcDelta)
     {
         var x = _mobo.ReadWord(_pc + 1) & 0x0F;
-        var target = GetRegister(x);
-        _pc = target;
+        _pc = GetRegister(x);
         pcDelta = 0;
     }
 }

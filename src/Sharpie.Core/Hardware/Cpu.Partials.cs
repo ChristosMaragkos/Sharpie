@@ -26,8 +26,28 @@ internal partial class Cpu
     private partial void Execute_LDI(byte opcode, ref ushort pcDelta)
     {
         var x = IndexFromOpcode(opcode);
-        var value = _mobo.ReadWord(_pc + 1);
-        GetRegister(x) = value;
+        GetRegister(x) = _mobo.ReadWord(_pc + 1);
+    }
+
+    private partial void Execute_LDS(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+        var addr = _sp + (short)GetRegister(y);
+        GetRegister(x) = _mobo.ReadWord(addr);
+    }
+
+    private partial void Execute_LDV(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+
+        const int DisplayWidth = 256;
+
+        var coord = GetRegister(y);
+        var pixelX = (byte)coord;
+        var pixelY = (byte)(coord >> 8);
+
+        var address = (ushort)((DisplayWidth * pixelY) + pixelX);
+        GetRegister(x) = _mobo.ReadVram(address);
     }
 
     private partial void Execute_STM(byte opcode, ref ushort pcDelta)
@@ -52,19 +72,26 @@ internal partial class Cpu
         _mobo.WriteWord(addr, value);
     }
 
-    private partial void Execute_LDS(byte opcode, ref ushort pcDelta)
-    {
-        var (x, y) = ReadRegisterArgs();
-        var addr = _sp + (short)GetRegister(y);
-        GetRegister(x) = _mobo.ReadWord(addr);
-    }
-
     private partial void Execute_STS(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
         var value = GetRegister(x);
         var addr = _sp + (short)GetRegister(y);
         _mobo.WriteWord(addr, value);
+    }
+
+    private partial void Execute_STV(byte opcode, ref ushort pcDelta)
+    {
+        var (x, y) = ReadRegisterArgs();
+
+        const int DisplayWidth = 256;
+
+        var coord = GetRegister(y);
+        var pixelX = (byte)coord;
+        var pixelY = (byte)(coord >> 8);
+
+        var address = (ushort)((DisplayWidth * pixelY) + pixelX);
+        _mobo.WriteVram(address, (byte)GetRegister(x));
     }
 
     private partial void Execute_GETSP(byte opcode, ref ushort pcDelta)
@@ -108,62 +135,63 @@ internal partial class Cpu
     {
         var (x, y) = ReadRegisterArgs();
 
-        int result = GetRegister(x) * GetRegister(y);
+        short sx = (short)GetRegister(x);
+        short sy = (short)GetRegister(y);
+
+        int result = sx * sy;
         var truncated = (ushort)result;
 
-        UpdateLogicFlags(truncated);
-        var dataLost = result > ushort.MaxValue;
-        SetFlag(dataLost, CpuFlags.Carry);
-        SetFlag(dataLost, CpuFlags.Overflow);
+        UpdateFlags(result, GetRegister(x), GetRegister(y));
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_DIV(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
-        ushort valY = GetRegister(y);
+        short sy = (short)GetRegister(y);
 
-        if (valY == 0)
+        if (sy == 0)
         {
             GetRegister(x) = 0;
-
             FlagRegister &= 0xFFF0;
             SetFlag(true, CpuFlags.Zero);
             SetFlag(true, CpuFlags.Overflow);
             return;
         }
 
-        var result = (ushort)(GetRegister(x) / valY);
+        short sx = (short)GetRegister(x);
+        var truncated = (ushort)(sx / sy);
 
-        UpdateLogicFlags(result);
-
+        UpdateLogicFlags(truncated);
         SetFlag(false, CpuFlags.Carry);
         SetFlag(false, CpuFlags.Overflow);
 
-        GetRegister(x) = result;
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_MOD(byte opcode, ref ushort pcDelta)
     {
         var (x, y) = ReadRegisterArgs();
-        ushort valY = GetRegister(y);
+        short sy = (short)GetRegister(y);
 
-        if (valY == 0)
+        if (sy == 0)
         {
             GetRegister(x) = 0;
-
             FlagRegister &= 0xFFF0;
             SetFlag(true, CpuFlags.Zero);
             SetFlag(true, CpuFlags.Overflow);
             return;
         }
 
-        var result = (ushort)(GetRegister(x) % valY);
-        UpdateLogicFlags(result);
+        short sx = (short)GetRegister(x);
+        int result = sx % sy;
+        var truncated = (ushort)result;
 
+        UpdateLogicFlags(truncated);
         SetFlag(false, CpuFlags.Carry);
         SetFlag(false, CpuFlags.Overflow);
 
-        GetRegister(x) = result;
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_AND(byte opcode, ref ushort pcDelta)
@@ -289,7 +317,7 @@ internal partial class Cpu
 
     private partial void Execute_NEG(byte opcode, ref ushort pcDelta)
     {
-        var x = IndexFromOpcode(opcode);
+        var x = _mobo.ReadByte(_pc + 1) & 0xF;
 
         var result = 0 - GetRegister(x);
 
@@ -323,9 +351,14 @@ internal partial class Cpu
         var x = _mobo.ReadByte(_pc + 1);
         var imm = _mobo.ReadByte(_pc + 2);
 
-        var result = (ushort)(GetRegister(x) * imm);
-        UpdateLogicFlags(result);
-        GetRegister(x) = result;
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+
+        int result = sx * simm;
+        var truncated = (ushort)result;
+
+        UpdateFlags(result, GetRegister(x), imm);
+        GetRegister(x) = truncated;
     }
 
     private partial void Execute_IDIV(byte opcode, ref ushort pcDelta)
@@ -342,8 +375,14 @@ internal partial class Cpu
             return;
         }
 
-        var result = (ushort)(GetRegister(x) / imm);
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+        ushort result = (ushort)(sx / simm);
+
         UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+
         GetRegister(x) = result;
     }
 
@@ -361,8 +400,14 @@ internal partial class Cpu
             return;
         }
 
-        var result = (ushort)(GetRegister(x) % imm);
+        short sx = (short)GetRegister(x);
+        sbyte simm = (sbyte)imm;
+        ushort result = (ushort)(sx % simm);
+
         UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+
         GetRegister(x) = result;
     }
 
@@ -433,8 +478,7 @@ internal partial class Cpu
 
     private partial void Execute_JMP(byte opcode, ref ushort pcDelta)
     {
-        var target = _mobo.ReadWord(_pc + 1);
-        _pc = target;
+        _pc = _mobo.ReadWord(_pc + 1);
         pcDelta = 0;
     }
 
@@ -670,6 +714,20 @@ internal partial class Cpu
         var x = _mobo.ReadByte(_pc + 1);
         var id = (byte)GetRegister(x);
         _mobo.SetCurrentBank(id);
+    }
+
+    private partial void Execute_BLITMODE(byte opcode, ref ushort pcDelta)
+    {
+        var reg = _mobo.ReadByte(_pc + 1) & 0xF;
+        var value = GetRegister(reg);
+        var mode = value switch
+        {
+            0 => BlitterMode.Default,
+            1 => BlitterMode.NoText,
+            2 => BlitterMode.NoOam,
+            _ => BlitterMode.None,
+        };
+        _mobo.SetBlitterMode(mode);
     }
 
     private partial void Execute_SONG(byte opcode, ref ushort pcDelta)

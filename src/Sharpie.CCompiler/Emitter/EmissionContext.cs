@@ -29,10 +29,11 @@ public sealed class EmissionContext
         int CallerOffset,
         StorageLocation Target,
         int Slots
-    )> PendingStackArguments { get; } = [];
+    )> PendingStackArguments
+    { get; } = [];
 
     public int TotalStackBytes { get; private set; }
-    private int _currentStackOffset = 0;
+    private int _currentStackOffset;
     private int _nextLocalRegister = SharpieEmitter.LocalRegisterStart;
 
     private static int _labelCount;
@@ -153,30 +154,33 @@ public sealed class EmissionContext
 
             if (slots == 1)
             {
-                yield return $"MOV r6, r15";
-                yield return $"IADD r6, {argOffset}"; // Or use AccumulateOffset logic here
-                yield return "LDS r7, r6";
+                yield return "MOV r6, r15";
+                yield return $"IADD r6, {argOffset}";
+                yield return "LDP r7, r6"; // load word from absolute address
 
                 if (target.Type == StorageType.Register)
+                {
                     yield return $"MOV r{target.Value}, r7";
+                }
                 else
                 {
-                    yield return $"MOV r6, r15";
-                    yield return $"IADD r6, {target.Value}";
-                    yield return $"STS r7, r6";
+                    // dstAddr = r15 + target.Value
+                    yield return "MOV r5, r15";
+                    yield return $"IADD r5, {target.Value}";
+                    yield return "STA r7, r5";
                 }
             }
             else
             {
-                yield return $"MOV r6, r15";
+                yield return "MOV r6, r15";
                 yield return $"IADD r6, {argOffset}";
-                yield return $"MOV r5, r15";
+                yield return "MOV r5, r15";
                 yield return $"IADD r5, {target.Value}";
 
                 for (int s = 0; s < slots; s++)
                 {
-                    yield return "LDS r7, r6";
-                    yield return "STS r7, r5";
+                    yield return "LDP r7, r6";
+                    yield return "STA r7, r5";
                     if (s < slots - 1)
                     {
                         yield return "IADD r6, 2";
@@ -239,11 +243,29 @@ public sealed class EmissionContext
     {
         var index = register - SharpieEmitter.TempRegisterStart;
         if (index < 0 || index >= _tempInUse.Length)
+        {
             throw new InvalidOperationException(
                 $"Attempted to release invalid temp register r{register}."
             );
+        }
 
         _tempInUse[index] = false;
+    }
+
+    public int EphemeralBytes { get; private set; }
+
+    public void AllocEphemeral(int bytes)
+    {
+        Emit($"LDI r1, {bytes}");
+        Emit("CALL SYS_ALLOC_STACKFRAME");
+        EphemeralBytes += bytes;
+    }
+
+    public void FreeEphemeral(int bytes)
+    {
+        Emit($"LDI r1, {bytes}");
+        Emit("CALL SYS_FREE_STACKFRAME");
+        EphemeralBytes -= bytes;
     }
 
     public readonly struct TempLease : IDisposable

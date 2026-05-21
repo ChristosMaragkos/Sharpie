@@ -45,11 +45,14 @@ Main:
     STM r1, _global_g_p1
     LDI r1, _global_g_p1
     MOV r2, r15
-    PUSH r1
-    MOV r1, r2
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r3, r1
+    MOV r4, r2
+    LDP r5, r3
+    STA r5, r4
+    IADD r3, 2
+    IADD r4, 2
+    LDP r5, r3
+    STA r5, r4
     LDM r1, _global_g_score
     LDM r2, _global_g_lives
     ADD r1, r2
