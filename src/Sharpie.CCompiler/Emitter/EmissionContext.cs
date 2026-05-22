@@ -1,4 +1,4 @@
-namespace Sharpie.CCompiler;
+namespace Sharpie.CCompiler.Emitter;
 
 public enum StorageType
 {
@@ -42,9 +42,7 @@ public sealed class EmissionContext
 
     public static string GenerateLabel(string prefix = "") => $"{prefix}_L{_labelCount++}";
 
-#pragma warning disable IDE0028 // Simplify collection initialization
     public Dictionary<string, StorageLocation> Locals { get; } = new(StringComparer.Ordinal);
-#pragma warning restore IDE0028 // Simplify collection initialization
     public HashSet<string> EscapedVariables { get; }
 
     // track callee saved registers (r8-r15)

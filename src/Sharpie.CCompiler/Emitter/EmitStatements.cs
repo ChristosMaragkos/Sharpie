@@ -1,4 +1,5 @@
 using ClangSharp.Interop;
+using Sharpie.CCompiler.Emitter;
 
 namespace Sharpie.CCompiler;
 

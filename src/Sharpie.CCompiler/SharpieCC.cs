@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Sharpie.CCompiler.NativeInterop;
+using Sharpie.CCompiler.Emitter;
 
 namespace Sharpie.CCompiler;
 
@@ -26,7 +26,7 @@ public static class SharpieCC
                 index,
                 file,
                 clangArgs,
-                Array.Empty<ClangSharp.Interop.CXUnsavedFile>(),
+                [],
                 ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
             );
 

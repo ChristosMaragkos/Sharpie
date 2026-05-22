@@ -1,3 +1,5 @@
+using Sharpie.CCompiler.Emitter;
+
 namespace Sharpie.CCompiler.Optimizations;
 
 public class BasicBlock
@@ -66,7 +68,7 @@ public class ControlFlowGraph
             if (block.Instructions.Count == 0)
                 continue;
 
-            var lastInst = block.Instructions.Last();
+            var lastInst = block.Instructions[^1];
 
             if (lastInst.Mnemonic.StartsWith('J'))
             {
@@ -105,3 +107,4 @@ public class ControlFlowGraph
         return list;
     }
 }
+
