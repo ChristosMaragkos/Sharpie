@@ -105,9 +105,11 @@ public sealed partial class SharpieEmitter
 
         var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main").ToList();
         if (mainFunctions.Count > 1)
+        {
             throw new InvalidOperationException(
                 "Ambiguous entrypoint: more than one 'main' function found."
             );
+        }
 
         var orderedFunctions = new List<CXCursor>();
 
@@ -129,9 +131,11 @@ public sealed partial class SharpieEmitter
 
             var funcName = func.Spelling.ToString();
             if (funcName.StartsWith("__sharpie_"))
+            {
                 throw new InvalidOperationException(
                     $"Cannot define function '{funcName}'. Identifiers beginning with '__sharpie_' are reserved for hardware intrinsics."
                 );
+            }
 
             var body = GetChildren(func).First(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
 
@@ -244,10 +248,9 @@ public sealed partial class SharpieEmitter
 
             // If the function reached the end without a return,
             // emit an implicit one (HALT for main, RET for anything else)
-            if (!context.HasReturn)
+            if (!context.HasReturn && context.IsMain)
             {
-                if (context.IsMain)
-                    context.Emit("LDI r0, 0");
+                context.Emit("LDI r0, 0");
             }
 
             if (_optimize)
@@ -356,7 +359,7 @@ public sealed partial class SharpieEmitter
                 // Handle arrays and structs
                 if (initListExprs.Count > 0)
                 {
-                    var initVals = GetChildren(initListExprs.Last());
+                    var initVals = GetChildren(initListExprs[^1]);
                     var typeKind = global.Type.CanonicalType.kind;
 
                     if (
@@ -424,9 +427,7 @@ public sealed partial class SharpieEmitter
 
                             foreach (var rowVal in initVals)
                             {
-                                var colInitVals = GetAggregateInitializerValues(rowVal);
-
-                                foreach (var colVal in colInitVals)
+                                foreach (var colVal in GetAggregateInitializerValues(rowVal))
                                 {
                                     long v = PeelExpression(colVal).Evaluate.AsLongLong;
                                     asm.AppendLine(innerStride == 1 ? $"    .DB {v}" : $"    .DW {v}");
@@ -463,7 +464,7 @@ public sealed partial class SharpieEmitter
                 // Handle primitives and string literals safely
                 else if (normalExprs.Count > 0)
                 {
-                    var initExpr = PeelExpression(normalExprs.Last());
+                    var initExpr = PeelExpression(normalExprs[^1]);
 
                     if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
                     {
@@ -558,7 +559,9 @@ public sealed partial class SharpieEmitter
                 current.Kind == CXCursorKind.CXCursor_ParmDecl
                 || current.Kind == CXCursorKind.CXCursor_VarDecl
             )
+            {
                 decls.Add(current);
+            }
 
             foreach (var child in GetChildren(current))
                 queue.Enqueue(child);
