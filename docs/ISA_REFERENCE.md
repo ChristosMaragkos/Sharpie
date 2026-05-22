@@ -14,9 +14,9 @@
 | `0x15` | **STS** | `R, R` | 2 | Store word from R1 to SP + R2 (signed). | Store the low byte of R1 SP + R2 (signed). |
 | `0x16` | **GETSP** | `R` | 2 | Set R1 to the value of SP |  |
 | `0x17` | **SETSP** | `R` | 2 | Set SP to the value of R1 |  |
-| `0x40` | **ADD** | `R, R` | 2 | R1 = R1 + R2. Updates Z, N, C, V. |  |
-| `0x41` | **SUB** | `R, R` | 2 | R1 = R1 - R2. Updates Z, N, C, V. |  |
-| `0x42` | **MUL** | `R, R` | 2 | R1 = R1 * R2. Sets C/V if result > 65535. |  |
+| `0x40` | **ADD** | `R, R` | 2 | R1 = R1 + R2. Updates Z, N, C, V. | R1 = R1 + R2 + carry. |
+| `0x41` | **SUB** | `R, R` | 2 | R1 = R1 - R2. Updates Z, N, C, V. | R1 = R1 - R2 - carry. |
+| `0x42` | **MUL** | `R, R` | 2 | R1 = R1 * R2. Sets C/V if result > 65535. Discards the high word. | R1 = R1 * R2. Emits only the high word into the result. |
 | `0x43` | **DIV** | `R, R` | 2 | R1 = R1 / R2. (Div by 0 sets Overflow/Zero). |  |
 | `0x44` | **MOD** | `R, R` | 2 | R1 = R1 % R2. |  |
 | `0x45` | **AND** | `R, R` | 2 | Bitwise AND. |  |
@@ -25,7 +25,6 @@
 | `0x48` | **SHL** | `R, R` | 2 | Bitwise shift left R1 by (R2 & 0xF). |  |
 | `0x49` | **SHR** | `R, R` | 2 | Bitwise shift right R1 by (R2 & 0xF). |  |
 | `0x4A` | **CMP** | `R, R` | 2 | Internal subtraction to set flags. |  |
-| `0x4B` | **ADC** | `R, R` | 2 | Add with Carry: R1 + R2 + C. |  |
 | `0x50` | **INC** | `R` | 2 | Increment register R by 1. |  |
 | `0x51` | **DEC** | `R` | 2 | Decrement register R by 1. |  |
 | `0x52` | **NOT** | `R` | 2 | Bitwise NOT (Invert all bits). |  |

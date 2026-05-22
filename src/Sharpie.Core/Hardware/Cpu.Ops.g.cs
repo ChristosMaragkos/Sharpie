@@ -128,11 +128,6 @@ internal partial class Cpu {
                 Execute_CMP(opcode, ref pcDelta);
                 break;
 
-            case 0x4B: //ADC
-                pcDelta = 2;
-                Execute_ADC(opcode, ref pcDelta);
-                break;
-
             case 0x50: //INC
                 pcDelta = 2;
                 Execute_INC(opcode, ref pcDelta);
@@ -460,7 +455,6 @@ internal partial class Cpu {
     private partial void Execute_SHL(byte opcode, ref ushort pcDelta);
     private partial void Execute_SHR(byte opcode, ref ushort pcDelta);
     private partial void Execute_CMP(byte opcode, ref ushort pcDelta);
-    private partial void Execute_ADC(byte opcode, ref ushort pcDelta);
     private partial void Execute_INC(byte opcode, ref ushort pcDelta);
     private partial void Execute_DEC(byte opcode, ref ushort pcDelta);
     private partial void Execute_NOT(byte opcode, ref ushort pcDelta);

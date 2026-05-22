@@ -149,7 +149,7 @@
     "words": 2,
     "pattern": "RR",
     "desc": "R1 = R1 + R2. Updates Z, N, C, V.",
-    "alt": ""
+    "alt": "R1 = R1 + R2 + carry."
   },
   {
     "hex": "0x41",
@@ -159,7 +159,7 @@
     "words": 2,
     "pattern": "RR",
     "desc": "R1 = R1 - R2. Updates Z, N, C, V.",
-    "alt": ""
+    "alt": "R1 = R1 - R2 - carry."
   },
   {
     "hex": "0x42",
@@ -168,8 +168,8 @@
     "logic": null,
     "words": 2,
     "pattern": "RR",
-    "desc": "R1 = R1 * R2. Sets C/V if result > 65535.",
-    "alt": ""
+    "desc": "R1 = R1 * R2. Sets C/V if result > 65535. Discards the high word.",
+    "alt": "R1 = R1 * R2. Emits only the high word into the result."
   },
   {
     "hex": "0x43",
@@ -249,16 +249,6 @@
     "words": 2,
     "pattern": "RR",
     "desc": "Internal subtraction to set flags.",
-    "alt": ""
-  },
-  {
-    "hex": "0x4B",
-    "name": "ADC",
-    "len": 2,
-    "logic": null,
-    "words": 2,
-    "pattern": "RR",
-    "desc": "Add with Carry: R1 + R2 + C.",
     "alt": ""
   },
   {

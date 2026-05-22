@@ -277,17 +277,6 @@ internal partial class Cpu
         UpdateFlags(result, GetRegister(x), GetRegister(y), true);
     }
 
-    private partial void Execute_ADC(byte opcode, ref ushort pcDelta)
-    {
-        var (x, y) = ReadRegisterArgs();
-
-        var carry = IsFlagOn(CpuFlags.Carry) ? 1 : 0;
-        var result = GetRegister(x) + GetRegister(y) + carry;
-
-        UpdateFlags(result, GetRegister(x), GetRegister(y));
-        GetRegister(x) = (ushort)result;
-    }
-
     private partial void Execute_INC(byte opcode, ref ushort pcDelta)
     {
         var x = _mobo.ReadByte(_pc + 1);

@@ -86,7 +86,7 @@ internal partial class Cpu
     // 15 (MSB) - Register Bank (are we using registers 0-15 or 16-31?)
     private ushort FlagRegister;
 
-    private void UpdateFlags(int result, ushort op1, ushort op2, bool subtraction = false)
+    private void UpdateFlags(int result, int op1, int op2, bool subtraction = false)
     {
         FlagRegister &= 0xFFF0;
         ushort flags = 0;

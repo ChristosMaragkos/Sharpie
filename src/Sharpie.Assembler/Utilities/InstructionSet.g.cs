@@ -31,7 +31,6 @@ public static class InstructionSet
         { "SHL", (2, 72, 2, false, "RR") },
         { "SHR", (2, 73, 2, false, "RR") },
         { "CMP", (2, 74, 2, false, "RR") },
-        { "ADC", (2, 75, 2, false, "RR") },
         { "INC", (2, 80, 1, false, "R") },
         { "DEC", (2, 81, 1, false, "R") },
         { "NOT", (2, 82, 1, false, "R") },
