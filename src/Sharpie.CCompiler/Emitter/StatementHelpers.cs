@@ -717,14 +717,65 @@ public partial class SharpieEmitter
                     context.Emit($"MOV r{lhsHigh.Value}, r{acc.Value}");         // lhsHigh = result_high
                     break;
                 }
+            case CXBinaryOperatorKind.CXBinaryOperator_DivAssign:
+            case CXBinaryOperatorKind.CXBinaryOperator_RemAssign:
+                {
+                    // 32-bit division/modulus via SYS_DIV_32
+                    var tempLabel = EmissionContext.GenerateLabel("div_temp");
+                    var tempSpace = context.AllocateStorage(tempLabel, true, 4);
+                    using var bufAddr = context.AcquireTempRegister();
+                    context.Emit($"MOV r{bufAddr.Value}, r15");
+                    AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
+
+                    // Save addrReg first (might be r1-r4, which we're about to overwrite)
+                    context.Emit($"PUSH r{addrReg.Value}");
+
+                    // Load dividend (LHS) into r1:r2 (high:low)
+                    context.Emit($"MOV r1, r{lhsHigh.Value}");
+                    context.Emit($"MOV r2, r{lhsLow.Value}");
+
+                    // Load divisor (RHS) into r3:r4 (high:low)
+                    context.Emit($"MOV r3, r{rhsHigh.Value}");
+                    context.Emit($"MOV r4, r{rhsLow.Value}");
+
+                    int mode = kind == CXBinaryOperatorKind.CXBinaryOperator_DivAssign ? 0 : 1;
+                    context.Emit($"LDI r0, {mode}");
+                    context.Emit("PUSH r0");
+                    context.Emit($"PUSH r{bufAddr.Value}");
+
+                    context.Emit("CALL SYS_DIV_32");
+
+                    // Clean up args (2 words)
+                    context.Emit("POP r0");
+                    context.Emit("POP r0");
+
+                    // Restore addrReg
+                    context.Emit($"POP r{addrReg.Value}");
+
+                    // Reload buffer address (was clobbered by SYS_DIV_32)
+                    context.Emit($"MOV r{bufAddr.Value}, r15");
+                    AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
+
+                    // Read result from buffer into lhsLow/lhsHigh and store to destination
+                    context.Emit($"LDP r{lhsLow.Value}, r{bufAddr.Value}");
+                    context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
+                    context.Emit($"IADD r{bufAddr.Value}, 2");
+                    context.Emit($"IADD r{addrReg.Value}, 2");
+                    context.Emit($"LDP r{lhsHigh.Value}, r{bufAddr.Value}");
+                    context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
+                    break;
+                }
             default:
                 throw new InvalidOperationException($"Unsupported long compound assignment: {kind}");
         }
 
-        // Store result back
-        context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
-        context.Emit($"IADD r{addrReg.Value}, 2");
-        context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
+        // Store result back (for cases that compute into lhsLow/lhsHigh but don't store themselves)
+        if (kind != CXBinaryOperatorKind.CXBinaryOperator_DivAssign && kind != CXBinaryOperatorKind.CXBinaryOperator_RemAssign)
+        {
+            context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
+            context.Emit($"IADD r{addrReg.Value}, 2");
+            context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
+        }
     }
 
     private static void EmitReturn(CXCursor returnStmt, EmissionContext context)
@@ -1781,7 +1832,7 @@ public partial class SharpieEmitter
             else
             {
                 using var addrReg = context.AcquireTempRegister();
-                EmitLValueAddress(arg, addrReg.Value, context);
+                EmitMultiSlotArgAddress(arg, slots, addrReg.Value, context);
 
                 if (addrReg.Value == 2)
                     context.Emit("MOV r1, r2");
@@ -1811,7 +1862,7 @@ public partial class SharpieEmitter
             else
             {
                 using var addrReg = context.AcquireTempRegister();
-                EmitLValueAddress(arg, addrReg.Value, context);
+                EmitMultiSlotArgAddress(arg, slots, addrReg.Value, context);
 
                 for (int s = 0; s < slots; s++)
                 {
@@ -2017,7 +2068,7 @@ public partial class SharpieEmitter
             else
             {
                 using var addrReg = context.AcquireTempRegister();
-                EmitLValueAddress(arg, addrReg.Value, context);
+                EmitMultiSlotArgAddress(arg, slots, addrReg.Value, context);
 
                 if (addrReg.Value == 2)
                     context.Emit("MOV r1, r2");
@@ -2048,7 +2099,7 @@ public partial class SharpieEmitter
             else
             {
                 using var addrReg = context.AcquireTempRegister();
-                EmitLValueAddress(arg, addrReg.Value, context);
+                EmitMultiSlotArgAddress(arg, slots, addrReg.Value, context);
 
                 for (int s = 0; s < slots; s++)
                 {
@@ -2152,6 +2203,32 @@ public partial class SharpieEmitter
 
         foreach (var lease in activeLeases)
             lease.Dispose();
+    }
+
+    private static void EmitMultiSlotArgAddress(CXCursor arg, int slots, int targetReg, EmissionContext context)
+    {
+        var peeled = PeelExpression(arg);
+        bool isLvalue = peeled.Kind
+            is CXCursorKind.CXCursor_DeclRefExpr
+                or CXCursorKind.CXCursor_MemberRefExpr
+                or CXCursorKind.CXCursor_ArraySubscriptExpr;
+        isLvalue |= peeled.Kind == CXCursorKind.CXCursor_UnaryOperator
+            && GetUnaryOperatorKind(peeled) == CXUnaryOperatorKind.CXUnaryOperator_Deref;
+
+        if (isLvalue)
+        {
+            EmitLValueAddress(arg, targetReg, context);
+        }
+        else
+        {
+            var tempLabel = EmissionContext.GenerateLabel("arg_temp");
+            var tempSpace = context.AllocateStorage(tempLabel, true, slots * 2);
+            context.Emit($"MOV r{targetReg}, r15");
+            AccumulateOffset(targetReg, tempSpace.Value, context);
+            EmitLongToAddress(arg, targetReg, context);
+            context.Emit($"MOV r{targetReg}, r15");
+            AccumulateOffset(targetReg, tempSpace.Value, context);
+        }
     }
 
     private static void EmitLValueAddress(CXCursor lvalue, int targetReg, EmissionContext context)
@@ -2605,6 +2682,88 @@ public partial class SharpieEmitter
                         context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
                         context.Emit($"IADD r{destAddrReg}, 2");
                         context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
+                    }
+                    else if (
+                        kind
+                        is CXBinaryOperatorKind.CXBinaryOperator_Div
+                            or CXBinaryOperatorKind.CXBinaryOperator_Rem
+                    )
+                    {
+                        var lhs = PeelExpression(operands[0]);
+                        var rhs = PeelExpression(operands[1]);
+
+                        // Allocate 4-byte temp buffer for SYS_DIV_32 result
+                        var tempLabel = EmissionContext.GenerateLabel("div_temp");
+                        var tempSpace = context.AllocateStorage(tempLabel, true, 4);
+
+                        using var bufAddr = context.AcquireTempRegister();
+                        context.Emit($"MOV r{bufAddr.Value}, r15");
+                        AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
+
+                        // Load dividend (LHS) into r1:r2 (high:low)
+                        if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        {
+                            long v = lhs.Evaluate.AsLongLong;
+                            context.Emit($"LDI r1, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+                            context.Emit($"LDI r2, {unchecked((ushort)(v & 0xFFFF))}");
+                        }
+                        else
+                        {
+                            using var src = context.AcquireTempRegister();
+                            EmitExpression(operands[0], src.Value, context);
+                            context.Emit($"LDP r2, r{src.Value}");
+                            context.Emit($"IADD r{src.Value}, 2");
+                            context.Emit($"LDP r1, r{src.Value}");
+                        }
+
+                        // Load divisor (RHS) into r3:r4 (high:low)
+                        if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        {
+                            long v = rhs.Evaluate.AsLongLong;
+                            context.Emit($"LDI r3, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+                            context.Emit($"LDI r4, {unchecked((ushort)(v & 0xFFFF))}");
+                        }
+                        else
+                        {
+                            using var src = context.AcquireTempRegister();
+                            EmitExpression(operands[1], src.Value, context);
+                            context.Emit($"LDP r4, r{src.Value}");
+                            context.Emit($"IADD r{src.Value}, 2");
+                            context.Emit($"LDP r3, r{src.Value}");
+                        }
+
+                        // Save destAddrReg across the CALL (SYS_DIV_32 clobbers r0-r12)
+                        context.Emit($"PUSH r{destAddrReg}");
+
+                        // Push SYS_DIV_32 args: after CALL push, SP+2 = buf_ptr, SP+4 = mode
+                        int mode = kind == CXBinaryOperatorKind.CXBinaryOperator_Div ? 0 : 1;
+                        context.Emit($"LDI r0, {mode}");
+                        context.Emit("PUSH r0");
+                        context.Emit($"PUSH r{bufAddr.Value}");
+
+                        context.Emit("CALL SYS_DIV_32");
+
+                        // Clean up args (2 words)
+                        context.Emit("POP r0");
+                        context.Emit("POP r0");
+
+                        // Restore destAddrReg
+                        context.Emit($"POP r{destAddrReg}");
+
+                        // Reload buffer address (was clobbered by SYS_DIV_32)
+                        context.Emit($"MOV r{bufAddr.Value}, r15");
+                        AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
+
+                        // Read result from buffer and store to destination
+                        using var resultLow = context.AcquireTempRegister();
+                        using var resultHigh = context.AcquireTempRegister();
+                        context.Emit($"LDP r{resultLow.Value}, r{bufAddr.Value}");
+                        context.Emit($"IADD r{bufAddr.Value}, 2");
+                        context.Emit($"LDP r{resultHigh.Value}, r{bufAddr.Value}");
+
+                        context.Emit($"STA r{resultLow.Value}, r{destAddrReg}");
+                        context.Emit($"IADD r{destAddrReg}, 2");
+                        context.Emit($"STA r{resultHigh.Value}, r{destAddrReg}");
                     }
                     else
                     {
