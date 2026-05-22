@@ -519,8 +519,21 @@ public sealed partial class SharpieEmitter
                     else
                     {
                         long v = initExpr.Evaluate.AsLongLong;
-                        asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                        bytesWritten += sizeBytes;
+                        if (sizeBytes <= 2)
+                        {
+                            asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                            bytesWritten += sizeBytes;
+                        }
+                        else
+                        {
+                            int wordCount = (int)((sizeBytes + 1) / 2);
+                            for (int w = 0; w < wordCount; w++)
+                            {
+                                asm.AppendLine($"    .DW {unchecked((ushort)(v & 0xFFFF))}");
+                                bytesWritten += 2;
+                                v >>= 16;
+                            }
+                        }
                     }
                 }
 
