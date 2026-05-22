@@ -48,6 +48,8 @@
 | `0x74` | **JLT** | `W` | 3 | Jump if Less Than. | Uses register instead of immediate word |
 | `0x75` | **JGE** | `W` | 3 | Jump if Greater or Equal. | Uses register instead of immediate word |
 | `0x76` | **JLE** | `W` | 3 | Jump if Less or Equal. | Uses register instead of immediate word |
+| `0x4B` | **JC** | `W` | 3 | Jump if Carry | Uses register instead of immediate word |
+| `0x4C` | **JNC** | `W` | 3 | Jump if Carry | Uses register instead of immediate word |
 | `0x77` | **CALL** | `W` | 3 | Push PC+3 to stack and jump to W. | Push PC+3 to stack and jump to the address contained in R1. |
 | `0x78` | **RET** | `-` | 1 | Pop address from stack and jump back. |  |
 | `0x79` | **PUSH** | `R` | 2 | Push value in R onto stack. | Push the low byte of R onto the stack |

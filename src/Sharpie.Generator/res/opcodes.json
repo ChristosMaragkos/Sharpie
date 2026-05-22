@@ -482,6 +482,26 @@
     "alt": "Uses register instead of immediate word"
   },
   {
+    "hex": "0x4B",
+    "name": "JC",
+    "len": 3,
+    "logic": null,
+    "words": 1,
+    "pattern": "W",
+    "desc": "Jump if Carry",
+    "alt": "Uses register instead of immediate word"
+  },
+  {
+    "hex": "0x4C",
+    "name": "JNC",
+    "len": 3,
+    "logic": null,
+    "words": 1,
+    "pattern": "W",
+    "desc": "Jump if Carry",
+    "alt": "Uses register instead of immediate word"
+  },
+  {
     "hex": "0x77",
     "name": "CALL",
     "len": 3,

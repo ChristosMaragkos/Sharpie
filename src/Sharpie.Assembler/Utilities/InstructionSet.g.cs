@@ -54,6 +54,8 @@ public static class InstructionSet
         { "JLT", (3, 116, 1, false, "W") },
         { "JGE", (3, 117, 1, false, "W") },
         { "JLE", (3, 118, 1, false, "W") },
+        { "JC", (3, 75, 1, false, "W") },
+        { "JNC", (3, 76, 1, false, "W") },
         { "CALL", (3, 119, 1, false, "W") },
         { "RET", (1, 120, 0, false, "") },
         { "PUSH", (2, 121, 1, false, "R") },

@@ -243,6 +243,16 @@ internal partial class Cpu {
                 Execute_JLE(opcode, ref pcDelta);
                 break;
 
+            case 0x4B: //JC
+                pcDelta = 3;
+                Execute_JC(opcode, ref pcDelta);
+                break;
+
+            case 0x4C: //JNC
+                pcDelta = 3;
+                Execute_JNC(opcode, ref pcDelta);
+                break;
+
             case 0x77: //CALL
                 pcDelta = 3;
                 Execute_CALL(opcode, ref pcDelta);
@@ -478,6 +488,8 @@ internal partial class Cpu {
     private partial void Execute_JLT(byte opcode, ref ushort pcDelta);
     private partial void Execute_JGE(byte opcode, ref ushort pcDelta);
     private partial void Execute_JLE(byte opcode, ref ushort pcDelta);
+    private partial void Execute_JC(byte opcode, ref ushort pcDelta);
+    private partial void Execute_JNC(byte opcode, ref ushort pcDelta);
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta);
     private partial void Execute_RET(byte opcode, ref ushort pcDelta);
     private partial void Execute_PUSH(byte opcode, ref ushort pcDelta);

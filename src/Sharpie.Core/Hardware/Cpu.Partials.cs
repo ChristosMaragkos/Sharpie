@@ -545,6 +545,30 @@ internal partial class Cpu
         }
     }
 
+    private partial void Execute_JC(byte opcode, ref ushort pcDelta)
+    {
+        var target = _mobo.ReadWord(_pc + 1);
+        var carry = IsFlagOn(CpuFlags.Carry);
+
+        if (carry)
+        {
+            _pc = target;
+            pcDelta = 0;
+        }
+    }
+
+    private partial void Execute_JNC(byte opcode, ref ushort pcDelta)
+    {
+        var target = _mobo.ReadWord(_pc + 1);
+        var carry = IsFlagOn(CpuFlags.Carry);
+
+        if (!carry)
+        {
+            _pc = target;
+            pcDelta = 0;
+        }
+    }
+
     private partial void Execute_CALL(byte opcode, ref ushort pcDelta)
     {
         if (_sp <= Memory.SpriteAtlasStart + 1) // Also overflow if we try to write a word with 1 byte left
