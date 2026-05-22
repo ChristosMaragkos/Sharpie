@@ -591,11 +591,14 @@ _func_world_to_screen:
     IADD r2, 2
     STA r1, r2
     MOV r1, r15
-    PUSH r1
-    MOV r1, r8
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r2, r1
+    MOV r3, r8
+    LDP r4, r2
+    STA r4, r3
+    IADD r2, 2
+    IADD r3, 2
+    LDP r4, r2
+    STA r4, r3
     JMP epilogue_L27
 if_L28:
     LDI r1, 128
@@ -623,11 +626,14 @@ if_L28:
     IADD r2, 2
     STA r1, r2
     MOV r1, r15
-    PUSH r1
-    MOV r1, r8
-    POP r2
-    LDI r3, 4
-    CALL SYS_MEM_MOVE
+    MOV r2, r1
+    MOV r3, r8
+    LDP r4, r2
+    STA r4, r3
+    IADD r2, 2
+    IADD r3, 2
+    LDP r4, r2
+    STA r4, r3
 epilogue_L27:
     MOV r6, r15
     LDI r7, 4
