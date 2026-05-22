@@ -107,6 +107,7 @@ internal partial class Cpu
 
             case 0x40: // ADD
                 {
+                    pcDelta = 2;
                     var (x, y) = ReadRegisterArgs();
 
                     var carry = IsFlagOn(CpuFlags.Carry) ? 1 : 0;
@@ -119,6 +120,7 @@ internal partial class Cpu
 
             case 0x41: // SUB
                 {
+                    pcDelta = 2;
                     var (x, y) = ReadRegisterArgs();
 
                     var borrow = IsFlagOn(CpuFlags.Carry) ? 1 : 0;
@@ -131,6 +133,7 @@ internal partial class Cpu
 
             case 0x42: // MUL
                 {
+                    pcDelta = 2;
                     var (x, y) = ReadRegisterArgs();
 
                     short sx = (short)GetRegister(x);

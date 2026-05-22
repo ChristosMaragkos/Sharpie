@@ -22,6 +22,7 @@ public partial class SharpieRomEmitter
         { "SYS_PRINT", 64280 },
         { "SYS_MEM_MOVE", 64299 },
         { "SYS_FAR_CALL", 64334 },
+        { "SYS_DIV_32", 0xFB62 },
     };
 
     private ScopeLevel GetCurrentScope() =>
