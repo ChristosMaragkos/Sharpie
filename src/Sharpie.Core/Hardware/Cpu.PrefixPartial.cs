@@ -147,6 +147,18 @@ internal partial class Cpu
                     break;
                 }
 
+            case 0x4A: // CMP
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+
+                    var borrow = IsFlagOn(CpuFlags.Carry) ? 1 : 0;
+                    var result = GetRegister(x) - (GetRegister(y) + borrow);
+
+                    UpdateFlags(result, GetRegister(x), GetRegister(y) + borrow, subtraction: true);
+                    break;
+                }
+
             case 0x60: // IADD
                 {
                     pcDelta = 3;

@@ -24,7 +24,7 @@
 | `0x47` | **XOR** | `R, R` | 2 | Bitwise XOR. |  |
 | `0x48` | **SHL** | `R, R` | 2 | Bitwise shift left R1 by (R2 & 0xF). |  |
 | `0x49` | **SHR** | `R, R` | 2 | Bitwise shift right R1 by (R2 & 0xF). |  |
-| `0x4A` | **CMP** | `R, R` | 2 | Internal subtraction to set flags. |  |
+| `0x4A` | **CMP** | `R, R` | 2 | Internal subtraction to set flags. | Compare with borrow. |
 | `0x50` | **INC** | `R` | 2 | Increment register R by 1. |  |
 | `0x51` | **DEC** | `R` | 2 | Decrement register R by 1. |  |
 | `0x52` | **NOT** | `R` | 2 | Bitwise NOT (Invert all bits). |  |
