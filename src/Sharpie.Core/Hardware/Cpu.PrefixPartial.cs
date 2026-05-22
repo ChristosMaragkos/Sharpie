@@ -147,6 +147,59 @@ internal partial class Cpu
                     break;
                 }
 
+            case 0x48: // SHL
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var shiftAmount = GetRegister(y) & 0x0F;
+                    var original = GetRegister(x);
+                    ushort result;
+                    bool carry;
+                    if (shiftAmount == 0)
+                    {
+                        result = 0;
+                        carry = false;
+                    }
+                    else
+                    {
+                        var effective = 16 - shiftAmount;
+                        result = (ushort)(original >> effective);
+                        carry = ((original >> (effective - 1)) & 1) == 1;
+                    }
+                    UpdateLogicFlags(result);
+                    SetFlag(carry, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+                    GetRegister(x) = result;
+                    break;
+                }
+
+            case 0x49: // SHR
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+                    var shiftAmount = GetRegister(y) & 0x0F;
+                    var original = GetRegister(x);
+                    ushort result;
+                    bool carry;
+                    if (shiftAmount == 0)
+                    {
+                        result = 0;
+                        carry = false;
+                    }
+                    else
+                    {
+                        var effective = 16 - shiftAmount;
+                        var shifted = (uint)original << effective;
+                        result = (ushort)shifted;
+                        carry = shifted > ushort.MaxValue;
+                    }
+                    UpdateLogicFlags(result);
+                    SetFlag(carry, CpuFlags.Carry);
+                    SetFlag(false, CpuFlags.Overflow);
+                    GetRegister(x) = result;
+                    break;
+                }
+
             case 0x4A: // CMP
                 {
                     pcDelta = 2;
