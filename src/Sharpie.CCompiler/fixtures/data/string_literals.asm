@@ -11,10 +11,6 @@
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r8
-    PUSH r9
-    PUSH r10
-    PUSH r11
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -29,19 +25,17 @@ Main:
     STA r1, r15
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
-    MOV r1, r0
-    MOV r8, r1
     LDI r1, 97
-    MOV r2, r8
+    MOV r2, r0
     XOR r3, r3
     ADD r2, r3
     ALT STA r1, r2
     XOR r1, r1
-    MOV r2, r8
+    MOV r2, r0
     LDI r3, 19
     ADD r2, r3
     ALT STA r1, r2
-    MOV r1, r8
+    MOV r1, r0
     XOR r2, r2
     XOR r3, r3
     CALL SYS_PRINT
@@ -52,10 +46,6 @@ epilogue_L0:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r11
-    POP r10
-    POP r9
-    POP r8
     HALT
 .ENDGLOBAL
 

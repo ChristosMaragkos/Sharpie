@@ -11,8 +11,6 @@
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r8
-    PUSH r9
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -31,8 +29,6 @@ epilogue_L0:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r9
-    POP r8
     HALT
 .ENDGLOBAL
 .ENDREGION

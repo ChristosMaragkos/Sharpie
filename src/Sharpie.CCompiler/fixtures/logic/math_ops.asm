@@ -30,8 +30,7 @@ Main:
     SHL r1, r2
     LDI r2, 2
     SHR r1, r2
-    MOV r8, r1
-    MOV r0, r8
+    MOV r0, r1
     NEG r0
 epilogue_L0:
     POP r9

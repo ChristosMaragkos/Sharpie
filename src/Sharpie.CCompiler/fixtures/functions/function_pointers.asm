@@ -12,7 +12,6 @@
 .GLOBAL
 Main:
     PUSH r8
-    PUSH r9
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -21,18 +20,18 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r1, _func_add
-    MOV r2, r15
+    MOV r2, r6
     XOR r3, r3
     LDI r4, 2
     MUL r3, r4
     ADD r2, r3
     STA r1, r2
     LDI r1, _func_sub
-    MOV r2, r15
+    MOV r2, r6
     LDI r3, 2
     ADD r2, r3
     STA r1, r2
-    MOV r0, r15
+    MOV r0, r6
     IADD r0, 4
     STA r1, r0
     LDI r2, _func_add
@@ -43,7 +42,7 @@ Main:
     MOV r3, r4
     CALL _func_do_math
     MOV r1, r0
-    MOV r8, r1
+    MOV r8, r0
     MOV r0, r15
     IADD r0, 4
     STA r1, r0
@@ -57,10 +56,8 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    MOV r1, r0
-    MOV r9, r1
     MOV r1, r8
-    MOV r2, r9
+    MOV r2, r0
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:
@@ -69,7 +66,6 @@ epilogue_L0:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r9
     POP r8
     HALT
 .ENDGLOBAL
@@ -106,8 +102,6 @@ epilogue_L2:
 .GLOBAL
 _func_do_math:
     PUSH r8
-    PUSH r9
-    PUSH r10
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -116,12 +110,9 @@ _func_do_math:
     SETSP r6
     MOV r15, r6
     MOV r8, r1
-    MOV r9, r2
-    MOV r10, r3
-    MOV r1, r8
     STA r1, r15
-    MOV r1, r9
-    MOV r2, r10
+    MOV r1, r2
+    MOV r2, r3
     LDP r0, r15
     ALT CALL r0
 epilogue_L3:
@@ -130,8 +121,6 @@ epilogue_L3:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r10
-    POP r9
     POP r8
     RET
 .ENDGLOBAL

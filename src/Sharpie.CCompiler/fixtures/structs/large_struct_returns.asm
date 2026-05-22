@@ -18,8 +18,8 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
-    MOV r0, r15
+    MOV r1, r6
+    MOV r0, r6
     IADD r0, 104
     STA r1, r0
     CALL _func_create_padding
@@ -46,7 +46,7 @@ _func_create_padding:
     SETSP r6
     MOV r15, r6
     MOV r8, r1
-    MOV r1, r15
+    MOV r1, r6
     PUSH r1
     MOV r1, r8
     POP r2

@@ -11,7 +11,6 @@
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r8
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -23,11 +22,11 @@ Main:
     INC r1
     ALT STA r1, r15
     LDI r1, 99
-    MOV r2, r15
+    MOV r2, r6
     INC r2
     ALT STA r1, r2
     ALT LDP r1, r15
-    MOV r3, r15
+    MOV r3, r6
     INC r3
     ALT LDP r2, r3
     ADD r1, r2
@@ -38,7 +37,6 @@ epilogue_L0:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r8
     HALT
 .ENDGLOBAL
 .ENDREGION

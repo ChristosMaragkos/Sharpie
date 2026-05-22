@@ -25,11 +25,10 @@ _func_test_logic:
     PUSH r9
     PUSH r10
     PUSH r11
-    MOV r8, r1
     MOV r9, r2
     MOV r10, r3
     MOV r11, r4
-    CMP r8, r9
+    CMP r1, r9
     JEQ rel_true_L7
     XOR r1, r1
     JMP rel_end_L8

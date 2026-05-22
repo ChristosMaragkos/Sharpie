@@ -18,7 +18,7 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
+    MOV r1, r6
     IADD r1, 6
     LDI r2, 30
     STA r2, r1
@@ -26,36 +26,35 @@ Main:
     MOV r3, r1
     IADD r3, 2
     STA r2, r3
-    MOV r1, r15
     LDI r2, 1
-    STA r2, r1
+    STA r2, r15
     LDI r2, 2
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 2
     STA r2, r3
     LDI r2, 3
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 4
     STA r2, r3
-    MOV r2, r15
+    MOV r2, r6
     IADD r2, 6
     LDP r1, r2
-    MOV r3, r15
+    MOV r3, r6
     IADD r3, 8
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     XOR r4, r4
     LDI r5, 2
     MUL r4, r5
     ADD r3, r4
     LDP r2, r3
-    MOV r4, r15
+    MOV r4, r6
     LDI r5, 2
     ADD r4, r5
     LDP r3, r4
     ADD r2, r3
-    MOV r4, r15
+    MOV r4, r6
     LDI r5, 4
     ADD r4, r5
     LDP r3, r4

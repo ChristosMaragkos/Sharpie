@@ -24,22 +24,22 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
+    MOV r1, r6
     LDI r2, 34464
     STA r2, r1
     IADD r1, 2
     LDI r2, 1
     STA r2, r1
-    MOV r1, r15
+    MOV r1, r6
     IADD r1, 4
     LDI r2, 3392
     STA r2, r1
     IADD r1, 2
     LDI r2, 3
     STA r2, r1
-    MOV r1, r15
+    MOV r1, r6
     IADD r1, 8
-    MOV r4, r15
+    MOV r4, r6
     LDP r2, r4
     IADD r4, 2
     LDP r3, r4
@@ -1019,14 +1019,12 @@ _func_div_long:
     LDP r4, r2
     IADD r2, 2
     LDP r3, r2
-    PUSH r8
     XOR r0, r0
     PUSH r0
     PUSH r1
     CALL SYS_DIV_32
     POP r0
     POP r0
-    POP r8
     MOV r1, r15
     IADD r1, 8
     LDP r2, r1
@@ -1077,14 +1075,12 @@ _func_mod_long:
     LDP r4, r2
     IADD r2, 2
     LDP r3, r2
-    PUSH r8
     LDI r0, 1
     PUSH r0
     PUSH r1
     CALL SYS_DIV_32
     POP r0
     POP r0
-    POP r8
     MOV r1, r15
     IADD r1, 8
     LDP r2, r1
@@ -1414,13 +1410,13 @@ _func_test_incdec:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
+    MOV r1, r6
     LDI r2, 34464
     STA r2, r1
     IADD r1, 2
     LDI r2, 1
     STA r2, r1
-    MOV r2, r15
+    MOV r2, r6
     LDP r1, r2
     IADD r2, 2
     LDP r3, r2
@@ -1429,10 +1425,9 @@ _func_test_incdec:
     STA r3, r2
     IADD r2, -2
     STA r1, r2
-    MOV r1, r15
+    MOV r1, r6
     IADD r1, 4
-    MOV r2, r15
-    MOV r3, r2
+    MOV r3, r6
     MOV r4, r1
     LDP r5, r3
     STA r5, r4

@@ -18,7 +18,7 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
+    MOV r1, r6
     LDI r2, 3
     CALL _func_fill_array
     MOV r1, r15

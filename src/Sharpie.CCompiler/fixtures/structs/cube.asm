@@ -364,9 +364,8 @@ for_start_L3:
     LDI r3, 6
     MUL r2, r3
     ADD r1, r2
-    MOV r2, r15
     MOV r3, r1
-    MOV r4, r2
+    MOV r4, r15
     LDP r5, r3
     STA r5, r4
     IADD r3, 2
@@ -483,7 +482,7 @@ epilogue_L0:
 _func_draw_point:
     PUSH r8
     MOV r8, r1
-    LDP r2, r8
+    LDP r2, r1
     LDI r3, 255
     CMP r2, r3
     JGT rel_true_L19
@@ -587,11 +586,10 @@ _func_world_to_screen:
     LDI r1, 65535
     STA r1, r15
     LDI r1, 65535
-    MOV r2, r15
+    MOV r2, r6
     IADD r2, 2
     STA r1, r2
-    MOV r1, r15
-    MOV r2, r1
+    MOV r2, r6
     MOV r3, r8
     LDP r4, r2
     STA r4, r3
@@ -625,8 +623,7 @@ if_L28:
     MOV r2, r15
     IADD r2, 2
     STA r1, r2
-    MOV r1, r15
-    MOV r2, r1
+    MOV r2, r15
     MOV r3, r8
     LDP r4, r2
     STA r4, r3
@@ -712,7 +709,7 @@ _func_translate_z:
     PUSH r9
     MOV r8, r1
     MOV r9, r2
-    MOV r2, r8
+    MOV r2, r1
     IADD r2, 4
     LDP r1, r2
     MOV r2, r9
@@ -746,7 +743,7 @@ _func_line_bresenham:
     XOR r1, r1
     STA r1, r15
     XOR r1, r1
-    MOV r2, r15
+    MOV r2, r6
     IADD r2, 2
     STA r1, r2
     LDP r1, r14

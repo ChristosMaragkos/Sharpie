@@ -36,7 +36,7 @@ Main:
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
     MOV r1, r0
-    MOV r8, r1
+    MOV r8, r0
     XOR r1, r1
     CLS r1
     LDI r1, 10
@@ -58,8 +58,6 @@ epilogue_L0:
 _func_add_six_numbers:
     PUSH r8
     PUSH r9
-    PUSH r10
-    PUSH r11
     PUSH r12
     PUSH r13
     PUSH r15
@@ -74,33 +72,28 @@ _func_add_six_numbers:
     MOV r13, r7
     MOV r8, r1
     MOV r9, r2
-    MOV r10, r3
-    MOV r11, r4
     MOV r1, r8
     MOV r2, r9
     ADD r1, r2
-    MOV r2, r10
+    MOV r2, r3
     ADD r1, r2
-    MOV r2, r11
+    MOV r2, r4
     ADD r1, r2
     MOV r2, r12
     ADD r1, r2
-    MOV r2, r13
+    MOV r2, r7
     ADD r1, r2
     MOV r0, r1
 epilogue_L1:
     POP r15
     POP r13
     POP r12
-    POP r11
-    POP r10
     POP r9
     POP r8
     RET
 .ENDGLOBAL
 .GLOBAL
 _func_test_memory:
-    PUSH r8
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -122,7 +115,6 @@ epilogue_L2:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r8
     RET
 .ENDGLOBAL
 .ENDREGION

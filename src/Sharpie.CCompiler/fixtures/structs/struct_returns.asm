@@ -19,8 +19,8 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
-    MOV r0, r15
+    MOV r1, r6
+    MOV r0, r6
     IADD r0, 4
     STA r1, r0
     LDI r2, 10
@@ -67,8 +67,6 @@ epilogue_L0:
 .GLOBAL
 _func_make_point:
     PUSH r8
-    PUSH r9
-    PUSH r10
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -77,16 +75,13 @@ _func_make_point:
     SETSP r6
     MOV r15, r6
     MOV r8, r1
-    MOV r9, r2
-    MOV r10, r3
-    MOV r1, r9
+    MOV r1, r2
     STA r1, r15
-    MOV r1, r10
-    MOV r2, r15
+    MOV r1, r3
+    MOV r2, r6
     IADD r2, 2
     STA r1, r2
-    MOV r1, r15
-    MOV r2, r1
+    MOV r2, r6
     MOV r3, r8
     LDP r4, r2
     STA r4, r3
@@ -100,8 +95,6 @@ epilogue_L1:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r10
-    POP r9
     POP r8
     RET
 .ENDGLOBAL
