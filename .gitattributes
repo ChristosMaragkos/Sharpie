@@ -2,7 +2,7 @@
 *.html linguist-vendored
 *.js linguist-vendored
 *.c linguist-vendored
-tools/Sharpie.CCompiler/fixtures/*.asm linguist-vendored
+src/Sharpie.CCompiler/fixtures/**/*.asm linguist-vendored
 
 *.shr binary
 *.bin binary
