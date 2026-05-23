@@ -5,7 +5,7 @@
     JMP Main
 .ENDREGION
 ; ----------------------------------
-; SOURCE: arrays.c
+; SOURCE: large_struct_returns.c
 ; ----------------------------------
 
 .REGION FIXED
@@ -14,51 +14,50 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 6
+    LDI r7, 106
     SUB r6, r7
     SETSP r6
     MOV r15, r6
     MOV r1, r6
-    LDI r2, 3
-    CALL _func_fill_array
-    MOV r1, r15
-    LDI r2, 4
-    ADD r1, r2
-    LDP r0, r1
+    MOV r0, r6
+    IADD r0, 104
+    STA r1, r0
+    CALL _func_create_padding
+    PUSH r0
+    MOV r0, r15
+    IADD r0, 104
+    XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 6
+    LDI r7, 106
     ADD r6, r7
     SETSP r6
     POP r15
     HALT
 .ENDGLOBAL
 .GLOBAL
-_func_fill_array:
+_func_create_padding:
     PUSH r8
-    PUSH r9
-    PUSH r10
-    MOV r9, r1
-    MOV r10, r2
-    XOR r1, r1
+    PUSH r15
+    GETSP r15
+    MOV r6, r15
+    LDI r7, 104
+    SUB r6, r7
+    SETSP r6
+    MOV r15, r6
     MOV r8, r1
-while_start_L2:
-    CMP r8, r10
-    JGE while_end_L3
+    MOV r1, r6
+    PUSH r1
     MOV r1, r8
-    IMUL r1, 10
-    MOV r2, r9
-    MOV r3, r8
-    LDI r4, 2
-    MUL r3, r4
-    ADD r2, r3
-    STA r1, r2
-    INC r8
-    JMP while_start_L2
-while_end_L3:
+    POP r2
+    LDI r3, 104
+    CALL SYS_MEM_MOVE
 epilogue_L1:
-    POP r10
-    POP r9
+    MOV r6, r15
+    LDI r7, 104
+    ADD r6, r7
+    SETSP r6
+    POP r15
     POP r8
     RET
 .ENDGLOBAL

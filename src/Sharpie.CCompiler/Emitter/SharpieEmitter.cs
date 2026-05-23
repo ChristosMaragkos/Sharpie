@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using ClangSharp.Interop;
+using Sharpie.CCompiler.Emitter;
 using Sharpie.CCompiler.Optimizations;
 
 namespace Sharpie.CCompiler;
@@ -15,13 +16,15 @@ public sealed partial class SharpieEmitter
     public const int FramePointer = 15;
 
     private readonly bool _optimize;
+    private readonly bool _allowLong;
 
     [GeneratedRegex(@"#pragma\s+bank\s+(\d+)")]
     private static partial Regex MyRegex();
 
-    public SharpieEmitter(bool optimizationsEnabled)
+    public SharpieEmitter(bool optimizationsEnabled, bool allowLong = false)
     {
         _optimize = optimizationsEnabled;
+        _allowLong = allowLong;
     }
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
@@ -48,6 +51,9 @@ public sealed partial class SharpieEmitter
             }
             asm.AppendLine($".REGION {regionName}");
         }
+
+        if (!_allowLong)
+            CheckLongTypeUsage(translationUnitCursor);
 
         var globalNames = new HashSet<string>(StringComparer.Ordinal);
 
@@ -105,9 +111,11 @@ public sealed partial class SharpieEmitter
 
         var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main").ToList();
         if (mainFunctions.Count > 1)
+        {
             throw new InvalidOperationException(
                 "Ambiguous entrypoint: more than one 'main' function found."
             );
+        }
 
         var orderedFunctions = new List<CXCursor>();
 
@@ -129,9 +137,11 @@ public sealed partial class SharpieEmitter
 
             var funcName = func.Spelling.ToString();
             if (funcName.StartsWith("__sharpie_"))
+            {
                 throw new InvalidOperationException(
                     $"Cannot define function '{funcName}'. Identifiers beginning with '__sharpie_' are reserved for hardware intrinsics."
                 );
+            }
 
             var body = GetChildren(func).First(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
 
@@ -244,10 +254,9 @@ public sealed partial class SharpieEmitter
 
             // If the function reached the end without a return,
             // emit an implicit one (HALT for main, RET for anything else)
-            if (!context.HasReturn)
+            if (!context.HasReturn && context.IsMain)
             {
-                if (context.IsMain)
-                    context.Emit("LDI r0, 0");
+                context.Emit("LDI r0, 0");
             }
 
             if (_optimize)
@@ -356,7 +365,7 @@ public sealed partial class SharpieEmitter
                 // Handle arrays and structs
                 if (initListExprs.Count > 0)
                 {
-                    var initVals = GetChildren(initListExprs.Last());
+                    var initVals = GetChildren(initListExprs[^1]);
                     var typeKind = global.Type.CanonicalType.kind;
 
                     if (
@@ -424,9 +433,7 @@ public sealed partial class SharpieEmitter
 
                             foreach (var rowVal in initVals)
                             {
-                                var colInitVals = GetAggregateInitializerValues(rowVal);
-
-                                foreach (var colVal in colInitVals)
+                                foreach (var colVal in GetAggregateInitializerValues(rowVal))
                                 {
                                     long v = PeelExpression(colVal).Evaluate.AsLongLong;
                                     asm.AppendLine(innerStride == 1 ? $"    .DB {v}" : $"    .DW {v}");
@@ -463,7 +470,7 @@ public sealed partial class SharpieEmitter
                 // Handle primitives and string literals safely
                 else if (normalExprs.Count > 0)
                 {
-                    var initExpr = PeelExpression(normalExprs.Last());
+                    var initExpr = PeelExpression(normalExprs[^1]);
 
                     if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
                     {
@@ -518,8 +525,21 @@ public sealed partial class SharpieEmitter
                     else
                     {
                         long v = initExpr.Evaluate.AsLongLong;
-                        asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                        bytesWritten += sizeBytes;
+                        if (sizeBytes <= 2)
+                        {
+                            asm.AppendLine(sizeBytes == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                            bytesWritten += sizeBytes;
+                        }
+                        else
+                        {
+                            int wordCount = (int)((sizeBytes + 1) / 2);
+                            for (int w = 0; w < wordCount; w++)
+                            {
+                                asm.AppendLine($"    .DW {unchecked((ushort)(v & 0xFFFF))}");
+                                bytesWritten += 2;
+                                v >>= 16;
+                            }
+                        }
                     }
                 }
 
@@ -558,7 +578,9 @@ public sealed partial class SharpieEmitter
                 current.Kind == CXCursorKind.CXCursor_ParmDecl
                 || current.Kind == CXCursorKind.CXCursor_VarDecl
             )
+            {
                 decls.Add(current);
+            }
 
             foreach (var child in GetChildren(current))
                 queue.Enqueue(child);
@@ -585,5 +607,50 @@ public sealed partial class SharpieEmitter
                 queue.Enqueue(child);
         }
         return usage;
+    }
+
+    private static bool IsLongType(CXType type)
+    {
+        if (type.SizeOf <= 2) return false;
+        var kind = type.CanonicalType.kind;
+        return kind is CXTypeKind.CXType_Long
+            or CXTypeKind.CXType_ULong
+            or CXTypeKind.CXType_LongLong
+            or CXTypeKind.CXType_ULongLong;
+    }
+
+    private static void CheckLongTypeUsage(CXCursor rootCursor)
+    {
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(rootCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            if (IsLongType(current.Type))
+            {
+                var name = current.Spelling.ToString();
+                var kind = current.Kind.ToString();
+                throw new InvalidOperationException(
+                    "Compilation with 32-bit integers (long) is not allowed by default.\n"
+                    + "Use --allow-long to enable 32-bit operations.\n"
+                    + $"Found: {kind} '{(string.IsNullOrEmpty(name) ? "(anonymous)" : name)}' with type '{current.Type.Spelling}'."
+                );
+            }
+
+            if (current.Kind == CXCursorKind.CXCursor_FunctionDecl && IsLongType(current.ResultType))
+            {
+                var name = current.Spelling.ToString();
+                throw new InvalidOperationException(
+                    "Compilation with 32-bit integers (long) is not allowed by default.\n"
+                    + "Use --allow-long to enable 32-bit operations.\n"
+                    + $"Found: function '{name}' returns 'long'."
+                );
+            }
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
     }
 }

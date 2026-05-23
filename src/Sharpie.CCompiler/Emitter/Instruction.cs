@@ -1,4 +1,4 @@
-namespace Sharpie.CCompiler;
+namespace Sharpie.CCompiler.Emitter;
 
 public class Instruction
 {

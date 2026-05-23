@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClangSharp" Version="21.1.8.2" />
+    <PackageReference Include="ClangSharp" Version="21.1.8.3" />
   </ItemGroup>
 
 </Project>

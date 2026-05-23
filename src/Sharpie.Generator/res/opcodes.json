@@ -229,7 +229,7 @@
     "words": 2,
     "pattern": "RR",
     "desc": "Bitwise shift left R1 by (R2 & 0xF).",
-    "alt": ""
+    "alt": "Shift right by (16 - R2)"
   },
   {
     "hex": "0x49",
@@ -239,7 +239,7 @@
     "words": 2,
     "pattern": "RR",
     "desc": "Bitwise shift right R1 by (R2 & 0xF).",
-    "alt": ""
+    "alt": "Shift left by (16 - R2)"
   },
   {
     "hex": "0x4A",
@@ -249,7 +249,7 @@
     "words": 2,
     "pattern": "RR",
     "desc": "Internal subtraction to set flags.",
-    "alt": ""
+    "alt": "Compare with borrow."
   },
   {
     "hex": "0x50",

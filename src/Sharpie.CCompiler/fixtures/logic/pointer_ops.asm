@@ -12,8 +12,6 @@
 .GLOBAL
 Main:
     PUSH r8
-    PUSH r9
-    PUSH r10
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -28,16 +26,13 @@ Main:
     STA r1, r8
     MOV r1, r8
     LDP r1, r1
-    MOV r9, r1
-    MOV r0, r9
+    MOV r0, r1
 epilogue_L0:
     MOV r6, r15
     LDI r7, 2
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r10
-    POP r9
     POP r8
     HALT
 .ENDGLOBAL

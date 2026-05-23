@@ -1,3 +1,5 @@
+using Sharpie.CCompiler.Emitter;
+
 namespace Sharpie.CCompiler;
 
 public partial class SharpieEmitter

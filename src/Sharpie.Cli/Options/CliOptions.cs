@@ -10,6 +10,8 @@ public class CliOptions
 
     public bool Optimize { get; set; }
 
+    public bool AllowLong { get; set; }
+
     public bool StopAtAsm { get; set; }
 
     // Assembler flags

@@ -1,3 +1,5 @@
+using Sharpie.CCompiler.Emitter;
+
 namespace Sharpie.CCompiler.Optimizations;
 
 public static class Optimizer
@@ -143,14 +145,11 @@ public static class Optimizer
                 }
 
                 // JMP to the very next line
-                if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel)
+                if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel && current.Arg1 == next.OriginalText.TrimEnd(':'))
                 {
-                    if (current.Arg1 == next.OriginalText.TrimEnd(':'))
-                    {
-                        instructions.RemoveAt(i);
-                        changed = true;
-                        break;
-                    }
+                    instructions.RemoveAt(i);
+                    changed = true;
+                    break;
                 }
 
                 // MOV rX, rX -> nothing
@@ -329,6 +328,77 @@ public static class Optimizer
                     }
                 }
 
+                // Wider IADD/ISUB accumulation — scan forward across neutral instructions
+                if (
+                    !current.IsAlt
+                    && current.Mnemonic is "IADD" or "ISUB"
+                    && int.TryParse(current.Arg2, out int _)
+                )
+                {
+                    int total = current.Mnemonic == "IADD" ? int.Parse(current.Arg2) : -int.Parse(current.Arg2);
+                    var matchIndices = new List<int>();
+                    bool blocked = false;
+
+                    for (int scan = 1; i + scan < instructions.Count; scan++)
+                    {
+                        var mid = instructions[i + scan];
+
+                        if (mid.IsLabel || mid.IsComment || mid.IsDirective)
+                            continue;
+
+                        if (
+                            !mid.IsAlt
+                            && mid.Mnemonic is "IADD" or "ISUB"
+                            && mid.Arg1 == current.Arg1
+                            && int.TryParse(mid.Arg2, out int midVal)
+                        )
+                        {
+                            total += mid.Mnemonic == "IADD" ? midVal : -midVal;
+                            matchIndices.Add(i + scan);
+                            continue;
+                        }
+
+                        var midDefs = GetDefs(mid);
+                        var midUses = GetUses(mid);
+
+                        if (midDefs.Contains(current.Arg1) || midUses.Contains(current.Arg1))
+                        {
+                            if (matchIndices.Count > 0)
+                                break;
+                            blocked = true;
+                            break;
+                        }
+
+                        if (mid.Mnemonic is "JMP" or "RET" or "HALT")
+                        {
+                            if (matchIndices.Count > 0)
+                                break;
+                            blocked = true;
+                            break;
+                        }
+                    }
+
+                    if (!blocked && matchIndices.Count > 0 && Math.Abs(total) <= 255)
+                    {
+                        for (int m = matchIndices.Count - 1; m >= 0; m--)
+                            instructions.RemoveAt(matchIndices[m]);
+
+                        if (total == 0)
+                        {
+                            instructions.RemoveAt(i);
+                        }
+                        else
+                        {
+                            current.Mnemonic = total > 0 ? "IADD" : "ISUB";
+                            current.Arg2 = Math.Abs(total).ToString();
+                            current.RebuildText();
+                        }
+
+                        changed = true;
+                        break;
+                    }
+                }
+
                 // LDP -> Math -> STA  ==>  ALT <math>
                 if (i < instructions.Count - 2)
                 {
@@ -439,21 +509,17 @@ public static class Optimizer
                         && (nextNext.Mnemonic == "MUL" || nextNext.Mnemonic == "ADD")
                         && current.Arg1 == nextNext.Arg1
                         && next.Arg1 == nextNext.Arg2
+&& int.TryParse(current.Arg2, out int v1)
+                            && int.TryParse(next.Arg2, out int v2)
                     )
                     {
-                        if (
-                            int.TryParse(current.Arg2, out int v1)
-                            && int.TryParse(next.Arg2, out int v2)
-                        )
-                        {
-                            int result = nextNext.Mnemonic == "MUL" ? (v1 * v2) : (v1 + v2);
-                            current.Arg2 = result.ToString();
-                            current.RebuildText();
-                            instructions.RemoveAt(i + 2); // Remove MUL/ADD
-                            instructions.RemoveAt(i + 1); // Remove second LDI
-                            changed = true;
-                            break;
-                        }
+                        int result = nextNext.Mnemonic == "MUL" ? (v1 * v2) : (v1 + v2);
+                        current.Arg2 = result.ToString();
+                        current.RebuildText();
+                        instructions.RemoveAt(i + 2); // Remove MUL/ADD
+                        instructions.RemoveAt(i + 1); // Remove second LDI
+                        changed = true;
+                        break;
                     }
                 }
 
@@ -575,30 +641,97 @@ public static class Optimizer
                     }
                 }
 
-                // JMP to the next line => Remove the JMP
-                if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel)
+                // MOV rA, rB -> ... -> MOV rC, rA  =>  MOV rC, rB
+                if (!current.IsAlt && current.Mnemonic == "MOV" && current.Arg1.StartsWith('r') && current.Arg2.StartsWith('r'))
                 {
-                    if (current.Arg1 == next.OriginalText.Trim(':'))
+                    bool sawLabel = false;
+                    for (int scan = 1; i + scan < instructions.Count; scan++)
                     {
-                        instructions.RemoveAt(i);
-                        changed = true;
-                        break;
-                    }
-                }
+                        var mid = instructions[i + scan];
 
-                // PUSH rX -> do something unrelated (that doesn't mutate rX) -> POP rX => remove PUSH & POP
-                if (current.Mnemonic == "PUSH")
-                {
-                    var nextNext = instructions[i + 2];
-                    if (nextNext.Mnemonic == "POP" && current.Arg1 == nextNext.Arg1)
-                    {
-                        if (next.Arg1 != current.Arg1) // if we don't have something like ADD rX, rY
+                        if (mid.IsLabel)
                         {
-                            instructions.RemoveAt(i + 2);
-                            instructions.RemoveAt(i);
+                            sawLabel = true;
+                            continue;
+                        }
+
+                        if (mid.IsComment || mid.IsDirective)
+                            continue;
+
+                        if (!mid.IsAlt && mid.Mnemonic == "MOV" && mid.Arg2 == current.Arg1)
+                        {
+                            // Don't propagate across label boundaries when the source
+                            // register is volatile across calls (r0–r7). The label may be
+                            // a loop header — rB gets clobbered by CALLs in the loop body
+                            // and won't equal rA on the next iteration.
+                            if (sawLabel && IsCallVolatile(current.Arg2))
+                                break;
+
+                            // Don't substitute if the target writes to the source register
+                            // (e.g. MOV rA, rB; MOV rB, rA — swap that also depends on rA's value)
+                            if (mid.Arg1 == current.Arg2)
+                                break;
+
+                            mid.Arg2 = current.Arg2;
+                            mid.RebuildText();
                             changed = true;
                             break;
                         }
+
+                        var midDefs = GetDefs(mid);
+                        if (midDefs.Contains(current.Arg1) || midDefs.Contains(current.Arg2))
+                            break;
+
+                        if (mid.Mnemonic is "JMP" or "RET" or "HALT")
+                            break;
+                    }
+
+                    if (changed)
+                        break;
+                }
+
+                // JMP to the next line => Remove the JMP
+                if (!current.IsAlt && current.Mnemonic == "JMP" && next.IsLabel && current.Arg1 == next.OriginalText.Trim(':'))
+                {
+                    instructions.RemoveAt(i);
+                    changed = true;
+                    break;
+                }
+
+                // PUSH rX -> ... (no use/def of rX) -> POP rX  =>  remove both
+                if (current.Mnemonic == "PUSH")
+                {
+                    int popScan = -1;
+
+                    for (int scan = 1; i + scan < instructions.Count; scan++)
+                    {
+                        var mid = instructions[i + scan];
+
+                        if (mid.IsLabel || mid.IsComment || mid.IsDirective)
+                            continue;
+
+                        if (!mid.IsAlt && mid.Mnemonic == "POP" && mid.Arg1 == current.Arg1)
+                        {
+                            popScan = scan;
+                            break;
+                        }
+
+                        var midDefs = GetDefs(mid);
+                        var midUses = GetUses(mid);
+
+                        if (midDefs.Contains(current.Arg1) || midUses.Contains(current.Arg1))
+                            break;
+
+                        if (mid.Mnemonic is "JMP" or "RET" or "HALT")
+                            break;
+                    }
+
+                    if (popScan > 0)
+                    {
+                        instructions.RemoveAt(i + popScan);
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
                     }
                 }
             }
@@ -615,9 +748,10 @@ public static class Optimizer
         {
             foreach (var line in readOnlyData)
             {
-                var tokens = line.Split([' ', '\t', ','], StringSplitOptions.RemoveEmptyEntries);
-                foreach (var token in tokens)
+                foreach (var token in line.Split([' ', '\t', ','], StringSplitOptions.RemoveEmptyEntries))
+                {
                     addressTakenLabels.Add(token);
+                }
             }
         }
 
@@ -682,10 +816,9 @@ public static class Optimizer
             uses.Add(inst.Arg4);
 
         // arg 1 is used as a source in math, stores, compares, pushes etc
-        if (ReadsFirstArg(inst))
+        if (ReadsFirstArg(inst) && !string.IsNullOrEmpty(inst.Arg1) && inst.Arg1.StartsWith('r'))
         {
-            if (!string.IsNullOrEmpty(inst.Arg1) && inst.Arg1.StartsWith('r'))
-                uses.Add(inst.Arg1);
+            uses.Add(inst.Arg1);
         }
 
         // CALL uses argument registers (r1-r4)
@@ -720,7 +853,12 @@ public static class Optimizer
     private static bool ReadsFirstArg(Instruction inst)
     {
         return UseMnemonics.Contains(inst.Mnemonic)
-            || inst.Mnemonic.StartsWith('J') && inst.Mnemonic.Length == 3;
+            || (inst.Mnemonic.StartsWith('J') && inst.Mnemonic.Length == 3);
+    }
+
+    private static bool IsCallVolatile(string register)
+    {
+        return register is "r0" or "r1" or "r2" or "r3" or "r4" or "r5" or "r6" or "r7";
     }
 
     private static bool IsRegisterUsedBeforeRedefined(
@@ -879,3 +1017,4 @@ public static class Optimizer
         }
     }
 }
+

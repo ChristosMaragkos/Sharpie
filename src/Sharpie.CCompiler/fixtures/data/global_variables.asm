@@ -43,10 +43,8 @@ Main:
     DINC r1
     LDI r1, 200
     STM r1, _global_g_p1
-    LDI r1, _global_g_p1
-    MOV r2, r15
-    MOV r3, r1
-    MOV r4, r2
+    LDI r3, _global_g_p1
+    MOV r4, r6
     LDP r5, r3
     STA r5, r4
     IADD r3, 2

@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using ClangSharp.Interop;
 
-namespace Sharpie.CCompiler.NativeInterop;
+namespace Sharpie.CCompiler.Emitter;
 
 internal static class LibClangResolver
 {

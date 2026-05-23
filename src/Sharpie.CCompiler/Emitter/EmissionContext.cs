@@ -1,4 +1,4 @@
-namespace Sharpie.CCompiler;
+namespace Sharpie.CCompiler.Emitter;
 
 public enum StorageType
 {
@@ -11,11 +11,13 @@ public readonly struct StorageLocation
 {
     public StorageType Type { get; }
     public int Value { get; }
+    public int Slots { get; }
 
-    public StorageLocation(StorageType type, int value)
+    public StorageLocation(StorageType type, int value, int slots = 1)
     {
         Type = type;
         Value = value;
+        Slots = slots;
     }
 }
 
@@ -40,9 +42,7 @@ public sealed class EmissionContext
 
     public static string GenerateLabel(string prefix = "") => $"{prefix}_L{_labelCount++}";
 
-#pragma warning disable IDE0028 // Simplify collection initialization
     public Dictionary<string, StorageLocation> Locals { get; } = new(StringComparer.Ordinal);
-#pragma warning restore IDE0028 // Simplify collection initialization
     public HashSet<string> EscapedVariables { get; }
 
     // track callee saved registers (r8-r15)
@@ -105,12 +105,15 @@ public sealed class EmissionContext
         if (Locals.TryGetValue(name, out var existing))
             return existing;
 
-        if (!forceStack && _nextLocalRegister <= SharpieEmitter.LocalRegisterEnd)
+        int slots = (bytes + 1) / 2;
+        bool isMultiSlot = slots > 1;
+
+        if (!forceStack && !isMultiSlot && _nextLocalRegister <= SharpieEmitter.LocalRegisterEnd)
         {
             int reg = _nextLocalRegister++;
             UsedPreservedRegisters.Add(reg);
 
-            var loc = new StorageLocation(StorageType.Register, reg);
+            var loc = new StorageLocation(StorageType.Register, reg, 1);
             Locals[name] = loc;
             return loc;
         }
@@ -120,7 +123,7 @@ public sealed class EmissionContext
             _currentStackOffset += bytes;
             TotalStackBytes = _currentStackOffset;
 
-            var loc = new StorageLocation(StorageType.Stack, offset);
+            var loc = new StorageLocation(StorageType.Stack, offset, slots);
             Locals[name] = loc;
             return loc;
         }

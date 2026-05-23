@@ -30,27 +30,26 @@ Main:
     SUB r6, r7
     SETSP r6
     MOV r15, r6
-    MOV r1, r15
     LDI r2, 3
-    ALT STA r2, r1
+    ALT STA r2, r15
     LDI r2, 5
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 2
     STA r2, r3
     LDI r2, 7
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 4
     STA r2, r3
     LDI r2, 4
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 6
     ALT STA r2, r3
     LDI r2, 65527
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 8
     STA r2, r3
     LDI r2, 11
-    MOV r3, r1
+    MOV r3, r6
     IADD r3, 10
     STA r2, r3
     LDI r2, _global_gverts
@@ -71,14 +70,14 @@ Main:
     IADD r3, 4
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     XOR r4, r4
     LDI r5, 6
     MUL r4, r5
     ADD r3, r4
     ALT LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     XOR r4, r4
     LDI r5, 6
     MUL r4, r5
@@ -86,7 +85,7 @@ Main:
     IADD r3, 2
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     XOR r4, r4
     LDI r5, 6
     MUL r4, r5
@@ -94,18 +93,18 @@ Main:
     IADD r3, 4
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     LDI r4, 6
     ADD r3, r4
     ALT LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     LDI r4, 6
     ADD r3, r4
     IADD r3, 2
     LDP r2, r3
     ADD r1, r2
-    MOV r3, r15
+    MOV r3, r6
     LDI r4, 6
     ADD r3, r4
     IADD r3, 4

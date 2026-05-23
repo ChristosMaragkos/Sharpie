@@ -21,18 +21,18 @@ Main:
     SETSP r6
     MOV r15, r6
     LDI r1, 10
-    MOV r2, r15
+    MOV r2, r6
     IADD r2, 4
     STA r1, r2
     LDI r1, 20
-    MOV r2, r15
+    MOV r2, r6
     IADD r2, 6
     STA r1, r2
-    MOV r0, r15
+    MOV r0, r6
     IADD r0, 8
     STA r1, r0
     LDI r2, 5
-    MOV r3, r15
+    MOV r3, r6
     IADD r3, 4
     LDP r4, r3
     IADD r3, 2
@@ -41,8 +41,7 @@ Main:
     MOV r2, r4
     MOV r3, r5
     CALL _func_test_registers
-    MOV r1, r0
-    MOV r8, r1
+    MOV r8, r0
     LDI r1, 100
     STA r1, r15
     LDI r1, 200
@@ -52,8 +51,7 @@ Main:
     MOV r0, r15
     IADD r0, 8
     STA r1, r0
-    MOV r2, r15
-    MOV r1, r2
+    MOV r1, r15
     LDI r2, 4
     CALL SYS_STACKALLOC
     LDI r2, 1
@@ -65,8 +63,7 @@ Main:
     CALL _func_test_stack
     LDI r1, 4
     CALL SYS_FREE_STACKFRAME
-    MOV r1, r0
-    MOV r9, r1
+    MOV r9, r0
     MOV r1, r15
     CALL _func_test_pointer
     MOV r1, r8
@@ -121,7 +118,6 @@ epilogue_L1:
 _func_test_stack:
     PUSH r8
     PUSH r9
-    PUSH r10
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -139,11 +135,10 @@ _func_test_stack:
     STA r7, r5
     MOV r8, r1
     MOV r9, r2
-    MOV r10, r3
     MOV r1, r8
     MOV r2, r9
     ADD r1, r2
-    MOV r2, r10
+    MOV r2, r3
     ADD r1, r2
     LDP r2, r15
     ADD r1, r2
@@ -158,7 +153,6 @@ epilogue_L2:
     ADD r6, r7
     SETSP r6
     POP r15
-    POP r10
     POP r9
     POP r8
     RET
