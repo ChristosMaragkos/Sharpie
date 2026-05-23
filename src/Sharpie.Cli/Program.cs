@@ -7,7 +7,7 @@ using Sharpie.Tools;
 
 namespace Sharpie.Cli;
 
-class Program
+static class Program
 {
     static void Main(string[] args)
     {
@@ -44,6 +44,9 @@ class Program
                 case "-O":
                 case "--optimize":
                     options.Optimize = true;
+                    break;
+                case "--allow-long":
+                    options.AllowLong = true;
                     break;
                 case "-S":
                 case "--asm-only":
@@ -105,6 +108,7 @@ class Program
         Console.WriteLine(
             "  -S, --asm-only         Stop after C compilation and emit assembly text. Can be combined with -O."
         );
+        Console.WriteLine("      --allow-long        Enable support for 32-bit integers.");
         Console.WriteLine(
             "  -f, --firmware         Assemble as raw firmware (no cartridge header)."
         );
@@ -179,7 +183,9 @@ class Program
                         !Path.GetExtension(img)
                             .Equals(".png", StringComparison.CurrentCultureIgnoreCase)
                     )
+                    {
                         throw new Exception($"Mixed input types! Expected .png, got {img}");
+                    }
 
                     Console.WriteLine($"      -> {img}");
                     ImageConverter.ConvertImage(img, outputDir, format, false);
@@ -231,7 +237,7 @@ class Program
             {
                 Console.WriteLine($"[CC] Compiling {inputList.Count} source file(s)...");
 
-                assemblySource = SharpieCC.Compile(options.Inputs, options.Optimize);
+                assemblySource = SharpieCC.Compile(options.Inputs, options.Optimize, options.AllowLong);
 
                 if (options.StopAtAsm)
                 {
@@ -257,7 +263,7 @@ class Program
             }
             else if (firstFileExt is ".asm")
             {
-                var asmInputFile = inputList.First();
+                var asmInputFile = inputList[0];
                 Console.WriteLine($"[ASM] Assembling {asmInputFile}...");
                 var assembler = new SharpieAssembler(options.IsFirmware);
                 machineCode = assembler.AssembleFromFile(asmInputFile);

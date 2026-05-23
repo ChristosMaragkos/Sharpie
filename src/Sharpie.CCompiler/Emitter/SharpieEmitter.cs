@@ -16,13 +16,15 @@ public sealed partial class SharpieEmitter
     public const int FramePointer = 15;
 
     private readonly bool _optimize;
+    private readonly bool _allowLong;
 
     [GeneratedRegex(@"#pragma\s+bank\s+(\d+)")]
     private static partial Regex MyRegex();
 
-    public SharpieEmitter(bool optimizationsEnabled)
+    public SharpieEmitter(bool optimizationsEnabled, bool allowLong = false)
     {
         _optimize = optimizationsEnabled;
+        _allowLong = allowLong;
     }
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
@@ -49,6 +51,9 @@ public sealed partial class SharpieEmitter
             }
             asm.AppendLine($".REGION {regionName}");
         }
+
+        if (!_allowLong)
+            CheckLongTypeUsage(translationUnitCursor);
 
         var globalNames = new HashSet<string>(StringComparer.Ordinal);
 
@@ -602,5 +607,50 @@ public sealed partial class SharpieEmitter
                 queue.Enqueue(child);
         }
         return usage;
+    }
+
+    private static bool IsLongType(CXType type)
+    {
+        if (type.SizeOf <= 2) return false;
+        var kind = type.CanonicalType.kind;
+        return kind is CXTypeKind.CXType_Long
+            or CXTypeKind.CXType_ULong
+            or CXTypeKind.CXType_LongLong
+            or CXTypeKind.CXType_ULongLong;
+    }
+
+    private static void CheckLongTypeUsage(CXCursor rootCursor)
+    {
+        var queue = new Queue<CXCursor>();
+        queue.Enqueue(rootCursor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            if (IsLongType(current.Type))
+            {
+                var name = current.Spelling.ToString();
+                var kind = current.Kind.ToString();
+                throw new InvalidOperationException(
+                    "Compilation with 32-bit integers (long) is not allowed by default.\n"
+                    + "Use --allow-long to enable 32-bit operations.\n"
+                    + $"Found: {kind} '{(string.IsNullOrEmpty(name) ? "(anonymous)" : name)}' with type '{current.Type.Spelling}'."
+                );
+            }
+
+            if (current.Kind == CXCursorKind.CXCursor_FunctionDecl && IsLongType(current.ResultType))
+            {
+                var name = current.Spelling.ToString();
+                throw new InvalidOperationException(
+                    "Compilation with 32-bit integers (long) is not allowed by default.\n"
+                    + "Use --allow-long to enable 32-bit operations.\n"
+                    + $"Found: function '{name}' returns 'long'."
+                );
+            }
+
+            foreach (var child in GetChildren(current))
+                queue.Enqueue(child);
+        }
     }
 }

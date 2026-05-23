@@ -43,7 +43,7 @@ while read -r c_file; do
 	# Ensure output directory exists (in case of nested folders)
 	mkdir -p "$(dirname "$asm_file")"
 
-	if dotnet "$COMPILER_DLL" "$c_file" -O -S -o "$asm_file"; then
+	if dotnet "$COMPILER_DLL" "$c_file" --allow-long -O -S -o "$asm_file"; then
 		echo "[✓] Compilation Successful"
 		echo "--- Generated Assembly ---"
 		cat "$asm_file"

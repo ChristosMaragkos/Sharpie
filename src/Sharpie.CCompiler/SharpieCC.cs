@@ -5,7 +5,7 @@ namespace Sharpie.CCompiler;
 
 public static class SharpieCC
 {
-    public static string Compile(IEnumerable<string> inputFiles, bool optimize)
+    public static string Compile(IEnumerable<string> inputFiles, bool optimize, bool allowLong = false)
     {
         LibClangResolver.Configure();
 
@@ -35,7 +35,7 @@ public static class SharpieCC
                 throw new Exception($"Compilation failed due to frontend errors in {file}.");
             }
 
-            var emitter = new SharpieEmitter(optimize);
+            var emitter = new SharpieEmitter(optimize, allowLong);
 
             masterAssembly.AppendLine("; ----------------------------------");
             masterAssembly.AppendLine($"; SOURCE: {Path.GetFileName(file)}");
