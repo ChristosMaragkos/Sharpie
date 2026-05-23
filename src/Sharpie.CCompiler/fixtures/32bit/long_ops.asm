@@ -5,7 +5,7 @@
     JMP Main
 .ENDREGION
 ; ----------------------------------
-; SOURCE: long_test.c
+; SOURCE: long_ops.c
 ; ----------------------------------
 
 .REGION FIXED
@@ -109,16 +109,17 @@ if_L1:
     XOR r5, r5
     MOV r6, r2
     MUL r2, r4
-    MOV r7, r6
-    ALT MUL r7, r4
+    MOV r0, r6
+    ALT MUL r0, r4
     MUL r6, r5
-    ADD r7, r6
+    ADD r0, r6
     MOV r6, r3
     MUL r6, r4
-    ADD r7, r6
+    ADD r0, r6
+    MOV r3, r0
     STA r2, r1
     IADD r1, 2
-    STA r7, r1
+    STA r3, r1
     MOV r1, r15
     IADD r1, 20
     LDI r2, 37856
@@ -761,16 +762,17 @@ if_L25:
     LDP r5, r6
     MOV r6, r2
     MUL r2, r4
-    MOV r7, r6
-    ALT MUL r7, r4
+    MOV r0, r6
+    ALT MUL r0, r4
     MUL r6, r5
-    ADD r7, r6
+    ADD r0, r6
     MOV r6, r3
     MUL r6, r4
-    ADD r7, r6
+    ADD r0, r6
+    MOV r3, r0
     STA r2, r1
     IADD r1, 2
-    STA r7, r1
+    STA r3, r1
     MOV r1, r15
     IADD r1, 108
     MOV r0, r15
@@ -967,16 +969,17 @@ _func_mul_long:
     LDP r4, r5
     MOV r5, r1
     MUL r1, r3
-    MOV r6, r5
-    ALT MUL r6, r3
+    MOV r0, r5
+    ALT MUL r0, r3
     MUL r5, r4
-    ADD r6, r5
+    ADD r0, r5
     MOV r5, r2
     MUL r5, r3
-    ADD r6, r5
+    ADD r0, r5
+    MOV r2, r0
     STA r1, r8
     IADD r8, 2
-    STA r6, r8
+    STA r2, r8
 epilogue_L29:
     MOV r6, r15
     LDI r7, 8
