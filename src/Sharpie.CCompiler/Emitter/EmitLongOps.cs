@@ -69,10 +69,17 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
+                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
+                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
+
                         using var lhsLow = context.AcquireTempRegister();
                         using var lhsHigh = context.AcquireTempRegister();
 
-                        if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        if (lhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(lhsLow.Value, lhsHigh.Value, lhsSlot, context);
+                        }
+                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = lhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r{lhsLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
@@ -90,7 +97,11 @@ public partial class SharpieEmitter
                         using var rhsLow = context.AcquireTempRegister();
                         using var rhsHigh = context.AcquireTempRegister();
 
-                        if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        if (rhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(rhsLow.Value, rhsHigh.Value, rhsSlot, context);
+                        }
+                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = rhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r{rhsLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
@@ -126,12 +137,19 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
+                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
+                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
+
                         using var aLow = context.AcquireTempRegister();
                         using var aHigh = context.AcquireTempRegister();
                         using var bLow = context.AcquireTempRegister();
                         using var bHigh = context.AcquireTempRegister();
 
-                        if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        if (lhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(aLow.Value, aHigh.Value, lhsSlot, context);
+                        }
+                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = lhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r{aLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
@@ -146,7 +164,11 @@ public partial class SharpieEmitter
                             context.Emit($"LDP r{aHigh.Value}, r{src.Value}");
                         }
 
-                        if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        if (rhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(bLow.Value, bHigh.Value, rhsSlot, context);
+                        }
+                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = rhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r{bLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
@@ -164,24 +186,24 @@ public partial class SharpieEmitter
                         if (kind == CXBinaryOperatorKind.CXBinaryOperator_Mul)
                         {
                             using var origALow = context.AcquireTempRegister();
-                            using var acc = context.AcquireTempRegister();
 
                             context.Emit($"MOV r{origALow.Value}, r{aLow.Value}");
 
                             context.Emit($"MUL r{aLow.Value}, r{bLow.Value}");
-                            context.Emit($"MOV r{acc.Value}, r{origALow.Value}");
-                            context.Emit($"ALT MUL r{acc.Value}, r{bLow.Value}");
+                            context.Emit($"MOV r0, r{origALow.Value}");
+                            context.Emit($"ALT MUL r0, r{bLow.Value}");
 
                             context.Emit($"MUL r{origALow.Value}, r{bHigh.Value}");
-                            context.Emit($"ADD r{acc.Value}, r{origALow.Value}");
+                            context.Emit($"ADD r0, r{origALow.Value}");
 
                             context.Emit($"MOV r{origALow.Value}, r{aHigh.Value}");
                             context.Emit($"MUL r{origALow.Value}, r{bLow.Value}");
-                            context.Emit($"ADD r{acc.Value}, r{origALow.Value}");
+                            context.Emit($"ADD r0, r{origALow.Value}");
 
+                            context.Emit($"MOV r{aHigh.Value}, r0");
                             context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
                             context.Emit($"IADD r{destAddrReg}, 2");
-                            context.Emit($"STA r{acc.Value}, r{destAddrReg}");
+                            context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
                         }
                         else
                         {
@@ -209,10 +231,16 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
+                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
+
                         using var aLow = context.AcquireTempRegister();
                         using var aHigh = context.AcquireTempRegister();
 
-                        if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        if (lhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(aLow.Value, aHigh.Value, lhsSlot, context);
+                        }
+                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = lhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r{aLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
@@ -285,7 +313,13 @@ public partial class SharpieEmitter
                         context.Emit($"MOV r{bufAddr.Value}, r15");
                         AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
 
-                        if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
+
+                        if (lhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(2, 1, lhsSlot, context);
+                        }
+                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = lhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r1, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
@@ -300,7 +334,13 @@ public partial class SharpieEmitter
                             context.Emit($"LDP r1, r{src.Value}");
                         }
 
-                        if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
+
+                        if (rhsSlot >= 0)
+                        {
+                            LoadLongFromBuffer(4, 3, rhsSlot, context);
+                        }
+                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long v = rhs.Evaluate.AsLongLong;
                             context.Emit($"LDI r3, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
@@ -447,5 +487,34 @@ public partial class SharpieEmitter
                     return;
                 }
         }
+    }
+
+    private static int EmitLongToBufferIfComplex(CXCursor operand, CXCursor peeled, EmissionContext context)
+    {
+        if (!IsComplexLongExpression(peeled))
+            return -1;
+
+        var label = EmissionContext.GenerateLabel("buf");
+        var slot = context.AllocateStorage(label, true, 4);
+
+        context.Emit("MOV r0, r15");
+        AccumulateOffset(0, slot.Value, context);
+        EmitLongToAddress(operand, 0, context);
+        return slot.Value;
+    }
+
+    private static void LoadLongFromBuffer(int lowReg, int highReg, int slot, EmissionContext context)
+    {
+        context.Emit("MOV r0, r15");
+        AccumulateOffset(0, slot, context);
+        context.Emit($"LDP r{lowReg}, r0");
+        context.Emit($"IADD r0, 2");
+        context.Emit($"LDP r{highReg}, r0");
+    }
+
+    private static bool IsComplexLongExpression(CXCursor peeled)
+    {
+        return peeled.Kind == CXCursorKind.CXCursor_BinaryOperator
+            || peeled.Kind == CXCursorKind.CXCursor_UnaryOperator;
     }
 }
