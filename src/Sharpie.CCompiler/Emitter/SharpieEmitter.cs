@@ -129,11 +129,22 @@ public sealed partial class SharpieEmitter
             }
         }
 
+        var spriteAtlasAsm = new StringBuilder();
+        var rawAsm = new StringBuilder();
         if (topLevelAsm.Count > 0)
         {
             foreach (var asmStmt in topLevelAsm)
             {
-                ParseAndEmitAsmString(asmStmt, line => defAsm.AppendLine(line));
+                var tempAsm = new StringBuilder();
+                ParseAndEmitAsmString(asmStmt, line => tempAsm.AppendLine(line));
+
+                var content = tempAsm.ToString();
+                if (content.Contains(".REGION SPRITE_ATLAS", StringComparison.OrdinalIgnoreCase))
+                    spriteAtlasAsm.Append(content);
+                else if (content.Contains(".REGION", StringComparison.OrdinalIgnoreCase) || content.Contains(".ENDREGION", StringComparison.OrdinalIgnoreCase))
+                    rawAsm.Append(content);
+                else
+                    defAsm.Append(content);
             }
         }
 
@@ -318,30 +329,6 @@ public sealed partial class SharpieEmitter
 
         var result = new StringBuilder();
 
-        // Extract .REGION SPRITE_ATLAS blocks from defAsm so they aren't
-        // nested inside a code region. They will be emitted at the end.
-        var rawDefAsm = defAsm.ToString();
-        defAsm.Clear();
-        var spriteAtlasAsm = new StringBuilder();
-        bool inSpriteAtlas = false;
-
-        foreach (var rawLine in rawDefAsm.Split('\n'))
-        {
-            var line = rawLine.TrimEnd('\r');
-            var trimmed = line.AsSpan().Trim();
-
-            if (trimmed.Equals(".REGION SPRITE_ATLAS", StringComparison.OrdinalIgnoreCase))
-                inSpriteAtlas = true;
-
-            if (inSpriteAtlas)
-                spriteAtlasAsm.AppendLine(line);
-            else
-                defAsm.AppendLine(line);
-
-            if (inSpriteAtlas && trimmed.Equals(".ENDREGION", StringComparison.OrdinalIgnoreCase))
-                inSpriteAtlas = false;
-        }
-
         string defaultRegionName = defaultBank == -1 ? "FIXED" : $"BANK_{defaultBank}";
         result.AppendLine($".REGION {defaultRegionName}");
         result.Append(defAsm);
@@ -373,6 +360,9 @@ public sealed partial class SharpieEmitter
             }
             result.AppendLine(".ENDREGION");
         }
+
+        if (rawAsm.Length > 0)
+            result.Append(rawAsm);
 
         if (spriteAtlasAsm.Length > 0)
             result.Append(spriteAtlasAsm);
