@@ -85,13 +85,15 @@ public class ImageConverter
 
         writer.WriteLine($"; Auto-generated sprite: {baseName}");
         writer.WriteLine();
+        writer.WriteLine(".REGION SPRITE_ATLAS");
+        writer.WriteLine();
 
         int spriteIndex = 0;
         for (int startY = 0; startY < image.Height; startY += 8)
         {
             for (int startX = 0; startX < image.Width; startX += 8)
             {
-                writer.Write($".SPRITE {spriteIndex} ");
+                writer.WriteLine($".SPRITE {spriteIndex}");
                 ProcessSpriteBlock(
                     writer,
                     image,
@@ -101,9 +103,11 @@ public class ImageConverter
                     strictMode,
                     OutputFormat.Assembly
                 );
-                writer.WriteLine();
             }
         }
+
+        writer.WriteLine();
+        writer.WriteLine(".ENDREGION");
         Console.WriteLine($"Successfully generated {baseName}.asm ({spriteIndex} sprites).");
     }
 
@@ -140,8 +144,6 @@ public class ImageConverter
                 for (int startX = 0; startX < image.Width; startX += 8)
                 {
                     cWriter.WriteLine($"    \".SPRITE {spriteIndex}\\n\"");
-                    cWriter.Write("    \"    .DB ");
-
                     ProcessSpriteBlock(
                         cWriter,
                         image,
@@ -151,8 +153,6 @@ public class ImageConverter
                         strictMode,
                         OutputFormat.C
                     );
-
-                    cWriter.WriteLine("\\n\"");
                 }
             }
 
@@ -182,39 +182,35 @@ public class ImageConverter
         {
             if (format == OutputFormat.Assembly)
                 writer.Write("   .DB ");
+            else
+                writer.Write("    \"    .DB ");
 
             for (int x = 0; x < 8; x += 2)
             {
                 int p1Index = MatchColor(GetPixel(image, startX + x, startY + y));
                 int p2Index = MatchColor(GetPixel(image, startX + x + 1, startY + y));
 
-                if (p1Index > 0 && p1Index < 16)
+                if (p1Index > 0 && p1Index <= 15)
                     usesNormal = true;
-                if (p1Index > 16)
+                if (p1Index >= 16)
                     usesAlt = true;
-                if (p2Index > 0 && p2Index < 16)
+                if (p2Index > 0 && p2Index <= 15)
                     usesNormal = true;
-                if (p2Index > 16)
+                if (p2Index >= 16)
                     usesAlt = true;
 
                 byte packed = (byte)(((p1Index % 16) << 4) | (p2Index % 16));
 
                 writer.Write($"0x{packed:X2}");
 
-                if (format == OutputFormat.Assembly)
-                {
-                    if (x < 6)
-                        writer.Write(", ");
-                }
-                else if (format == OutputFormat.C)
-                {
-                    if (y < 7 || x < 6)
-                        writer.Write(", ");
-                }
+                if (x < 6)
+                    writer.Write(", ");
             }
 
             if (format == OutputFormat.Assembly)
                 writer.WriteLine();
+            else
+                writer.WriteLine("\\n\"");
         }
 
         if (usesNormal && usesAlt)
@@ -241,7 +237,7 @@ public class ImageConverter
         int bestIndex = 0;
         int shortestDistance = int.MaxValue;
 
-        for (int i = 0; i < MasterPalette.Length; i++)
+        for (int i = 1; i < MasterPalette.Length; i++)
         {
             var (R, G, B) = MasterPalette[i];
             int dR = pixel.R - R;
