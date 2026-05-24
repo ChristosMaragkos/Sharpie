@@ -40,7 +40,13 @@ public partial class SharpieRomEmitter
             SpriteAtlasBuffer => (18 * 1024) + (32 * 1024),
             _ => 0,
         };
-        return currentScope.TryDefineLabel(name, (ushort)(address + offset));
+        var result = currentScope.TryDefineLabel(name, (ushort)(address + offset));
+        if (result)
+        {
+            int bank = CurrentRegion is BankBuffer b ? b.BankId : -1;
+            _labelBanks[name] = bank;
+        }
+        return result;
     }
 
     private bool TryResolveLabel(string name, out ushort address) =>
@@ -188,7 +194,17 @@ public partial class SharpieRomEmitter
             return (ushort)val;
 
         if (TryResolveLabel(arg, out var addr))
+        {
+            if (_labelBanks.TryGetValue(arg, out int labelBank))
+            {
+                int currentBank = CurrentRegion is BankBuffer b ? b.BankId : -1;
+                if (labelBank != -1 && currentBank != -1 && labelBank != currentBank)
+                {
+                    Console.WriteLine($"Warning (line {lineNum + 1}): Label '{arg}' is defined in BANK_{labelBank} but referenced from BANK_{currentBank}. Ensure this cross-bank reference is intentional.");
+                }
+            }
             return addr;
+        }
 
         var num = ParseNumberLiteral(arg, true, lineNum);
         if (num.HasValue && num.Value <= ushort.MaxValue)

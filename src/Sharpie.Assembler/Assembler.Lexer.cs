@@ -30,6 +30,7 @@ public partial class SharpieRomEmitter
 
     private IRomBuffer? CurrentRegion = null;
     private readonly Dictionary<string, IRomBuffer> AllRegions = [];
+    private readonly Dictionary<string, int> _labelBanks = new(StringComparer.Ordinal);
 
     private void NewScope()
     {
