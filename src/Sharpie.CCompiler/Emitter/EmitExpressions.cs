@@ -380,10 +380,12 @@ public partial class SharpieEmitter
                             if (targetReg >= 0)
                                 context.Emit($"MOV r{targetReg}, r{mathReg}");
                             context.Emit($"{op} r{mathReg}");
+                            TruncateToByte(mathReg, peeled.Type.SizeOf, context);
                         }
                         else
                         {
                             context.Emit($"{op} r{mathReg}");
+                            TruncateToByte(mathReg, peeled.Type.SizeOf, context);
                             if (targetReg >= 0)
                                 context.Emit($"MOV r{targetReg}, r{mathReg}");
                         }

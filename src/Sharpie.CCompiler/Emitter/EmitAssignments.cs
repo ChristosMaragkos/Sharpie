@@ -29,7 +29,23 @@ public partial class SharpieEmitter
                 && loc.Type == StorageType.Register
             )
             {
-                EmitExpression(rhs, loc.Value, context);
+                if (
+                    lhs.Type.SizeOf == 1
+                    && rhs.Kind != CXCursorKind.CXCursor_CallExpr
+                    && rhs.Kind != CXCursorKind.CXCursor_IntegerLiteral
+                    && rhs.Kind != CXCursorKind.CXCursor_DeclRefExpr
+                )
+                {
+                    using var valueReg = context.AcquireTempRegister();
+                    EmitExpression(rhs, valueReg.Value, context);
+                    TruncateToByteIfNeeded(valueReg.Value, 1, rhs, context);
+                    context.Emit($"MOV r{loc.Value}, r{valueReg.Value}");
+                }
+                else
+                {
+                    EmitExpression(rhs, loc.Value, context);
+                    TruncateToByteIfNeeded(loc.Value, lhs.Type.SizeOf, rhs, context);
+                }
                 return;
             }
             else if (context.Globals.Contains(variableName))
@@ -186,6 +202,7 @@ public partial class SharpieEmitter
             {
                 if (mathReg != loc.Value)
                     context.Emit($"MOV r{loc.Value}, r{mathReg}");
+                TruncateToByte(loc.Value, lhs.Type.SizeOf, context);
                 return;
             }
             else if (context.Globals.Contains(name))
@@ -615,6 +632,8 @@ public partial class SharpieEmitter
         if (space.Type == StorageType.Register)
         {
             context.Emit($"MOV r{space.Value}, r{valRegPrimitive.Value}");
+            if (initExprs.Count > 0)
+                TruncateToByteIfNeeded(space.Value, sizeBytes, initExprs[^1], context);
         }
         else
         {

@@ -234,6 +234,34 @@ public partial class SharpieEmitter
         return true;
     }
 
+    private static void TruncateToByte(int reg, long sizeBytes, EmissionContext context)
+    {
+        if (sizeBytes == 1)
+            context.Emit($"IAND r{reg}, 255");
+    }
+
+    private static void TruncateToByteIfNeeded(int reg, long sizeBytes, CXCursor sourceExpr, EmissionContext context)
+    {
+        if (sizeBytes != 1)
+            return;
+
+        var peeled = PeelExpression(sourceExpr);
+        switch (peeled.Kind)
+        {
+            case CXCursorKind.CXCursor_IntegerLiteral:
+                var val = GetLiteralValue(peeled);
+                if (val >= 0 && val <= 255)
+                    return;
+                break;
+            case CXCursorKind.CXCursor_DeclRefExpr:
+                if (peeled.Type.SizeOf == 1)
+                    return;
+                break;
+        }
+
+        context.Emit($"IAND r{reg}, 255");
+    }
+
     private static bool TryGetByteLiteral(CXCursor cursor, out byte value)
     {
         value = 0;

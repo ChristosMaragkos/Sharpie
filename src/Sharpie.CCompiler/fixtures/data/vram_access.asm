@@ -28,6 +28,7 @@ while_start_L1:
     XOR r1, r1
     INPUT r1, r0
     MOV r8, r0
+    IAND r8, 255
     JMP while_start_L1
 while_end_L2:
     XOR r0, r0

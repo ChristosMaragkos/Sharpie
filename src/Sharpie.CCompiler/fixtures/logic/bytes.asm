@@ -20,6 +20,7 @@ Main:
     MOV r15, r6
     LDI r1, 68
     INC r1
+    IAND r1, 255
     ALT STA r1, r15
     LDI r1, 99
     MOV r2, r6
