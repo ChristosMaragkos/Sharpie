@@ -172,6 +172,12 @@ public partial class SharpieEmitter
                 );
             }
 
+            if (targetBank == null && context.FunctionBanks != null && isDirectCall)
+            {
+                if (context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
+                    targetBank = mappedBank.ToString();
+            }
+
             if (targetBank != null)
             {
                 context.Emit("PUSH r13");
@@ -396,6 +402,12 @@ public partial class SharpieEmitter
                     },
                     new CXClientData(IntPtr.Zero)
                 );
+            }
+
+            if (targetBank == null && context.FunctionBanks != null && isDirectCall)
+            {
+                if (context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
+                    targetBank = mappedBank.ToString();
             }
 
             if (targetBank != null)

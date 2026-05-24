@@ -82,6 +82,8 @@ public sealed class EmissionContext
 
     public HashSet<string> Globals { get; }
 
+    public Dictionary<string, int>? FunctionBanks { get; set; }
+
     public EmissionContext(
         HashSet<string> escapedVariables,
         List<string> readOnlyData,

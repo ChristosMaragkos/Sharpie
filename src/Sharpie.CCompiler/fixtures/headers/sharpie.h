@@ -18,6 +18,8 @@ typedef unsigned long uint32_t;
 
 #define ARAM_START ((volatile uint8_t *)0xF800)
 
+#define BANK(n) __attribute__((annotate("bank_" #n)))
+
 typedef enum {
     ATTR_NONE = 0,
     ATTR_HFLIP = 1 << 0,
@@ -81,7 +83,8 @@ void __sharpie_mute(void);
 void __sharpie_hard_mute(void);
 void __sharpie_vblnk(void);
 void __sharpie_force_vblnk(void);
-void __sharpie_bank(int bank);
+void __sharpie_switch_bank(unsigned char bank);
+unsigned char __sharpie_get_bank();
 void __sharpie_save(void);
 void __sharpie_halt(void);
 void __sharpie_crash(void);
@@ -123,6 +126,8 @@ void __sharpie_debug(int value_to_print);
 #define crash() __sharpie_crash()
 #define swap_color(active, master) __sharpie_swc(active, master)
 #define print_breadcrumb(value) __sharpie_debug(value)
+#define switch_bank(b) __sharpie_switch_bank(b)
+#define get_current_bank() __sharpie_get_bank()
 
 #define read_vram(x, y) __sharpie_read_vram((((y) & 0xFF) << 8) | ((x) & 0xFF))
 #define write_vram(x, y, value)                                                \

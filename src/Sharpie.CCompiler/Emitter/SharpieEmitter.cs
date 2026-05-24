@@ -29,28 +29,7 @@ public sealed partial class SharpieEmitter
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
     {
-        var asm = new StringBuilder();
-        var roData = new List<string>();
-        var stringPool = new Dictionary<string, string>();
-
-        var regionName = "FIXED";
-
-        unsafe
-        {
-            var tuCursor = clang.Cursor_getTranslationUnit(translationUnitCursor);
-            var tuSpelling = clang.getTranslationUnitSpelling(tuCursor).ToString();
-
-            if (File.Exists(tuSpelling))
-            {
-                var srcText = File.ReadAllText(tuSpelling);
-                var match = MyRegex().Match(srcText);
-                if (match.Success)
-                {
-                    regionName = $"BANK_{match.Groups[1].Value}";
-                }
-            }
-            asm.AppendLine($".REGION {regionName}");
-        }
+        int defaultBank = DetermineDefaultBank(translationUnitCursor);
 
         if (!_allowLong)
             CheckLongTypeUsage(translationUnitCursor);
@@ -61,7 +40,60 @@ public sealed partial class SharpieEmitter
             .Where(c => c.Kind == CXCursorKind.CXCursor_VarDecl)
             .ToList();
 
-        HandleGlobals(asm, globalNames, globalVars, roData, stringPool);
+        var functions = GetChildren(translationUnitCursor)
+            .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
+            .ToList();
+
+        var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main").ToList();
+        if (mainFunctions.Count > 1)
+        {
+            throw new InvalidOperationException(
+                "Ambiguous entrypoint: more than one 'main' function found."
+            );
+        }
+
+        var functionBanks = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var func in functions)
+        {
+            var name = func.Spelling.ToString();
+            if (name == "main")
+            {
+                int mainBank = GetFunctionBank(func);
+                if (mainBank != -1)
+                {
+                    throw new InvalidOperationException(
+                        "The 'main' function cannot be placed in a bank. It must reside in the FIXED region."
+                    );
+                }
+
+                functionBanks[name] = -1;
+            }
+            else
+            {
+                functionBanks[name] = GetFunctionBank(func);
+            }
+        }
+
+        var allBanks = new HashSet<int> { defaultBank };
+        foreach (var b in functionBanks.Values)
+            allBanks.Add(b);
+
+        var bankAsm = new Dictionary<int, StringBuilder>();
+        var bankRoData = new Dictionary<int, List<string>>();
+        var bankStringPools = new Dictionary<int, Dictionary<string, string>>();
+
+        foreach (var b in allBanks)
+        {
+            bankAsm[b] = new StringBuilder();
+            bankRoData[b] = [];
+            bankStringPools[b] = new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var defAsm = bankAsm[defaultBank];
+        var defRoData = bankRoData[defaultBank];
+        var defStringPool = bankStringPools[defaultBank];
+
+        HandleGlobals(defAsm, globalNames, globalVars, defRoData, defStringPool);
 
         var topLevelAsm = new List<CXCursor>();
         foreach (var child in GetChildren(translationUnitCursor))
@@ -101,20 +133,8 @@ public sealed partial class SharpieEmitter
         {
             foreach (var asmStmt in topLevelAsm)
             {
-                ParseAndEmitAsmString(asmStmt, line => asm.AppendLine(line));
+                ParseAndEmitAsmString(asmStmt, line => defAsm.AppendLine(line));
             }
-        }
-
-        var functions = GetChildren(translationUnitCursor)
-            .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
-            .ToList();
-
-        var mainFunctions = functions.Where(func => func.Spelling.ToString() == "main").ToList();
-        if (mainFunctions.Count > 1)
-        {
-            throw new InvalidOperationException(
-                "Ambiguous entrypoint: more than one 'main' function found."
-            );
         }
 
         var orderedFunctions = new List<CXCursor>();
@@ -128,14 +148,19 @@ public sealed partial class SharpieEmitter
         {
             var hasBody = GetChildren(func).Any(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
             if (!hasBody)
-                continue; // skip prototypes entirely
+                continue;
+
+            var funcName = func.Spelling.ToString();
+            int bank = functionBanks[funcName];
+            var asm = bankAsm[bank];
+            var roData = bankRoData[bank];
+            var stringPool = bankStringPools[bank];
 
             var linkage = clang.getCursorLinkage(func);
-            var isStatic = linkage == CXLinkageKind.CXLinkage_Internal; // static methods in C are file-scoped so we just don't emit .GLOBAL
+            var isStatic = linkage == CXLinkageKind.CXLinkage_Internal;
             if (!isStatic)
                 asm.AppendLine(".GLOBAL");
 
-            var funcName = func.Spelling.ToString();
             if (funcName.StartsWith("__sharpie_"))
             {
                 throw new InvalidOperationException(
@@ -145,13 +170,11 @@ public sealed partial class SharpieEmitter
 
             var body = GetChildren(func).First(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
 
-            // because I can't be bothered to make this a two-pass compiler,
-            // we're just gonna have to emit the body, scan for variables that need to be spilled,
-            // then stitch the prologue and epilogue after the fact.
             var escapedVars = DetectEscapingVariables(func);
             var context = new EmissionContext(escapedVars, roData, stringPool, globalNames)
             {
                 IsMain = funcName == "main",
+                FunctionBanks = functionBanks,
             };
 
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
@@ -205,7 +228,7 @@ public sealed partial class SharpieEmitter
                 var sizeBytes = paramDecl.Type.SizeOf;
 
                 if (sizeBytes <= 0)
-                    sizeBytes = 2; // Fallback for void*/unresolved
+                    sizeBytes = 2;
                 var slotsNeeded = GetRegistersNeededForVariable(paramDecl.Type);
 
                 var needsStack = isRecord || context.EscapedVariables.Contains(paramName);
@@ -213,7 +236,6 @@ public sealed partial class SharpieEmitter
 
                 if (currentReg + slotsNeeded - 1 <= 4)
                 {
-                    // It fits in r1-r4
                     if (slotsNeeded == 1)
                     {
                         if (space.Type == StorageType.Register)
@@ -229,8 +251,6 @@ public sealed partial class SharpieEmitter
                     }
                     else
                     {
-                        // A multi-word struct was passed in registers
-                        // We must reconstruct it in its local stack home
                         context.Emit("MOV r6, r15");
                         AccumulateOffset(6, space.Value, context);
 
@@ -245,15 +265,12 @@ public sealed partial class SharpieEmitter
                 }
                 else
                 {
-                    // It was pushed to the stack so we record its byte offset and slot count
                     context.PendingStackArguments.Add((currentStackArgOffset, space, slotsNeeded));
                     currentStackArgOffset += slotsNeeded * 2;
                 }
             }
             EmitFunctionBody(body, context);
 
-            // If the function reached the end without a return,
-            // emit an implicit one (HALT for main, RET for anything else)
             if (!context.HasReturn && context.IsMain)
             {
                 context.Emit("LDI r0, 0");
@@ -277,7 +294,7 @@ public sealed partial class SharpieEmitter
 
             context.Instructions.InsertRange(0, context.GetPrologue().Select(Instruction.Parse));
 
-            if (_optimize) // second optimization pass to nuke dead code that survived the first (like redundant PUSH/POP shenanigans)
+            if (_optimize)
             {
                 var cfg = ControlFlowGraph.Build(context.Instructions);
 
@@ -295,23 +312,45 @@ public sealed partial class SharpieEmitter
                     asm.AppendLine($"    {inst.OriginalText}");
             }
 
-            // EmitReturn is responsible for the epilogue
             if (!isStatic)
                 asm.AppendLine(".ENDGLOBAL");
         }
 
-        if (roData.Count > 0)
+        var result = new StringBuilder();
+
+        string defaultRegionName = defaultBank == -1 ? "FIXED" : $"BANK_{defaultBank}";
+        result.AppendLine($".REGION {defaultRegionName}");
+        result.Append(defAsm);
+        if (defRoData.Count > 0)
         {
-            asm.AppendLine("");
-            asm.AppendLine("; Readonly Data");
-            asm.AppendLine(".GLOBAL");
-            foreach (var dataLine in roData)
-                asm.AppendLine(dataLine);
-            asm.AppendLine(".ENDGLOBAL");
+            result.AppendLine("");
+            result.AppendLine("; Readonly Data");
+            result.AppendLine(".GLOBAL");
+            foreach (var line in defRoData)
+                result.AppendLine(line);
+            result.AppendLine(".ENDGLOBAL");
+        }
+        result.AppendLine(".ENDREGION");
+
+        foreach (var bank in allBanks.Where(b => b != defaultBank).Order())
+        {
+            var asm = bankAsm[bank];
+            var roData = bankRoData[bank];
+            result.AppendLine($".REGION BANK_{bank}");
+            result.Append(asm);
+            if (roData.Count > 0)
+            {
+                result.AppendLine("");
+                result.AppendLine("; Readonly Data");
+                result.AppendLine(".GLOBAL");
+                foreach (var line in roData)
+                    result.AppendLine(line);
+                result.AppendLine(".ENDGLOBAL");
+            }
+            result.AppendLine(".ENDREGION");
         }
 
-        asm.AppendLine(".ENDREGION");
-        return asm.ToString();
+        return result.ToString();
     }
 
     private static void HandleGlobals(
@@ -657,5 +696,47 @@ public sealed partial class SharpieEmitter
             foreach (var child in GetChildren(current))
                 queue.Enqueue(child);
         }
+    }
+
+    private static int DetermineDefaultBank(CXCursor translationUnitCursor)
+    {
+        unsafe
+        {
+            var tuCursor = clang.Cursor_getTranslationUnit(translationUnitCursor);
+            var tuSpelling = clang.getTranslationUnitSpelling(tuCursor).ToString();
+
+            if (File.Exists(tuSpelling))
+            {
+                var srcText = File.ReadAllText(tuSpelling);
+                var match = MyRegex().Match(srcText);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var bank))
+                    return bank;
+            }
+        }
+        return -1;
+    }
+
+    private static int GetFunctionBank(CXCursor func)
+    {
+        string? bankStr = null;
+        unsafe
+        {
+            func.VisitChildren(
+                (child, _, _) =>
+                {
+                    if (child.Kind == CXCursorKind.CXCursor_AnnotateAttr)
+                    {
+                        var annotation = child.Spelling.ToString();
+                        if (annotation.StartsWith("bank_"))
+                            bankStr = annotation.Substring(5);
+                    }
+                    return CXChildVisitResult.CXChildVisit_Continue;
+                },
+                new CXClientData(IntPtr.Zero)
+            );
+        }
+        if (bankStr != null && int.TryParse(bankStr, out var bank))
+            return bank;
+        return -1;
     }
 }
