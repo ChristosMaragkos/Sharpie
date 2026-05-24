@@ -628,6 +628,9 @@ public sealed partial class SharpieEmitter
         {
             var current = queue.Dequeue();
 
+            if (current.Kind == CXCursorKind.CXCursor_TypedefDecl)
+                continue;
+
             if (IsLongType(current.Type))
             {
                 var name = current.Spelling.ToString();
@@ -635,7 +638,8 @@ public sealed partial class SharpieEmitter
                 throw new InvalidOperationException(
                     "Compilation with 32-bit integers (long) is not allowed by default.\n"
                     + "Use --allow-long to enable 32-bit operations.\n"
-                    + $"Found: {kind} '{(string.IsNullOrEmpty(name) ? "(anonymous)" : name)}' with type '{current.Type.Spelling}'."
+                    + $"Found: {kind} '{(string.IsNullOrEmpty(name) ? "(anonymous)" : name)}' with type '{current.Type.Spelling}'.\n"
+                    + "For more information, see:\n\thttps://github.com/ChristosMaragkos/Sharpie/wiki/Using-the-Sharpie-SDK#why-is-long-disallowed-by-default"
                 );
             }
 
@@ -645,7 +649,8 @@ public sealed partial class SharpieEmitter
                 throw new InvalidOperationException(
                     "Compilation with 32-bit integers (long) is not allowed by default.\n"
                     + "Use --allow-long to enable 32-bit operations.\n"
-                    + $"Found: function '{name}' returns 'long'."
+                    + $"Found: function '{name}' returns 'long'.\n"
+                    + "For more information, see:\n\thttps://github.com/ChristosMaragkos/Sharpie/wiki/Using-the-Sharpie-SDK#why-is-long-disallowed-by-default"
                 );
             }
 

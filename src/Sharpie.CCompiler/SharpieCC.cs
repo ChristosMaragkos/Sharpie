@@ -20,6 +20,13 @@ public static class SharpieCC
         using var index = ClangSharp.Interop.CXIndex.Create();
         var clangArgs = new[] { "-std=gnu11", "-target", "msp430" };
 
+        if (allowLong)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("[WARNING] Compilation with 32-bit support enabled. Be mindful of the size of the emitted code.");
+            Console.ResetColor();
+        }
+
         foreach (var file in inputFiles)
         {
             using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
