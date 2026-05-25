@@ -308,7 +308,7 @@ internal class Motherboard : IMotherboard
     {
         ClearTextGrid();
         _ppu.BackgroundColorIndex = colorIndex;
-        _oam.Invalidate(_oam.Cursor * 6, OamBank.Size - 1);
+        _oam.Invalidate(_oam.Cursor * OamBank.OamEntrySize, OamBank.Size - 1);
         if (_ppu.Mode is BlitterMode.None)
             _ppu.ClearBuffer();
     }
