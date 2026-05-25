@@ -69,7 +69,7 @@ DrawLogo:
 
 LDI r10, Y
 LowerCover:
-    LDI r4, 8 ; the first box is in OAM slot 7. The last is in OAM slot 13.
+    LDI r4, 7 ; the first box is in OAM slot 7. The last is in OAM slot 13.
     SETOAM r4
     CLS r12
     LDI r0, X ; reset X
