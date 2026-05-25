@@ -22,12 +22,12 @@ _func_get_score:
     PUSH r9
     MOV r9, r1
     ICMP r1, 5
-    JLT default_L6
-    ICMP r1, 15
-    JGT default_L6
+    JLT default_L7
+    ICMP r1, 20
+    JGT default_L7
     ISUB r1, 5
     ADD r1, r1
-    LDI r2, jt_L7
+    LDI r2, jt_L8
     ADD r1, r2
     LDP r1, r1
     ALT JMP r1
@@ -38,9 +38,10 @@ case_10_L4:
     LDI r8, 500
     JMP switch_end_L2
 case_15_L5:
+case_20_L6:
     LDI r8, 1000
     JMP switch_end_L2
-default_L6:
+default_L7:
     LDI r8, 65535
 switch_end_L2:
     MOV r0, r8
@@ -52,18 +53,23 @@ epilogue_L1:
 
 ; Readonly Data
 .GLOBAL
-jt_L7:
+jt_L8:
     .DW case_5_L3
-    .DW default_L6
-    .DW default_L6
-    .DW default_L6
-    .DW default_L6
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
     .DW case_10_L4
-    .DW default_L6
-    .DW default_L6
-    .DW default_L6
-    .DW default_L6
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
     .DW case_15_L5
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
+    .DW default_L7
+    .DW case_20_L6
 .ENDGLOBAL
 .ENDREGION
 

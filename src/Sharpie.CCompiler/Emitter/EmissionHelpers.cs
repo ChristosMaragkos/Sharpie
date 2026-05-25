@@ -102,14 +102,25 @@ public partial class SharpieEmitter
         var cases = new List<(long Value, string Label)>();
         string? defaultLabel = null;
 
+        void CollectCaseValues(CXCursor stmt)
+        {
+            if (stmt.Kind != CXCursorKind.CXCursor_CaseStmt)
+                return;
+
+            var valExpr = PeelExpression(GetChildren(stmt).First());
+            long val = GetLiteralValue(valExpr);
+            var caseLabel = EmissionContext.GenerateLabel($"case_{val}");
+            cases.Add((val, caseLabel));
+
+            var sub = GetChildren(stmt).Last();
+            CollectCaseValues(sub);
+        }
+
         foreach (var stmt in bodyStmts)
         {
             if (stmt.Kind == CXCursorKind.CXCursor_CaseStmt)
             {
-                var valExpr = PeelExpression(GetChildren(stmt).First());
-                long val = GetLiteralValue(valExpr);
-                var caseLabel = EmissionContext.GenerateLabel($"case_{val}");
-                cases.Add((val, caseLabel));
+                CollectCaseValues(stmt);
             }
             else if (stmt.Kind == CXCursorKind.CXCursor_DefaultStmt)
             {
@@ -173,13 +184,26 @@ public partial class SharpieEmitter
         }
 
         int caseIdx = 0;
+        void EmitCaseLabels(CXCursor stmt)
+        {
+            if (stmt.Kind != CXCursorKind.CXCursor_CaseStmt)
+            {
+                EmitStatement(stmt, context);
+                return;
+            }
+
+            context.Emit($"{cases[caseIdx].Label}:");
+            caseIdx++;
+
+            var sub = GetChildren(stmt).Last();
+            EmitCaseLabels(sub);
+        }
+
         foreach (var stmt in bodyStmts)
         {
             if (stmt.Kind == CXCursorKind.CXCursor_CaseStmt)
             {
-                context.Emit($"{cases[caseIdx].Label}:");
-                EmitStatement(stmt, context);
-                caseIdx++;
+                EmitCaseLabels(stmt);
             }
             else if (stmt.Kind == CXCursorKind.CXCursor_DefaultStmt)
             {
