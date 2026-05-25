@@ -337,8 +337,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 22
-    SUB r6, r7
+    ISUB r6, 22
     SETSP r6
     MOV r15, r6
     LDI r1, 3
@@ -349,8 +348,7 @@ while_start_L1:
     JEQ while_end_L2
     XOR r1, r1
     CLS r1
-    XOR r1, r1
-    MOV r8, r1
+    XOR r8, r8
 for_start_L3:
     MOV r1, r8
     LDI r2, 24
@@ -358,8 +356,7 @@ for_start_L3:
     JGE for_end_L5
     LDI r1, _global_vertices
     LDI r3, _global_edges
-    MOV r4, r8
-    ADD r3, r4
+    ADD r3, r8
     ALT LDP r2, r3
     LDI r3, 6
     MUL r2, r3
@@ -422,9 +419,6 @@ for_start_L3:
     STA r1, r2
     MOV r1, r15
     IADD r1, 12
-    MOV r0, r15
-    IADD r0, 20
-    STA r1, r0
     MOV r2, r15
     CALL _func_world_to_screen
     MOV r1, r15
@@ -471,8 +465,7 @@ while_end_L2:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 22
-    ADD r6, r7
+    IADD r6, 22
     SETSP r6
     POP r15
     POP r8
@@ -573,8 +566,7 @@ _func_world_to_screen:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 4
-    SUB r6, r7
+    ISUB r6, 4
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -633,8 +625,7 @@ if_L28:
     STA r4, r3
 epilogue_L27:
     MOV r6, r15
-    LDI r7, 4
-    ADD r6, r7
+    IADD r6, 4
     SETSP r6
     POP r15
     POP r9
@@ -712,8 +703,7 @@ _func_translate_z:
     MOV r2, r1
     IADD r2, 4
     LDP r1, r2
-    MOV r2, r9
-    ADD r1, r2
+    ADD r1, r9
     MOV r2, r8
     IADD r2, 4
     STA r1, r2
@@ -734,8 +724,7 @@ _func_line_bresenham:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     MOV r13, r1
@@ -793,8 +782,7 @@ if_L34:
     LDI r1, 2
     MOV r2, r11
     MUL r1, r2
-    MOV r2, r10
-    SUB r1, r2
+    SUB r1, r10
     MOV r12, r1
 while_start_L38:
     MOV r1, r8
@@ -907,8 +895,7 @@ else_L37:
     LDI r1, 2
     MOV r2, r10
     MUL r1, r2
-    MOV r2, r11
-    SUB r1, r2
+    SUB r1, r11
     MOV r12, r1
 while_start_L59:
     MOV r1, r9
@@ -1094,8 +1081,7 @@ logical_end_L83:
 if_L80:
 epilogue_L31:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r14

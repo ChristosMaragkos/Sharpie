@@ -15,8 +15,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 2
-    SUB r6, r7
+    ISUB r6, 2
     SETSP r6
     MOV r15, r6
     STA r1, r15
@@ -47,8 +46,7 @@ Main:
     MOV r0, r8
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 2
-    ADD r6, r7
+    IADD r6, 2
     SETSP r6
     POP r15
     POP r8
@@ -56,8 +54,6 @@ epilogue_L0:
 .ENDGLOBAL
 .GLOBAL
 _func_add_six_numbers:
-    PUSH r8
-    PUSH r9
     PUSH r12
     PUSH r13
     PUSH r15
@@ -70,26 +66,15 @@ _func_add_six_numbers:
     IADD r6, 18
     LDP r7, r6
     MOV r13, r7
-    MOV r8, r1
-    MOV r9, r2
-    MOV r1, r8
-    MOV r2, r9
-    ADD r1, r2
-    MOV r2, r3
-    ADD r1, r2
-    MOV r2, r4
-    ADD r1, r2
-    MOV r2, r12
-    ADD r1, r2
-    MOV r2, r7
-    ADD r1, r2
+    ADD r1, r3
+    ADD r1, r4
+    ADD r1, r12
+    ADD r1, r13
     MOV r0, r1
 epilogue_L1:
     POP r15
     POP r13
     POP r12
-    POP r9
-    POP r8
     RET
 .ENDGLOBAL
 .GLOBAL
@@ -97,8 +82,7 @@ _func_test_memory:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 2
-    SUB r6, r7
+    ISUB r6, 2
     SETSP r6
     MOV r15, r6
     STA r1, r15
@@ -111,8 +95,7 @@ _func_test_memory:
     LDI r0, 1
 epilogue_L2:
     MOV r6, r15
-    LDI r7, 2
-    ADD r6, r7
+    IADD r6, 2
     SETSP r6
     POP r15
     RET

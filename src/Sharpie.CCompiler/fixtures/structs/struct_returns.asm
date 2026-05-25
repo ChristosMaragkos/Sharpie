@@ -15,14 +15,10 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     MOV r1, r6
-    MOV r0, r6
-    IADD r0, 4
-    STA r1, r0
     LDI r2, 10
     LDI r3, 20
     CALL _func_make_point
@@ -52,13 +48,11 @@ Main:
     MOV r2, r15
     IADD r2, 2
     LDP r1, r2
-    MOV r2, r8
-    ADD r1, r2
+    ADD r1, r8
     MOV r0, r1
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -70,8 +64,7 @@ _func_make_point:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 4
-    SUB r6, r7
+    ISUB r6, 4
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -91,8 +84,7 @@ _func_make_point:
     STA r4, r3
 epilogue_L1:
     MOV r6, r15
-    LDI r7, 4
-    ADD r6, r7
+    IADD r6, 4
     SETSP r6
     POP r15
     POP r8

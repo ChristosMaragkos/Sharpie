@@ -14,8 +14,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 2
-    SUB r6, r7
+    ISUB r6, 2
     SETSP r6
     MOV r15, r6
     LDI r1, str_L3
@@ -32,8 +31,7 @@ Main:
     ALT STA r1, r2
     XOR r1, r1
     MOV r2, r0
-    LDI r3, 19
-    ADD r2, r3
+    IADD r2, 19
     ALT STA r1, r2
     MOV r1, r0
     XOR r2, r2
@@ -42,8 +40,7 @@ Main:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 2
-    ADD r6, r7
+    IADD r6, 2
     SETSP r6
     POP r15
     HALT

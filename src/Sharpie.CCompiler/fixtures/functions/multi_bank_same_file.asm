@@ -14,11 +14,9 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 2
-    SUB r6, r7
+    ISUB r6, 2
     SETSP r6
     MOV r15, r6
-    STA r1, r15
     LDI r1, 10
     PUSH r13
     PUSH r14
@@ -42,8 +40,7 @@ Main:
     CALL _func_fixed_func
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 2
-    ADD r6, r7
+    IADD r6, 2
     SETSP r6
     POP r15
     HALT

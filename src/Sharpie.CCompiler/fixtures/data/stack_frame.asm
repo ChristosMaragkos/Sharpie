@@ -14,8 +14,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 14
-    SUB r6, r7
+    ISUB r6, 14
     SETSP r6
     MOV r15, r6
     LDI r2, 1
@@ -48,8 +47,7 @@ Main:
     CALL _func_do_stuff
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 14
-    ADD r6, r7
+    IADD r6, 14
     SETSP r6
     POP r15
     HALT
@@ -60,8 +58,7 @@ _func_do_stuff:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 10
-    SUB r6, r7
+    ISUB r6, 10
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -111,8 +108,7 @@ _func_do_stuff:
     MOV r0, r1
 epilogue_L1:
     MOV r6, r15
-    LDI r7, 10
-    ADD r6, r7
+    IADD r6, 10
     SETSP r6
     POP r15
     POP r8

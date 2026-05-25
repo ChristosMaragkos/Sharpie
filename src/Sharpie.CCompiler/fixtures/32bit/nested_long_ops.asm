@@ -14,8 +14,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 46
-    SUB r6, r7
+    ISUB r6, 46
     SETSP r6
     MOV r15, r6
     MOV r1, r6
@@ -45,11 +44,6 @@ Main:
     IADD r1, 2
     LDI r2, 6
     STA r2, r1
-    MOV r1, r6
-    IADD r1, 16
-    MOV r0, r6
-    IADD r0, 32
-    STA r1, r0
     MOV r2, r6
     IADD r2, 12
     MOV r1, r2
@@ -74,11 +68,6 @@ Main:
     CALL _func_nested_add
     LDI r1, 12
     CALL SYS_FREE_STACKFRAME
-    MOV r1, r15
-    IADD r1, 20
-    MOV r0, r15
-    IADD r0, 32
-    STA r1, r0
     MOV r2, r15
     IADD r2, 12
     MOV r1, r2
@@ -103,11 +92,6 @@ Main:
     CALL _func_nested_mul
     LDI r1, 12
     CALL SYS_FREE_STACKFRAME
-    MOV r1, r15
-    IADD r1, 24
-    MOV r0, r15
-    IADD r0, 32
-    STA r1, r0
     MOV r2, r15
     IADD r2, 12
     MOV r1, r2
@@ -197,8 +181,7 @@ Main:
     IADD r0, 34
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 46
-    ADD r6, r7
+    IADD r6, 46
     SETSP r6
     POP r15
     HALT
@@ -209,8 +192,7 @@ _func_nested_add:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 40
-    SUB r6, r7
+    ISUB r6, 40
     SETSP r6
     MOV r15, r6
     IADD r6, 46
@@ -360,8 +342,7 @@ _func_nested_add:
     STA r2, r8
 epilogue_L4:
     MOV r6, r15
-    LDI r7, 40
-    ADD r6, r7
+    IADD r6, 40
     SETSP r6
     POP r15
     POP r8
@@ -373,8 +354,7 @@ _func_nested_mul:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 40
-    SUB r6, r7
+    ISUB r6, 40
     SETSP r6
     MOV r15, r6
     IADD r6, 46
@@ -556,8 +536,7 @@ _func_nested_mul:
     STA r2, r8
 epilogue_L11:
     MOV r6, r15
-    LDI r7, 40
-    ADD r6, r7
+    IADD r6, 40
     SETSP r6
     POP r15
     POP r8
@@ -569,8 +548,7 @@ _func_nested_mixed:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 40
-    SUB r6, r7
+    ISUB r6, 40
     SETSP r6
     MOV r15, r6
     IADD r6, 46
@@ -736,8 +714,7 @@ _func_nested_mixed:
     STA r2, r8
 epilogue_L18:
     MOV r6, r15
-    LDI r7, 40
-    ADD r6, r7
+    IADD r6, 40
     SETSP r6
     POP r15
     POP r8
@@ -749,8 +726,7 @@ _func_deep_nest:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 52
-    SUB r6, r7
+    ISUB r6, 52
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -764,9 +740,8 @@ _func_deep_nest:
     LDP r2, r4
     IADD r4, 2
     LDP r3, r4
-    LDI r4, 1
     XOR r5, r5
-    ADD r2, r4
+    INC r2
     ALT ADD r3, r5
     STA r2, r0
     IADD r0, 2
@@ -797,9 +772,8 @@ _func_deep_nest:
     LDP r2, r4
     IADD r4, 2
     LDP r3, r4
-    LDI r4, 3
     XOR r5, r5
-    ADD r2, r4
+    IADD r2, 3
     ALT ADD r3, r5
     STA r2, r0
     IADD r0, 2
@@ -845,9 +819,8 @@ _func_deep_nest:
     LDP r2, r4
     IADD r4, 2
     LDP r3, r4
-    LDI r4, 5
     XOR r5, r5
-    ADD r2, r4
+    IADD r2, 5
     ALT ADD r3, r5
     STA r2, r0
     IADD r0, 2
@@ -878,9 +851,8 @@ _func_deep_nest:
     LDP r2, r4
     IADD r4, 2
     LDP r3, r4
-    LDI r4, 7
     XOR r5, r5
-    ADD r2, r4
+    IADD r2, 7
     ALT ADD r3, r5
     STA r2, r0
     IADD r0, 2
@@ -958,8 +930,7 @@ _func_deep_nest:
     STA r3, r8
 epilogue_L25:
     MOV r6, r15
-    LDI r7, 52
-    ADD r6, r7
+    IADD r6, 52
     SETSP r6
     POP r15
     POP r8

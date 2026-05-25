@@ -26,8 +26,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 12
-    SUB r6, r7
+    ISUB r6, 12
     SETSP r6
     MOV r15, r6
     LDI r2, 3
@@ -59,15 +58,11 @@ Main:
     ADD r2, r3
     ALT LDP r1, r2
     LDI r3, _global_gverts
-    LDI r4, 6
-    ADD r3, r4
-    IADD r3, 2
+    IADD r3, 8
     LDP r2, r3
     ADD r1, r2
     LDI r3, _global_gverts
-    LDI r4, 6
-    ADD r3, r4
-    IADD r3, 4
+    IADD r3, 10
     LDP r2, r3
     ADD r1, r2
     MOV r3, r6
@@ -94,27 +89,21 @@ Main:
     LDP r2, r3
     ADD r1, r2
     MOV r3, r6
-    LDI r4, 6
-    ADD r3, r4
+    IADD r3, 6
     ALT LDP r2, r3
     ADD r1, r2
     MOV r3, r6
-    LDI r4, 6
-    ADD r3, r4
-    IADD r3, 2
+    IADD r3, 8
     LDP r2, r3
     ADD r1, r2
     MOV r3, r6
-    LDI r4, 6
-    ADD r3, r4
-    IADD r3, 4
+    IADD r3, 10
     LDP r2, r3
     ADD r1, r2
     MOV r0, r1
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 12
-    ADD r6, r7
+    IADD r6, 12
     SETSP r6
     POP r15
     HALT

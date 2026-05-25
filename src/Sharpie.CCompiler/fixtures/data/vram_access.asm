@@ -16,8 +16,7 @@ Main:
     LDI r1, 3
     BLITMODE r1
     LDI r9, 1
-    XOR r1, r1
-    MOV r8, r1
+    XOR r8, r8
     LDI r1, 32639
     MOV r2, r9
     STV r2, r1

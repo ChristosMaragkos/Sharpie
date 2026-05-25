@@ -20,8 +20,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 134
-    SUB r6, r7
+    ISUB r6, 134
     SETSP r6
     MOV r15, r6
     MOV r1, r6
@@ -705,8 +704,7 @@ if_L25:
     IADD r4, 2
     LDP r5, r3
     STA r5, r4
-    MOV r3, r15
-    IADD r3, 40
+    MOV r3, r2
     LDP r2, r3
     IADD r3, 2
     LDP r4, r3
@@ -773,11 +771,6 @@ if_L25:
     STA r2, r1
     IADD r1, 2
     STA r3, r1
-    MOV r1, r15
-    IADD r1, 108
-    MOV r0, r15
-    IADD r0, 132
-    STA r1, r0
     MOV r2, r15
     IADD r2, 4
     MOV r1, r2
@@ -834,8 +827,7 @@ if_L25:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 134
-    ADD r6, r7
+    IADD r6, 134
     SETSP r6
     POP r15
     HALT
@@ -846,8 +838,7 @@ _func_add_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -880,8 +871,7 @@ _func_add_long:
     STA r2, r8
 epilogue_L27:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -893,8 +883,7 @@ _func_sub_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -927,8 +916,7 @@ _func_sub_long:
     STA r2, r8
 epilogue_L28:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -940,8 +928,7 @@ _func_mul_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -982,8 +969,7 @@ _func_mul_long:
     STA r2, r8
 epilogue_L29:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -995,8 +981,7 @@ _func_div_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 12
-    SUB r6, r7
+    ISUB r6, 12
     SETSP r6
     MOV r15, r6
     IADD r6, 18
@@ -1038,8 +1023,7 @@ _func_div_long:
     STA r3, r8
 epilogue_L30:
     MOV r6, r15
-    LDI r7, 12
-    ADD r6, r7
+    IADD r6, 12
     SETSP r6
     POP r15
     POP r8
@@ -1051,8 +1035,7 @@ _func_mod_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 12
-    SUB r6, r7
+    ISUB r6, 12
     SETSP r6
     MOV r15, r6
     IADD r6, 18
@@ -1094,8 +1077,7 @@ _func_mod_long:
     STA r3, r8
 epilogue_L32:
     MOV r6, r15
-    LDI r7, 12
-    ADD r6, r7
+    IADD r6, 12
     SETSP r6
     POP r15
     POP r8
@@ -1107,8 +1089,7 @@ _func_shl_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -1141,8 +1122,7 @@ _func_shl_long:
     STA r2, r8
 epilogue_L34:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -1154,8 +1134,7 @@ _func_shr_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -1188,8 +1167,7 @@ _func_shr_long:
     STA r2, r8
 epilogue_L35:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -1201,8 +1179,7 @@ _func_neg_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 4
-    SUB r6, r7
+    ISUB r6, 4
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -1223,8 +1200,7 @@ _func_neg_long:
     STA r2, r8
 epilogue_L36:
     MOV r6, r15
-    LDI r7, 4
-    ADD r6, r7
+    IADD r6, 4
     SETSP r6
     POP r15
     POP r8
@@ -1236,8 +1212,7 @@ _func_not_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 4
-    SUB r6, r7
+    ISUB r6, 4
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -1256,8 +1231,7 @@ _func_not_long:
     STA r2, r8
 epilogue_L37:
     MOV r6, r15
-    LDI r7, 4
-    ADD r6, r7
+    IADD r6, 4
     SETSP r6
     POP r15
     POP r8
@@ -1269,8 +1243,7 @@ _func_and_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -1303,8 +1276,7 @@ _func_and_long:
     STA r2, r8
 epilogue_L38:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -1316,8 +1288,7 @@ _func_or_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -1350,8 +1321,7 @@ _func_or_long:
     STA r2, r8
 epilogue_L39:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -1363,8 +1333,7 @@ _func_xor_long:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     IADD r6, 14
@@ -1397,8 +1366,7 @@ _func_xor_long:
     STA r2, r8
 epilogue_L40:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     POP r8
@@ -1409,8 +1377,7 @@ _func_test_incdec:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 8
-    SUB r6, r7
+    ISUB r6, 8
     SETSP r6
     MOV r15, r6
     MOV r1, r6
@@ -1440,8 +1407,7 @@ _func_test_incdec:
     STA r5, r4
 epilogue_L41:
     MOV r6, r15
-    LDI r7, 8
-    ADD r6, r7
+    IADD r6, 8
     SETSP r6
     POP r15
     RET

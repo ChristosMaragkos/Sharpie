@@ -11,15 +11,12 @@
 .REGION FIXED
 .GLOBAL
 Main:
-    PUSH r8
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 6
-    SUB r6, r7
+    ISUB r6, 6
     SETSP r6
     MOV r15, r6
-    STA r1, r15
     LDI r1, 42
     PUSH r13
     PUSH r14
@@ -28,13 +25,10 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    MOV r1, r0
-    MOV r8, r0
     LDI r2, _func_calculate_path
     MOV r6, r15
     IADD r6, 2
     STA r2, r6
-    STA r1, r15
     LDI r2, 10
     LDI r3, 20
     MOV r1, r2
@@ -48,9 +42,7 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    MOV r1, r8
-    MOV r2, r0
-    ADD r1, r2
+    MOV r1, r0
     STA r1, r15
     MOV r0, r15
     IADD r0, 4
@@ -63,16 +55,13 @@ Main:
     POP r14
     POP r13
     LDP r1, r15
-    MOV r2, r0
-    ADD r1, r2
+    ADD r1, r0
     MOV r0, r1
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 6
-    ADD r6, r7
+    IADD r6, 6
     SETSP r6
     POP r15
-    POP r8
     HALT
 .ENDGLOBAL
 .ENDREGION
@@ -88,17 +77,9 @@ epilogue_L2:
 .REGION BANK_2
 .GLOBAL
 _func_calculate_path:
-    PUSH r8
-    PUSH r9
-    MOV r8, r1
-    MOV r9, r2
-    MOV r1, r8
-    MOV r2, r9
     ADD r1, r2
     MOV r0, r1
 epilogue_L3:
-    POP r9
-    POP r8
     RET
 .ENDGLOBAL
 .ENDREGION

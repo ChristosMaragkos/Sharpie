@@ -14,8 +14,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 106
-    SUB r6, r7
+    ISUB r6, 106
     SETSP r6
     MOV r15, r6
     MOV r1, r6
@@ -29,8 +28,7 @@ Main:
     XOR r0, r0
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 106
-    ADD r6, r7
+    IADD r6, 106
     SETSP r6
     POP r15
     HALT
@@ -41,8 +39,7 @@ _func_create_padding:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 104
-    SUB r6, r7
+    ISUB r6, 104
     SETSP r6
     MOV r15, r6
     MOV r8, r1
@@ -54,8 +51,7 @@ _func_create_padding:
     CALL SYS_MEM_MOVE
 epilogue_L1:
     MOV r6, r15
-    LDI r7, 104
-    ADD r6, r7
+    IADD r6, 104
     SETSP r6
     POP r15
     POP r8

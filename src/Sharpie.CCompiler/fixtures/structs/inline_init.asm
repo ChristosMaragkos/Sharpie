@@ -14,8 +14,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 10
-    SUB r6, r7
+    ISUB r6, 10
     SETSP r6
     MOV r15, r6
     MOV r1, r6
@@ -36,9 +35,7 @@ Main:
     MOV r3, r6
     IADD r3, 4
     STA r2, r3
-    MOV r2, r6
-    IADD r2, 6
-    LDP r1, r2
+    LDP r1, r1
     MOV r3, r6
     IADD r3, 8
     LDP r2, r3
@@ -50,13 +47,11 @@ Main:
     ADD r3, r4
     LDP r2, r3
     MOV r4, r6
-    LDI r5, 2
-    ADD r4, r5
+    IADD r4, 2
     LDP r3, r4
     ADD r2, r3
     MOV r4, r6
-    LDI r5, 4
-    ADD r4, r5
+    IADD r4, 4
     LDP r3, r4
     ADD r2, r3
     IDIV r2, 3
@@ -64,8 +59,7 @@ Main:
     MOV r0, r1
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 10
-    ADD r6, r7
+    IADD r6, 10
     SETSP r6
     POP r15
     HALT

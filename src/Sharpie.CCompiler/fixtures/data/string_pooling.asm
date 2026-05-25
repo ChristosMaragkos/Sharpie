@@ -20,8 +20,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 16
-    SUB r6, r7
+    ISUB r6, 16
     SETSP r6
     MOV r15, r6
     LDM r1, _global_str
@@ -48,8 +47,7 @@ Main:
     XOR r0, r0
 epilogue_L1:
     MOV r6, r15
-    LDI r7, 16
-    ADD r6, r7
+    IADD r6, 16
     SETSP r6
     POP r15
     POP r8

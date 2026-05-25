@@ -120,6 +120,22 @@ public static class Optimizer
                     break;
                 }
 
+                // XOR rX, rX; MOV rY, rX -> XOR rY, rY (zero propagation)
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "XOR" && current.Arg1 == current.Arg2
+                    && next.Mnemonic == "MOV" && next.Arg2 == current.Arg1
+                    && next.Arg1 != current.Arg1
+                )
+                {
+                    current.Arg1 = next.Arg1;
+                    current.Arg2 = next.Arg1;
+                    current.RebuildText();
+                    instructions.RemoveAt(i + 1);
+                    changed = true;
+                    break;
+                }
+
                 // ALT IADD rX, 1 -> DINC rX
                 if (current.IsAlt && current.Arg2 == "1")
                 {
@@ -265,6 +281,44 @@ public static class Optimizer
                     break;
                 }
 
+                // IAND rX, 255 before ALT STA rX, rY -> remove IAND (byte store truncates)
+                if (
+                    !current.IsAlt && current.Mnemonic == "IAND" && current.Arg2 == "255"
+                    && next.IsAlt && next.Mnemonic == "STA" && current.Arg1 == next.Arg1
+                )
+                {
+                    instructions.RemoveAt(i);
+                    changed = true;
+                    break;
+                }
+
+                // XOR rX, rX; MUL rX, rY -> remove MUL (rX is already 0)
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "XOR" && current.Arg1 == current.Arg2
+                    && next.Mnemonic == "MUL" && next.Arg1 == current.Arg1
+                )
+                {
+                    instructions.RemoveAt(i + 1);
+                    changed = true;
+                    break;
+                }
+
+                // XOR rX, rX; MUL rY, rX -> replace MUL with XOR rY, rY
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "XOR" && current.Arg1 == current.Arg2
+                    && next.Mnemonic == "MUL" && next.Arg2 == current.Arg1
+                    && next.Arg1 != current.Arg1
+                )
+                {
+                    next.Mnemonic = "XOR";
+                    next.Arg2 = next.Arg1;
+                    next.RebuildText();
+                    changed = true;
+                    break;
+                }
+
                 // IMUL rX, 2 -> ADD rX, rX
                 if (!current.IsAlt && current.Mnemonic == "IMUL" && current.Arg2 == "2")
                 {
@@ -348,14 +402,27 @@ public static class Optimizer
 
                         if (
                             !mid.IsAlt
-                            && mid.Mnemonic is "IADD" or "ISUB"
                             && mid.Arg1 == current.Arg1
-                            && int.TryParse(mid.Arg2, out int midVal)
                         )
                         {
-                            total += mid.Mnemonic == "IADD" ? midVal : -midVal;
-                            matchIndices.Add(i + scan);
-                            continue;
+                            if (mid.Mnemonic is "IADD" or "ISUB" && int.TryParse(mid.Arg2, out int midVal))
+                            {
+                                total += mid.Mnemonic == "IADD" ? midVal : -midVal;
+                                matchIndices.Add(i + scan);
+                                continue;
+                            }
+                            if (mid.Mnemonic == "INC")
+                            {
+                                total++;
+                                matchIndices.Add(i + scan);
+                                continue;
+                            }
+                            if (mid.Mnemonic == "DEC")
+                            {
+                                total--;
+                                matchIndices.Add(i + scan);
+                                continue;
+                            }
                         }
 
                         var midDefs = GetDefs(mid);
@@ -470,6 +537,95 @@ public static class Optimizer
                     break;
                 }
 
+                // LDI rX, N; ADD rY, rX -> IADD rY, N  (remove LDI)
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "LDI"
+                    && next.Mnemonic == "ADD"
+                    && next.Arg2 == current.Arg1
+                    && next.Arg1 != current.Arg1
+                    && int.TryParse(current.Arg2, out int ldiVal)
+                    && ldiVal >= 0 && ldiVal <= 255
+                )
+                {
+                    current.Mnemonic = "IADD";
+                    current.Arg1 = next.Arg1;
+                    current.RebuildText();
+                    instructions.RemoveAt(i + 1);
+                    changed = true;
+                    break;
+                }
+
+                // LDI rX, N; SUB rY, rX -> ISUB rY, N  (remove LDI)
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "LDI"
+                    && next.Mnemonic == "SUB"
+                    && next.Arg2 == current.Arg1
+                    && next.Arg1 != current.Arg1
+                    && int.TryParse(current.Arg2, out int ldiValSub)
+                    && ldiValSub >= 0 && ldiValSub <= 255
+                )
+                {
+                    current.Mnemonic = "ISUB";
+                    current.Arg1 = next.Arg1;
+                    current.RebuildText();
+                    instructions.RemoveAt(i + 1);
+                    changed = true;
+                    break;
+                }
+
+                // LDI rX, N (N<=255); ...neutral...; ADD rY, rX -> ...; IADD rY, N
+                // Also handles SUB -> ISUB.  Neutral instructions (e.g. XOR rZ, rZ for 32-bit zero
+                // extension) stay in place.  The LDI is removed and the ADD/SUB is transformed into
+                // IADD/ISUB so that flag-setting happens at the original ADD/SUB position (important
+                // when neutral instructions like XOR clear the carry flag that ALT ADD/SUB uses).
+                if (
+                    !current.IsAlt && current.Mnemonic == "LDI"
+                    && int.TryParse(current.Arg2, out int ldiScanVal)
+                    && ldiScanVal >= 0 && ldiScanVal <= 255
+                )
+                {
+                    bool foundTarget = false;
+                    for (int scan = 1; i + scan < instructions.Count; scan++)
+                    {
+                        var mid = instructions[i + scan];
+                        if (mid.IsLabel || mid.IsComment || mid.IsDirective)
+                            continue;
+
+                        if (!mid.IsAlt && mid.Arg2 == current.Arg1 && mid.Arg1 != current.Arg1)
+                        {
+                            if (mid.Mnemonic == "ADD")
+                            {
+                                instructions.RemoveAt(i);              // remove LDI
+                                instructions[i + scan - 1].Mnemonic = "IADD";
+                                instructions[i + scan - 1].Arg2 = ldiScanVal.ToString();
+                                instructions[i + scan - 1].RebuildText();
+                                foundTarget = true;
+                                break;
+                            }
+                            if (mid.Mnemonic == "SUB")
+                            {
+                                instructions.RemoveAt(i);              // remove LDI
+                                instructions[i + scan - 1].Mnemonic = "ISUB";
+                                instructions[i + scan - 1].Arg2 = ldiScanVal.ToString();
+                                instructions[i + scan - 1].RebuildText();
+                                foundTarget = true;
+                                break;
+                            }
+                        }
+
+                        var midDefs = GetDefs(mid);
+                        var midUses = GetUses(mid);
+                        if (midDefs.Contains(current.Arg1) || midUses.Contains(current.Arg1))
+                            break;
+
+                        if (mid.Mnemonic is "JMP" or "RET" or "HALT")
+                            break;
+                    }
+                    if (foundTarget) { changed = true; break; }
+                }
+
                 // MOV rTemp, rLocal followed by CMP rTemp, rOther -> CMP rLocal, rOther
                 if (
                     !current.IsAlt
@@ -482,6 +638,44 @@ public static class Optimizer
                     {
                         next.Arg1 = current.Arg2;
                         next.RebuildText();
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                    else if (current.Arg1 == next.Arg2)
+                    {
+                        next.Arg2 = current.Arg2;
+                        next.RebuildText();
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                }
+
+                // MOV rA, rB followed by ADD/SUB/AND/OR/XOR rC, rA -> use rB directly
+                // Also remove redundant trailing MOV rB, rA (store-back) when rA==rC
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic == "MOV"
+                    && next.Mnemonic is "ADD" or "SUB" or "AND" or "OR" or "XOR"
+                )
+                {
+                    if (current.Arg1 == next.Arg1)
+                    {
+                        next.Arg1 = current.Arg2;
+                        next.RebuildText();
+
+                        if (
+                            i + 2 < instructions.Count
+                            && !instructions[i + 2].IsLabel && !instructions[i + 2].IsAlt
+                            && instructions[i + 2].Mnemonic == "MOV"
+                            && instructions[i + 2].Arg1 == current.Arg2
+                            && instructions[i + 2].Arg2 == current.Arg1
+                        )
+                        {
+                            instructions.RemoveAt(i + 2);
+                        }
+
                         instructions.RemoveAt(i);
                         changed = true;
                         break;
@@ -1014,6 +1208,127 @@ public static class Optimizer
                 live.ExceptWith(defs);
                 live.UnionWith(uses);
             }
+        }
+    }
+
+    public static void EliminateDeadStackStores(ControlFlowGraph cfg)
+    {
+        foreach (var block in cfg.Blocks)
+        {
+            var regToOffset = new Dictionary<string, int>();
+            var prevStaIdx = new Dictionary<int, int>();
+            var toRemove = new HashSet<int>();
+
+            for (int i = 0; i < block.Instructions.Count; i++)
+            {
+                var inst = block.Instructions[i];
+                if (inst.IsLabel || inst.IsComment || inst.IsDirective)
+                    continue;
+
+                var defs = GetDefs(inst);
+                foreach (var d in defs)
+                {
+                    if (d.StartsWith('r') && regToOffset.ContainsKey(d))
+                    {
+                        if (inst.Mnemonic != "MOV" && inst.Mnemonic is not ("IADD" or "ISUB"))
+                            regToOffset.Remove(d);
+                    }
+                }
+
+                if (defs.Contains("r15"))
+                    regToOffset["r15"] = 0;
+
+                if (!inst.IsAlt && inst.Mnemonic == "MOV" && inst.Arg2 == "r15")
+                    regToOffset[inst.Arg1] = 0;
+                else if (!inst.IsAlt && inst.Mnemonic is "IADD" or "ISUB"
+                         && regToOffset.ContainsKey(inst.Arg1)
+                         && int.TryParse(inst.Arg2, out int iaddVal))
+                {
+                    if (inst.Mnemonic == "IADD")
+                        regToOffset[inst.Arg1] = regToOffset[inst.Arg1] + iaddVal;
+                    else
+                        regToOffset[inst.Arg1] = regToOffset[inst.Arg1] - iaddVal;
+                }
+                else if (!inst.IsAlt && inst.Mnemonic == "MOV"
+                         && regToOffset.TryGetValue(inst.Arg2, out int srcOff))
+                    regToOffset[inst.Arg1] = srcOff;
+
+                // LDP from a known stack offset invalidates any STA before it
+                if (!inst.IsAlt && inst.Mnemonic == "LDP"
+                    && regToOffset.TryGetValue(inst.Arg2, out int ldpOff))
+                {
+                    prevStaIdx.Remove(ldpOff);
+                }
+
+                // STA to a known stack offset: previous STA to the same offset is dead
+                if (!inst.IsAlt && inst.Mnemonic == "STA"
+                    && regToOffset.TryGetValue(inst.Arg2, out int staOff))
+                {
+                    if (prevStaIdx.TryGetValue(staOff, out int prev))
+                        toRemove.Add(prev);
+                    prevStaIdx[staOff] = i;
+                }
+            }
+
+            foreach (var idx in toRemove.OrderByDescending(i => i))
+                block.Instructions.RemoveAt(idx);
+        }
+    }
+
+    public static void CseStackAddresses(ControlFlowGraph cfg)
+    {
+        foreach (var block in cfg.Blocks)
+        {
+            var offsetRegs = new Dictionary<int, (string Reg, int AtIndex)>();
+            var invalidAfter = new Dictionary<string, int>();
+            var toRemove = new HashSet<int>();
+
+            for (int i = 0; i < block.Instructions.Count; i++)
+            {
+                var inst = block.Instructions[i];
+                if (inst.IsLabel || inst.IsComment || inst.IsDirective)
+                    continue;
+
+                var defs = GetDefs(inst);
+
+                foreach (var d in defs)
+                {
+                    invalidAfter[d] = i;
+                    if (d == "r15")
+                        offsetRegs.Clear();
+                }
+
+                if (!inst.IsAlt && inst.Mnemonic == "MOV" && inst.Arg2 == "r15")
+                {
+                    string dest = inst.Arg1;
+                    if (i + 1 < block.Instructions.Count
+                        && !block.Instructions[i + 1].IsAlt
+                        && block.Instructions[i + 1].Mnemonic is "IADD" or "ISUB"
+                        && block.Instructions[i + 1].Arg1 == dest
+                        && int.TryParse(block.Instructions[i + 1].Arg2, out int N))
+                    {
+                        int offset = block.Instructions[i + 1].Mnemonic == "IADD" ? N : -N;
+
+                        if (offsetRegs.TryGetValue(offset, out var cached)
+                            && cached.Reg != dest
+                            && (!invalidAfter.ContainsKey(cached.Reg)
+                                || invalidAfter[cached.Reg] <= cached.AtIndex + 1))
+                        {
+                            inst.Arg2 = cached.Reg;
+                            inst.RebuildText();
+                            toRemove.Add(i + 1);
+                            offsetRegs[offset] = (dest, i);
+                        }
+                        else
+                        {
+                            offsetRegs[offset] = (dest, i);
+                        }
+                    }
+                }
+            }
+
+            foreach (var idx in toRemove.OrderByDescending(i => i))
+                block.Instructions.RemoveAt(idx);
         }
     }
 }

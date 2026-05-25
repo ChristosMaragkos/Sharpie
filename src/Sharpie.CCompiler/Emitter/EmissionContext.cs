@@ -146,8 +146,13 @@ public sealed class EmissionContext
             if (TotalStackBytes > 0)
             {
                 yield return "MOV r6, r15";
-                yield return $"LDI r7, {TotalStackBytes}";
-                yield return "SUB r6, r7"; // SiX sEvEN
+                if (TotalStackBytes <= 255)
+                    yield return $"ISUB r6, {TotalStackBytes}";
+                else
+                {
+                    yield return $"LDI r7, {TotalStackBytes}";
+                    yield return "SUB r6, r7";
+                }
                 yield return "SETSP r6";
                 yield return "MOV r15, r6";
             }
@@ -203,8 +208,13 @@ public sealed class EmissionContext
             if (TotalStackBytes > 0)
             {
                 yield return "MOV r6, r15";
-                yield return $"LDI r7, {TotalStackBytes}";
-                yield return "ADD r6, r7";
+                if (TotalStackBytes <= 255)
+                    yield return $"IADD r6, {TotalStackBytes}";
+                else
+                {
+                    yield return $"LDI r7, {TotalStackBytes}";
+                    yield return "ADD r6, r7";
+                }
                 yield return "SETSP r6";
             }
             yield return "POP r15";

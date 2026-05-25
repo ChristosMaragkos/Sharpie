@@ -15,8 +15,7 @@ Main:
     PUSH r15
     GETSP r15
     MOV r6, r15
-    LDI r7, 2
-    SUB r6, r7
+    ISUB r6, 2
     SETSP r6
     MOV r15, r6
     STA r1, r15
@@ -32,8 +31,7 @@ ternary_false_L1:
 ternary_end_L2:
 epilogue_L0:
     MOV r6, r15
-    LDI r7, 2
-    ADD r6, r7
+    IADD r6, 2
     SETSP r6
     POP r15
     POP r8

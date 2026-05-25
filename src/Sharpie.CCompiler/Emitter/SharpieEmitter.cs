@@ -311,7 +311,14 @@ public sealed partial class SharpieEmitter
 
                 Optimizer.EliminateUnreachableBlocks(cfg, roData);
                 Optimizer.EliminateDeadStores(cfg);
+                Optimizer.EliminateDeadStackStores(cfg);
+                Optimizer.CseStackAddresses(cfg);
+
                 context.Instructions = cfg.Flatten();
+                cfg = ControlFlowGraph.Build(context.Instructions);
+                Optimizer.EliminateDeadStores(cfg);
+                context.Instructions = cfg.Flatten();
+
                 Optimizer.Optimize(context.Instructions);
             }
 
