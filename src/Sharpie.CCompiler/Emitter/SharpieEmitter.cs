@@ -128,7 +128,8 @@ public sealed partial class SharpieEmitter
 
         var allBanks = new HashSet<int> { defaultBank };
         foreach (var b in functionBanks.Values)
-            allBanks.Add(b);
+            if (b >= 0)
+                allBanks.Add(b);
 
         var bankAsm = new Dictionary<int, StringBuilder>();
         var bankRoData = new Dictionary<int, List<string>>();
@@ -225,6 +226,7 @@ public sealed partial class SharpieEmitter
 
             var funcName = func.Spelling.ToString();
             int bank = functionBanks[funcName];
+            if (bank < 0) bank = defaultBank;
             var asm = bankAsm[bank];
             var roData = bankRoData[bank];
             var stringPool = bankStringPools[bank];
