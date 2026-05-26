@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using ClangSharp.Interop;
@@ -7,7 +8,7 @@ namespace Sharpie.CCompiler.Emitter;
 internal static class LibClangResolver
 {
     private static bool _configured;
-    private static nint _preloadedHandle;
+    private static readonly ConcurrentDictionary<string, nint> _loadedHandles = new(StringComparer.OrdinalIgnoreCase);
 
     public static void Configure()
     {
@@ -15,29 +16,7 @@ internal static class LibClangResolver
             return;
 
         _configured = true;
-
-        var candidates = GetCandidates().Distinct(StringComparer.Ordinal).ToArray();
-        PreloadFirstAvailableCandidate(candidates);
         clang.ResolveLibrary += ResolveLibrary;
-    }
-
-    private static void PreloadFirstAvailableCandidate(IEnumerable<string> candidates)
-    {
-        if (_preloadedHandle != 0)
-            return;
-
-        foreach (var candidate in candidates)
-        {
-            try
-            {
-                if (NativeLibrary.TryLoad(candidate, out _preloadedHandle))
-                    return;
-            }
-            catch
-            {
-                // Try the next candidate.
-            }
-        }
     }
 
     private static IntPtr ResolveLibrary(
@@ -49,29 +28,38 @@ internal static class LibClangResolver
         if (!IsLibClangName(libraryName))
             return IntPtr.Zero;
 
-        if (_preloadedHandle != 0)
-            return _preloadedHandle;
+        if (_loadedHandles.TryGetValue(libraryName, out var cached))
+            return cached;
 
-        foreach (var candidate in GetCandidates().Distinct(StringComparer.Ordinal))
+        bool isClangSharp = libraryName.StartsWith("libClangSharp", StringComparison.OrdinalIgnoreCase);
+        var candidates = isClangSharp
+            ? GetClangSharpCandidates()
+            : GetLibclangCandidates();
+
+        foreach (var candidate in candidates.Distinct(StringComparer.Ordinal))
         {
             try
             {
                 if (NativeLibrary.TryLoad(candidate, assembly, searchPath, out var handle))
+                {
+                    _loadedHandles[libraryName] = handle;
                     return handle;
+                }
             }
             catch
             {
-                // Try the next candidate.
             }
 
             try
             {
                 if (NativeLibrary.TryLoad(candidate, out var handle))
+                {
+                    _loadedHandles[libraryName] = handle;
                     return handle;
+                }
             }
             catch
             {
-                // Try the next candidate.
             }
         }
 
@@ -92,10 +80,22 @@ internal static class LibClangResolver
         if (string.Equals(libraryName, "libclang.dll", StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (string.Equals(libraryName, "libClangSharp", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.Equals(libraryName, "libClangSharp.so", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.Equals(libraryName, "libClangSharp.dylib", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.Equals(libraryName, "libClangSharp.dll", StringComparison.OrdinalIgnoreCase))
+            return true;
+
         return false;
     }
 
-    private static IEnumerable<string> GetCandidates()
+    private static IEnumerable<string> GetLibclangCandidates()
     {
         var appDir = AppContext.BaseDirectory;
         var explicitPath = Environment.GetEnvironmentVariable("SHARPIE_LIBCLANG_PATH");
@@ -107,20 +107,31 @@ internal static class LibClangResolver
         if (!string.IsNullOrWhiteSpace(explicitName))
             yield return explicitName;
 
-        foreach (var localCandidate in GetLocalRuntimeCandidates(appDir))
-            yield return localCandidate;
+        // App-local paths
+        yield return Path.Combine(appDir, "libclang.so");
+        yield return Path.Combine(appDir, "libclang.so.1");
+        yield return Path.Combine(appDir, "libclang");
+        yield return Path.Combine(appDir, "runtimes", GetRuntimeFolder(), "native", "libclang.so");
+        yield return Path.Combine(appDir, "runtimes", GetRuntimeFolder(), "native", "libclang.so.1");
 
-        foreach (var defaultName in GetDefaultLibraryNames())
-            yield return defaultName;
+        // System defaults
+        yield return "libclang.so";
+        yield return "libclang.so.1";
+        yield return "libclang";
     }
 
-    private static IEnumerable<string> GetLocalRuntimeCandidates(string appDir)
+    private static IEnumerable<string> GetClangSharpCandidates()
     {
-        foreach (var fileName in GetDefaultLibraryNames())
-        {
-            yield return Path.Combine(appDir, fileName);
-            yield return Path.Combine(appDir, "runtimes", GetRuntimeFolder(), "native", fileName);
-        }
+        var appDir = AppContext.BaseDirectory;
+
+        // App-local paths
+        yield return Path.Combine(appDir, "libClangSharp.so");
+        yield return Path.Combine(appDir, "libClangSharp");
+        yield return Path.Combine(appDir, "runtimes", GetRuntimeFolder(), "native", "libClangSharp.so");
+
+        // System defaults
+        yield return "libClangSharp.so";
+        yield return "libClangSharp";
     }
 
     private static string GetRuntimeFolder()
@@ -132,26 +143,5 @@ internal static class LibClangResolver
             return Environment.Is64BitProcess ? "osx-x64" : "osx";
 
         return Environment.Is64BitProcess ? "linux-x64" : "linux-x86";
-    }
-
-    private static IEnumerable<string> GetDefaultLibraryNames()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            yield return "libclang.dll";
-            yield return "clang.dll";
-            yield break;
-        }
-
-        if (OperatingSystem.IsMacOS())
-        {
-            yield return "libclang.dylib";
-            yield return "libclang";
-            yield break;
-        }
-
-        yield return "libclang.so";
-        yield return "libclang.so.1";
-        yield return "libclang";
     }
 }
