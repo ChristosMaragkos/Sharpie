@@ -27,6 +27,8 @@ public static class SharpieCC
             Console.ResetColor();
         }
 
+        var emittedGlobals = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var file in inputFiles)
         {
             using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
@@ -42,7 +44,7 @@ public static class SharpieCC
                 throw new Exception($"Compilation failed due to frontend errors in {file}.");
             }
 
-            var emitter = new SharpieEmitter(optimize, allowLong);
+            var emitter = new SharpieEmitter(optimize, allowLong, emittedGlobals);
 
             masterAssembly.AppendLine("; ----------------------------------");
             masterAssembly.AppendLine($"; SOURCE: {Path.GetFileName(file)}");

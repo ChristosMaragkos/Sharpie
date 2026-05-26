@@ -17,14 +17,16 @@ public sealed partial class SharpieEmitter
 
     private readonly bool _optimize;
     private readonly bool _allowLong;
+    private readonly HashSet<string>? _crossFileGlobals;
 
     [GeneratedRegex(@"#pragma\s+bank\s+(\d+)")]
     private static partial Regex MyRegex();
 
-    public SharpieEmitter(bool optimizationsEnabled, bool allowLong = false)
+    public SharpieEmitter(bool optimizationsEnabled, bool allowLong = false, HashSet<string>? crossFileGlobals = null)
     {
         _optimize = optimizationsEnabled;
         _allowLong = allowLong;
+        _crossFileGlobals = crossFileGlobals;
     }
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
@@ -36,9 +38,59 @@ public sealed partial class SharpieEmitter
 
         var globalNames = new HashSet<string>(StringComparer.Ordinal);
 
-        var globalVars = GetChildren(translationUnitCursor)
-            .Where(c => c.Kind == CXCursorKind.CXCursor_VarDecl)
-            .ToList();
+        var globalVars = new List<CXCursor>();
+        foreach (var c in GetChildren(translationUnitCursor))
+        {
+            if (c.Kind != CXCursorKind.CXCursor_VarDecl)
+                continue;
+
+            var name = c.Spelling.ToString();
+
+            // Always register so function bodies can resolve references (e.g. extern int x;)
+            globalNames.Add(name);
+
+            // Skip `extern` declarations (their storage is in another TU).
+            // We use CX_SC_Extern rather than isCursorDefinition because the latter rejects
+            // tentative definitions (e.g. `int x;`) which still need storage per C11 semantics.
+            var storageClass = clang.Cursor_getStorageClass(c);
+            if (storageClass == CX_StorageClass.CX_SC_Extern)
+                continue;
+
+            // Skip if a previous translation unit already emitted storage for this global
+            // (only applies to extern linkage globals — static globals are per-TU)
+            if (_crossFileGlobals != null && _crossFileGlobals.Contains(name))
+            {
+                var linkage = clang.getCursorLinkage(c);
+                if (linkage == CXLinkageKind.CXLinkage_External)
+                    continue;
+            }
+
+            int existingIdx = globalVars.FindIndex(g => g.Spelling.ToString() == name);
+
+            if (existingIdx < 0)
+            {
+                globalVars.Add(c);
+                continue;
+            }
+
+            var kids = GetChildren(c);
+            var hasInit = kids.Any(k =>
+                k.Kind >= CXCursorKind.CXCursor_FirstExpr
+                && k.Kind <= CXCursorKind.CXCursor_LastExpr
+            );
+
+            if (!hasInit)
+                continue;
+
+            var existingKids = GetChildren(globalVars[existingIdx]);
+            var existingHasInit = existingKids.Any(k =>
+                k.Kind >= CXCursorKind.CXCursor_FirstExpr
+                && k.Kind <= CXCursorKind.CXCursor_LastExpr
+            );
+
+            if (!existingHasInit)
+                globalVars[existingIdx] = c;
+        }
 
         var functions = GetChildren(translationUnitCursor)
             .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
@@ -94,6 +146,16 @@ public sealed partial class SharpieEmitter
         var defStringPool = bankStringPools[defaultBank];
 
         HandleGlobals(defAsm, globalNames, globalVars, defRoData, defStringPool);
+
+        if (_crossFileGlobals != null)
+        {
+            foreach (var g in globalVars)
+            {
+                var linkage = clang.getCursorLinkage(g);
+                if (linkage == CXLinkageKind.CXLinkage_External)
+                    _crossFileGlobals.Add(g.Spelling.ToString());
+            }
+        }
 
         var topLevelAsm = new List<CXCursor>();
         foreach (var child in GetChildren(translationUnitCursor))
