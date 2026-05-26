@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -64,5 +65,6 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

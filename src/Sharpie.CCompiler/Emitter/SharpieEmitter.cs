@@ -58,7 +58,7 @@ public sealed partial class SharpieEmitter
 
             // Skip if a previous translation unit already emitted storage for this global
             // (only applies to extern linkage globals — static globals are per-TU)
-            if (_crossFileGlobals != null && _crossFileGlobals.Contains(name))
+            if (_crossFileGlobals?.Contains(name) == true)
             {
                 var linkage = clang.getCursorLinkage(c);
                 if (linkage == CXLinkageKind.CXLinkage_External)
@@ -250,6 +250,7 @@ public sealed partial class SharpieEmitter
                 FunctionBanks = functionBanks,
             };
 
+            asm.AppendLine("");
             asm.AppendLine($"{(context.IsMain ? "Main" : $"_func_{funcName}")}:");
 
             var retSizeBytes = func.ResultType.SizeOf;
@@ -394,6 +395,7 @@ public sealed partial class SharpieEmitter
 
             if (!isStatic)
                 asm.AppendLine(".ENDGLOBAL");
+            asm.AppendLine("");
         }
 
         var result = new StringBuilder();
@@ -449,6 +451,7 @@ public sealed partial class SharpieEmitter
     {
         if (globalVars.Count > 0)
         {
+            asm.AppendLine("");
             asm.AppendLine("; Global Variables");
             foreach (var global in globalVars)
             {
@@ -679,6 +682,7 @@ public sealed partial class SharpieEmitter
                 if (!isStatic)
                     asm.AppendLine(".ENDGLOBAL");
             }
+            asm.AppendLine("");
         }
     }
 

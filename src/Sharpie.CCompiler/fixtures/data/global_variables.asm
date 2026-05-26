@@ -9,6 +9,7 @@
 ; ----------------------------------
 
 .REGION FIXED
+
 ; Global Variables
 .GLOBAL
 _global_g_score:
@@ -28,7 +29,9 @@ _global_g_p1:
     .DW 100
     .DB 5
     .PAD 1
+
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -67,5 +70,6 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

@@ -9,6 +9,7 @@
 ; ----------------------------------
 
 .REGION FIXED
+
 ; Global Variables
 .GLOBAL
 _global_sin_table:
@@ -331,7 +332,9 @@ _global_angle:
 _global_dAngle:
     .DB 0
 .ENDGLOBAL
+
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r15
@@ -471,7 +474,9 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_draw_point:
     PUSH r8
     MOV r8, r1
@@ -559,7 +564,9 @@ epilogue_L8:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_world_to_screen:
     PUSH r8
     PUSH r9
@@ -632,7 +639,9 @@ epilogue_L27:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_rotate_xz:
     PUSH r8
     PUSH r9
@@ -694,7 +703,9 @@ epilogue_L29:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_translate_z:
     PUSH r8
     PUSH r9
@@ -712,7 +723,9 @@ epilogue_L30:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_line_bresenham:
     PUSH r8
     PUSH r9
@@ -1093,5 +1106,6 @@ epilogue_L31:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r15
@@ -52,7 +53,9 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_add_six_numbers:
     PUSH r12
     PUSH r13
@@ -77,7 +80,9 @@ epilogue_L1:
     POP r12
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_memory:
     PUSH r15
     GETSP r15
@@ -100,5 +105,6 @@ epilogue_L2:
     POP r15
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

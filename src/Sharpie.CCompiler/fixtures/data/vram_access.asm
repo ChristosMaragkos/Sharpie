@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r9
@@ -36,5 +37,6 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

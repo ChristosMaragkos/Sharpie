@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -186,7 +187,9 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_nested_add:
     PUSH r8
     PUSH r15
@@ -348,7 +351,9 @@ epilogue_L4:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_nested_mul:
     PUSH r8
     PUSH r15
@@ -542,7 +547,9 @@ epilogue_L11:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_nested_mixed:
     PUSH r8
     PUSH r15
@@ -720,7 +727,9 @@ epilogue_L18:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_deep_nest:
     PUSH r8
     PUSH r15
@@ -936,5 +945,6 @@ epilogue_L25:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

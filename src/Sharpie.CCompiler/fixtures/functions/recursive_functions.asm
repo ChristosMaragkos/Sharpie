@@ -10,13 +10,16 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r1, 5
     CALL _func_factorial
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_factorial:
     PUSH r8
     PUSH r15
@@ -52,5 +55,6 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

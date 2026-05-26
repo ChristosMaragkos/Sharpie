@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -45,30 +46,37 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_fixed_func:
     ISUB r1, 5
     MOV r0, r1
 epilogue_L3:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 .REGION BANK_1
 .GLOBAL
+
 _func_bank1_func:
     IADD r1, 100
     MOV r0, r1
 epilogue_L1:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 .REGION BANK_2
 .GLOBAL
+
 _func_bank2_func:
     ADD r1, r1
     MOV r0, r1
 epilogue_L2:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

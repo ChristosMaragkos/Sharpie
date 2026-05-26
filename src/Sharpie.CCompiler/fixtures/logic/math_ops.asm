@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r1, 5
     IADD r1, 2
@@ -29,5 +30,6 @@ Main:
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

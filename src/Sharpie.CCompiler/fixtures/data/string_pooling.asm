@@ -9,12 +9,15 @@
 ; ----------------------------------
 
 .REGION FIXED
+
 ; Global Variables
 .GLOBAL
 _global_str:
     .DW str_L0
 .ENDGLOBAL
+
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r15
@@ -53,6 +56,7 @@ epilogue_L1:
     POP r8
     HALT
 .ENDGLOBAL
+
 
 ; Readonly Data
 .GLOBAL

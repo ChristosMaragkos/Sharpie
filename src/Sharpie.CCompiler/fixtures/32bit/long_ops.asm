@@ -9,13 +9,16 @@
 ; ----------------------------------
 
 .REGION FIXED
+
 ; Global Variables
 .GLOBAL
 _global_global_long:
     .DW 34464
     .DW 1
 .ENDGLOBAL
+
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -832,7 +835,9 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_add_long:
     PUSH r8
     PUSH r15
@@ -877,7 +882,9 @@ epilogue_L27:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_sub_long:
     PUSH r8
     PUSH r15
@@ -922,7 +929,9 @@ epilogue_L28:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_mul_long:
     PUSH r8
     PUSH r15
@@ -975,7 +984,9 @@ epilogue_L29:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_div_long:
     PUSH r8
     PUSH r15
@@ -1029,7 +1040,9 @@ epilogue_L30:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_mod_long:
     PUSH r8
     PUSH r15
@@ -1083,7 +1096,9 @@ epilogue_L32:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_shl_long:
     PUSH r8
     PUSH r15
@@ -1128,7 +1143,9 @@ epilogue_L34:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_shr_long:
     PUSH r8
     PUSH r15
@@ -1173,7 +1190,9 @@ epilogue_L35:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_neg_long:
     PUSH r8
     PUSH r15
@@ -1206,7 +1225,9 @@ epilogue_L36:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_not_long:
     PUSH r8
     PUSH r15
@@ -1237,7 +1258,9 @@ epilogue_L37:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_and_long:
     PUSH r8
     PUSH r15
@@ -1282,7 +1305,9 @@ epilogue_L38:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_or_long:
     PUSH r8
     PUSH r15
@@ -1327,7 +1352,9 @@ epilogue_L39:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_xor_long:
     PUSH r8
     PUSH r15
@@ -1372,7 +1399,9 @@ epilogue_L40:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_incdec:
     PUSH r15
     GETSP r15
@@ -1412,5 +1441,6 @@ epilogue_L41:
     POP r15
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

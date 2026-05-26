@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r15
@@ -31,7 +32,9 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_square:
     MOV r2, r1
     MUL r1, r2
@@ -39,5 +42,6 @@ _func_square:
 epilogue_L1:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

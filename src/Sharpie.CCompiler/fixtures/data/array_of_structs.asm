@@ -9,6 +9,7 @@
 ; ----------------------------------
 
 .REGION FIXED
+
 ; Global Variables
 .GLOBAL
 _global_gverts:
@@ -21,7 +22,9 @@ _global_gverts:
     .DW -30
     .DW 40
 .ENDGLOBAL
+
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -108,5 +111,6 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

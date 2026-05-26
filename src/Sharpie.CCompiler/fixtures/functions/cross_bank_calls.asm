@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -64,31 +65,38 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 .REGION BANK_1
 .GLOBAL
+
 _func_fetch_enemy_sprite:
     IMUL r1, 3
     MOV r0, r1
 epilogue_L2:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 .REGION BANK_2
 .GLOBAL
+
 _func_calculate_path:
     ADD r1, r2
     MOV r0, r1
 epilogue_L3:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 .REGION BANK_3
 .GLOBAL
+
 _func_do_stuff:
     LDI r0, 42
 epilogue_L1:
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

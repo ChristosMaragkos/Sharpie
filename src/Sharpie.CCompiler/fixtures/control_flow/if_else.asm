@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r1, 10
     ICMP r1, 10
@@ -21,5 +22,6 @@ else_L2:
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

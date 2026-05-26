@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r8
     PUSH r15
@@ -58,7 +59,9 @@ epilogue_L0:
     POP r8
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_make_point:
     PUSH r8
     PUSH r15
@@ -90,5 +93,6 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

@@ -10,10 +10,12 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r0, 42
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .ENDREGION
 

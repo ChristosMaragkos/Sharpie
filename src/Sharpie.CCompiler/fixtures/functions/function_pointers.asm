@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -56,21 +57,27 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_add:
     ADD r1, r2
     MOV r0, r1
 epilogue_L1:
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_sub:
     SUB r1, r2
     MOV r0, r1
 epilogue_L2:
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_do_math:
     PUSH r8
     PUSH r15
@@ -93,5 +100,6 @@ epilogue_L3:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

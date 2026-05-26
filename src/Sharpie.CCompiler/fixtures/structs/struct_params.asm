@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     PUSH r15
     GETSP r15
@@ -68,7 +69,9 @@ epilogue_L0:
     POP r15
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_registers:
     PUSH r8
     PUSH r15
@@ -98,7 +101,9 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_stack:
     PUSH r15
     GETSP r15
@@ -129,7 +134,9 @@ epilogue_L2:
     POP r15
     RET
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_pointer:
     PUSH r8
     MOV r8, r1
@@ -139,5 +146,6 @@ epilogue_L3:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 

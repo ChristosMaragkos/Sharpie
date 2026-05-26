@@ -10,13 +10,16 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r1, 20
     CALL _func_get_score
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_get_score:
     PUSH r8
     PUSH r9
@@ -50,6 +53,7 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 
 ; Readonly Data
 .GLOBAL

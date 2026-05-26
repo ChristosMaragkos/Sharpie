@@ -10,6 +10,7 @@
 
 .REGION FIXED
 .GLOBAL
+
 Main:
     LDI r1, 1
     LDI r2, 2
@@ -19,7 +20,9 @@ Main:
 epilogue_L0:
     HALT
 .ENDGLOBAL
+
 .GLOBAL
+
 _func_test_logic:
     PUSH r8
     PUSH r9
@@ -74,5 +77,6 @@ epilogue_L1:
     POP r8
     RET
 .ENDGLOBAL
+
 .ENDREGION
 
