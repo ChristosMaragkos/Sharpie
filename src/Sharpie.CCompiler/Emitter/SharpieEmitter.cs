@@ -490,6 +490,34 @@ public sealed partial class SharpieEmitter
 
                 long bytesWritten = 0;
 
+                void ExtractStringLiteral(CXCursor cursor, out string rawString, out string? label)
+                {
+                    rawString = "";
+                    unsafe
+                    {
+                        var range = clang.getCursorExtent(cursor);
+                        var tu = clang.Cursor_getTranslationUnit(cursor);
+                        uint numTokens = 0;
+                        CXToken* tokens = null;
+                        clang.tokenize(tu, range, &tokens, &numTokens);
+                        if (numTokens > 0)
+                        {
+                            var cxString = clang.getTokenSpelling(tu, tokens[0]);
+                            rawString = cxString.ToString();
+                            clang.disposeString(cxString);
+                        }
+                        clang.disposeTokens(tu, tokens, numTokens);
+                    }
+
+                    if (!stringPool.TryGetValue(rawString, out label))
+                    {
+                        label = EmissionContext.GenerateLabel("str");
+                        stringPool[rawString] = label;
+                        readOnlyData.Add($"{label}:");
+                        readOnlyData.Add($"    .DB {rawString}, 0");
+                    }
+                }
+
                 // Handle arrays and structs
                 if (initListExprs.Count > 0)
                 {
@@ -537,7 +565,17 @@ public sealed partial class SharpieEmitter
 
                                     long value = 0;
                                     if (i < fieldInitVals.Count)
-                                        value = PeelExpression(fieldInitVals[i]).Evaluate.AsLongLong;
+                                    {
+                                        var fieldValPeeled = PeelExpression(fieldInitVals[i]);
+                                        if (fieldValPeeled.Kind == CXCursorKind.CXCursor_StringLiteral && fieldSize > 1)
+                                        {
+                                            ExtractStringLiteral(fieldValPeeled, out _, out var existingLabel);
+                                            asm.AppendLine($"    .DW {existingLabel}");
+                                            elementBytesWritten += fieldSize;
+                                            continue;
+                                        }
+                                        value = fieldValPeeled.Evaluate.AsLongLong;
+                                    }
 
                                     asm.AppendLine(fieldSize == 1 ? $"    .DB {value}" : $"    .DW {value}");
                                     elementBytesWritten += fieldSize;
@@ -563,9 +601,19 @@ public sealed partial class SharpieEmitter
                             {
                                 foreach (var colVal in GetAggregateInitializerValues(rowVal))
                                 {
-                                    long v = PeelExpression(colVal).Evaluate.AsLongLong;
-                                    asm.AppendLine(innerStride == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                                    bytesWritten += innerStride;
+                                    var innerPeeled = PeelExpression(colVal);
+                                    if (innerPeeled.Kind == CXCursorKind.CXCursor_StringLiteral && innerStride > 1)
+                                    {
+                                        ExtractStringLiteral(innerPeeled, out _, out var existingLabel);
+                                        asm.AppendLine($"    .DW {existingLabel}");
+                                        bytesWritten += innerStride;
+                                    }
+                                    else
+                                    {
+                                        long v = innerPeeled.Evaluate.AsLongLong;
+                                        asm.AppendLine(innerStride == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                                        bytesWritten += innerStride;
+                                    }
                                 }
                             }
                         }
@@ -573,9 +621,19 @@ public sealed partial class SharpieEmitter
                         {
                             foreach (var val in initVals)
                             {
-                                long v = PeelExpression(val).Evaluate.AsLongLong;
-                                asm.AppendLine(stride == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                                bytesWritten += stride;
+                                var peeled = PeelExpression(val);
+                                if (peeled.Kind == CXCursorKind.CXCursor_StringLiteral && stride > 1)
+                                {
+                                    ExtractStringLiteral(peeled, out _, out var existingLabel);
+                                    asm.AppendLine($"    .DW {existingLabel}");
+                                    bytesWritten += stride;
+                                }
+                                else
+                                {
+                                    long v = peeled.Evaluate.AsLongLong;
+                                    asm.AppendLine(stride == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                                    bytesWritten += stride;
+                                }
                             }
                         }
                     }
@@ -589,9 +647,19 @@ public sealed partial class SharpieEmitter
                         for (int i = 0; i < initVals.Count && i < fields.Count; i++)
                         {
                             long fieldSize = fields[i].Type.SizeOf;
-                            long v = PeelExpression(initVals[i]).Evaluate.AsLongLong;
-                            asm.AppendLine(fieldSize == 1 ? $"    .DB {v}" : $"    .DW {v}");
-                            bytesWritten += fieldSize;
+                            var fieldPeeled = PeelExpression(initVals[i]);
+                            if (fieldPeeled.Kind == CXCursorKind.CXCursor_StringLiteral && fieldSize > 1)
+                            {
+                                ExtractStringLiteral(fieldPeeled, out _, out var existingLabel);
+                                asm.AppendLine($"    .DW {existingLabel}");
+                                bytesWritten += fieldSize;
+                            }
+                            else
+                            {
+                                long v = fieldPeeled.Evaluate.AsLongLong;
+                                asm.AppendLine(fieldSize == 1 ? $"    .DB {v}" : $"    .DW {v}");
+                                bytesWritten += fieldSize;
+                            }
                         }
                     }
                 }
@@ -602,23 +670,7 @@ public sealed partial class SharpieEmitter
 
                     if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
                     {
-                        string rawString = "";
-                        unsafe
-                        {
-                            var range = clang.getCursorExtent(initExpr);
-                            var tu = clang.Cursor_getTranslationUnit(initExpr);
-                            uint numTokens = 0;
-                            CXToken* tokens = null;
-
-                            clang.tokenize(tu, range, &tokens, &numTokens);
-                            if (numTokens > 0)
-                            {
-                                var cxString = clang.getTokenSpelling(tu, tokens[0]);
-                                rawString = cxString.ToString();
-                                clang.disposeString(cxString);
-                            }
-                            clang.disposeTokens(tu, tokens, numTokens);
-                        }
+                        ExtractStringLiteral(initExpr, out var rawString, out var existingLabel);
 
                         var typeKind = global.Type.CanonicalType.kind;
 
@@ -636,14 +688,6 @@ public sealed partial class SharpieEmitter
                         // Pointer: const char* my_string = "Hello";
                         else
                         {
-                            if (!stringPool.TryGetValue(rawString, out var existingLabel))
-                            {
-                                existingLabel = EmissionContext.GenerateLabel("str");
-                                stringPool[rawString] = existingLabel;
-
-                                readOnlyData.Add($"{existingLabel}:");
-                                readOnlyData.Add($"    .DB {rawString}, 0");
-                            }
                             // Just save the 16-bit address pointing to the read-only string
                             asm.AppendLine($"    .DW {existingLabel}");
                             bytesWritten += 2;
