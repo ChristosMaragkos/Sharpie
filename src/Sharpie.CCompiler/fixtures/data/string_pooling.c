@@ -3,13 +3,11 @@
 char *str = "This should be shared";
 
 int main(void) {
-  print(str, 0, 0);
+    char *str2 = "This should not";
+    str2[0] = 'Z';
 
-  char *str2 = "This should not";
-  print(str2, 0, 1);
+    char str3[] = "This should not";
 
-  str2[0] = 'Z';
-
-  char str3[] = "This should not";
-  print(str3, 0, 2);
+    if (str2[0] != 'Z') return 1;
+    return 0;
 }
