@@ -533,7 +533,7 @@ NoBring:
     CMP r8, r4
 
 HighDone:
-    JLT SkipSub         ; if remainder < divisor, skip
+    JC SkipSub          ; if remainder < divisor (unsigned), skip
 
     ; Subtract divisor from remainder
     SUB r8, r4
