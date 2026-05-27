@@ -193,6 +193,23 @@ public partial class SharpieEmitter
                             context.Emit($"MOV r0, r{origALow.Value}");
                             context.Emit($"ALT MUL r0, r{bLow.Value}");
 
+                            // ALT MUL gives the SIGNED high word; correct it to unsigned:
+                            //   unsigned_high = signed_high + (a_low<0 ? b_low : 0) + (b_low<0 ? a_low : 0)
+                            // Use CMP+JGE (CMP writes no registers, immune to dead store eliminator)
+                            using var zero = context.AcquireTempRegister();
+                            var skip1 = EmissionContext.GenerateLabel("mulcorr1");
+                            context.Emit($"XOR r{zero.Value}, r{zero.Value}");
+                            context.Emit($"CMP r{origALow.Value}, r{zero.Value}");
+                            context.Emit($"JGE {skip1}");
+                            context.Emit($"ADD r0, r{bLow.Value}");
+                            context.Emit($"{skip1}:");
+                            var skip2 = EmissionContext.GenerateLabel("mulcorr2");
+                            context.Emit($"XOR r{zero.Value}, r{zero.Value}");
+                            context.Emit($"CMP r{bLow.Value}, r{zero.Value}");
+                            context.Emit($"JGE {skip2}");
+                            context.Emit($"ADD r0, r{origALow.Value}");
+                            context.Emit($"{skip2}:");
+
                             context.Emit($"MUL r{origALow.Value}, r{bHigh.Value}");
                             context.Emit($"ADD r0, r{origALow.Value}");
 
@@ -313,6 +330,10 @@ public partial class SharpieEmitter
                         context.Emit($"MOV r{bufAddr.Value}, r15");
                         AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
 
+                        // Save dest/buf to r7/r8 before LoadLongFromBuffer clobbers r1/r2
+                        context.Emit($"MOV r7, r{destAddrReg}");
+                        context.Emit($"MOV r8, r{bufAddr.Value}");
+
                         int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
 
                         if (lhsSlot >= 0)
@@ -355,12 +376,11 @@ public partial class SharpieEmitter
                             context.Emit($"LDP r3, r{src.Value}");
                         }
 
-                        context.Emit($"PUSH r{destAddrReg}");
-
+                        context.Emit($"PUSH r7");  // saved dest address (r7 preserved by Div32)
                         int mode = kind == CXBinaryOperatorKind.CXBinaryOperator_Div ? 0 : 1;
                         context.Emit($"LDI r0, {mode}");
                         context.Emit("PUSH r0");
-                        context.Emit($"PUSH r{bufAddr.Value}");
+                        context.Emit($"PUSH r8");  // saved buf address (r8 preserved by Div32)
 
                         context.Emit("CALL SYS_DIV_32");
 
@@ -381,6 +401,23 @@ public partial class SharpieEmitter
                         context.Emit($"STA r{resultLow.Value}, r{destAddrReg}");
                         context.Emit($"IADD r{destAddrReg}, 2");
                         context.Emit($"STA r{resultHigh.Value}, r{destAddrReg}");
+                    }
+                    else if (
+                        kind
+                        is CXBinaryOperatorKind.CXBinaryOperator_EQ
+                            or CXBinaryOperatorKind.CXBinaryOperator_NE
+                            or CXBinaryOperatorKind.CXBinaryOperator_LT
+                            or CXBinaryOperatorKind.CXBinaryOperator_GT
+                            or CXBinaryOperatorKind.CXBinaryOperator_LE
+                            or CXBinaryOperatorKind.CXBinaryOperator_GE
+                    )
+                    {
+                        using var result = context.AcquireTempRegister();
+                        EmitLongComparison(kind, operands[0], operands[1], result.Value, context);
+                        context.Emit($"STA r{result.Value}, r{destAddrReg}");
+                        context.Emit($"IADD r{destAddrReg}, 2");
+                        context.Emit($"LDI r{result.Value}, 0");
+                        context.Emit($"STA r{result.Value}, r{destAddrReg}");
                     }
                     else
                     {
@@ -487,6 +524,123 @@ public partial class SharpieEmitter
                     return;
                 }
         }
+    }
+
+    private static void EmitLongComparison(
+        CXBinaryOperatorKind kind,
+        CXCursor lhs,
+        CXCursor rhs,
+        int resultReg,
+        EmissionContext context
+    )
+    {
+        Console.Error.WriteLine($"EmitLongComparison called: kind={kind} lhs.Type.SizeOf={lhs.Type.SizeOf} rhs.Type.SizeOf={rhs.Type.SizeOf}");
+        var peeledLhs = PeelExpression(lhs);
+        var peeledRhs = PeelExpression(rhs);
+
+        int lhsSlot = EmitLongToBufferIfComplex(lhs, peeledLhs, context);
+        int rhsSlot = EmitLongToBufferIfComplex(rhs, peeledRhs, context);
+
+        using var aLow = context.AcquireTempRegister();
+        using var aHigh = context.AcquireTempRegister();
+        using var bLow = context.AcquireTempRegister();
+        using var bHigh = context.AcquireTempRegister();
+
+        void LoadLongOperand(CXCursor operand, CXCursor peeled, int slot, int lowReg, int highReg)
+        {
+            if (slot >= 0)
+            {
+                LoadLongFromBuffer(lowReg, highReg, slot, context);
+            }
+            else if (peeled.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+            {
+                long v = peeled.Evaluate.AsLongLong;
+                context.Emit($"LDI r{lowReg}, {unchecked((ushort)(v & 0xFFFF))}");
+                context.Emit($"LDI r{highReg}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+            }
+            else
+            {
+                using var src = context.AcquireTempRegister();
+                EmitExpression(operand, src.Value, context);
+                context.Emit($"LDP r{lowReg}, r{src.Value}");
+                context.Emit($"IADD r{src.Value}, 2");
+                context.Emit($"LDP r{highReg}, r{src.Value}");
+            }
+        }
+
+        LoadLongOperand(lhs, peeledLhs, lhsSlot, aLow.Value, aHigh.Value);
+        LoadLongOperand(rhs, peeledRhs, rhsSlot, bLow.Value, bHigh.Value);
+
+        var doneLabel = EmissionContext.GenerateLabel("cmp_done");
+
+        if (kind == CXBinaryOperatorKind.CXBinaryOperator_EQ || kind == CXBinaryOperatorKind.CXBinaryOperator_NE)
+        {
+            var notEqualLabel = EmissionContext.GenerateLabel("cmp_ne");
+            context.Emit($"CMP r{aHigh.Value}, r{bHigh.Value}");
+            context.Emit($"JNE {notEqualLabel}");
+            context.Emit($"CMP r{aLow.Value}, r{bLow.Value}");
+            context.Emit($"JNE {notEqualLabel}");
+            context.Emit($"LDI r{resultReg}, {(kind == CXBinaryOperatorKind.CXBinaryOperator_EQ ? "1" : "0")}");
+            context.Emit($"JMP {doneLabel}");
+            context.Emit($"{notEqualLabel}:");
+            context.Emit($"LDI r{resultReg}, {(kind == CXBinaryOperatorKind.CXBinaryOperator_EQ ? "0" : "1")}");
+        }
+        else
+        {
+            var trueLabel = EmissionContext.GenerateLabel("cmp_true");
+            var falseLabel = EmissionContext.GenerateLabel("cmp_false");
+
+            context.Emit($"CMP r{aHigh.Value}, r{bHigh.Value}");
+            switch (kind)
+            {
+                case CXBinaryOperatorKind.CXBinaryOperator_LT:
+                case CXBinaryOperatorKind.CXBinaryOperator_LE:
+                    context.Emit($"JLT {trueLabel}");
+                    context.Emit($"JGT {falseLabel}");
+                    break;
+                case CXBinaryOperatorKind.CXBinaryOperator_GT:
+                case CXBinaryOperatorKind.CXBinaryOperator_GE:
+                    context.Emit($"JGT {trueLabel}");
+                    context.Emit($"JLT {falseLabel}");
+                    break;
+            }
+
+            using var signBit = context.AcquireTempRegister();
+            context.Emit($"LDI r{signBit.Value}, 0x8000");
+            context.Emit($"XOR r{aLow.Value}, r{signBit.Value}");
+            context.Emit($"XOR r{bLow.Value}, r{signBit.Value}");
+            context.Emit($"CMP r{aLow.Value}, r{bLow.Value}");
+
+            switch (kind)
+            {
+                case CXBinaryOperatorKind.CXBinaryOperator_LT:
+                    context.Emit($"JLT {trueLabel}");
+                    break;
+                case CXBinaryOperatorKind.CXBinaryOperator_LE:
+                    context.Emit($"JGT {falseLabel}");
+                    break;
+                case CXBinaryOperatorKind.CXBinaryOperator_GT:
+                    context.Emit($"JGT {trueLabel}");
+                    break;
+                case CXBinaryOperatorKind.CXBinaryOperator_GE:
+                    context.Emit($"JLT {falseLabel}");
+                    break;
+            }
+
+            if (kind == CXBinaryOperatorKind.CXBinaryOperator_LE || kind == CXBinaryOperatorKind.CXBinaryOperator_GE)
+                context.Emit($"LDI r{resultReg}, 1");
+            else
+                context.Emit($"LDI r{resultReg}, 0");
+
+            context.Emit($"JMP {doneLabel}");
+            context.Emit($"{trueLabel}:");
+            context.Emit($"LDI r{resultReg}, 1");
+            context.Emit($"JMP {doneLabel}");
+            context.Emit($"{falseLabel}:");
+            context.Emit($"LDI r{resultReg}, 0");
+        }
+
+        context.Emit($"{doneLabel}:");
     }
 
     private static int EmitLongToBufferIfComplex(CXCursor operand, CXCursor peeled, EmissionContext context)

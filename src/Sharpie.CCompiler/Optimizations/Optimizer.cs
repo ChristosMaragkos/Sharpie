@@ -1040,6 +1040,11 @@ public static class Optimizer
 
                         if (mid.Mnemonic is "JMP" or "RET" or "HALT")
                             break;
+
+                        // PUSH before GETSP r15 is a callee-saved reg in the prologue.
+                        // Removing it would shift stack-arg offsets baked into the body.
+                        if (mid.Mnemonic == "GETSP" && mid.Arg1 == "r15")
+                            break;
                     }
 
                     if (popScan > 0)

@@ -595,6 +595,19 @@ public partial class SharpieEmitter
                 or CXBinaryOperatorKind.CXBinaryOperator_GE
         )
         {
+            if (lhs.Type.SizeOf > 2 || rhs.Type.SizeOf > 2)
+            {
+                EmitLongComparison(kind, lhs, rhs, outReg, context);
+
+                if (targetReg >= 0 && targetReg != outReg)
+                    context.Emit($"MOV r{targetReg}, r{outReg}");
+
+                if (needsFallback)
+                    fallbackLease.Dispose();
+
+                return;
+            }
+
             var trueLabel = EmissionContext.GenerateLabel("rel_true");
             var endLabel = EmissionContext.GenerateLabel("rel_end");
 

@@ -102,32 +102,41 @@ public partial class SharpieEmitter
 
                 if (lhs.Type.SizeOf > 2 || rhs.Type.SizeOf > 2)
                 {
-                    using var lhsBase = context.AcquireTempRegister();
-                    using var rhsBase = context.AcquireTempRegister();
                     using var aLow = context.AcquireTempRegister();
                     using var aHigh = context.AcquireTempRegister();
                     using var bLow = context.AcquireTempRegister();
                     using var bHigh = context.AcquireTempRegister();
 
-                    EmitExpression(lhs, lhsBase.Value, context);
-                    EmitExpression(rhs, rhsBase.Value, context);
+                    void LoadLong(CXCursor operand, CXCursor peeled, int lowReg, int highReg)
+                    {
+                        if (peeled.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+                        {
+                            long v = peeled.Evaluate.AsLongLong;
+                            context.Emit($"LDI r{lowReg}, {unchecked((ushort)(v & 0xFFFF))}");
+                            context.Emit($"LDI r{highReg}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+                        }
+                        else
+                        {
+                            using var baseReg = context.AcquireTempRegister();
+                            EmitExpression(operand, baseReg.Value, context);
+                            context.Emit($"LDP r{lowReg}, r{baseReg.Value}");
+                            context.Emit($"IADD r{baseReg.Value}, 2");
+                            context.Emit($"LDP r{highReg}, r{baseReg.Value}");
+                        }
+                    }
 
-                    context.Emit($"LDP r{aLow.Value}, r{lhsBase.Value}");
-                    context.Emit($"IADD r{lhsBase.Value}, 2");
-                    context.Emit($"LDP r{aHigh.Value}, r{lhsBase.Value}");
+                    LoadLong(operands[0], lhs, aLow.Value, aHigh.Value);
+                    LoadLong(operands[1], rhs, bLow.Value, bHigh.Value);
 
-                    context.Emit($"LDP r{bLow.Value}, r{rhsBase.Value}");
-                    context.Emit($"IADD r{rhsBase.Value}, 2");
-                    context.Emit($"LDP r{bHigh.Value}, r{rhsBase.Value}");
-
+                    using var signBit = context.AcquireTempRegister();
                     var labelCmpDone = EmissionContext.GenerateLabel("cmp_done");
 
                     context.Emit($"CMP r{aHigh.Value}, r{bHigh.Value}");
                     context.Emit($"JNE {labelCmpDone}");
 
-                    context.Emit($"LDI r{lhsBase.Value}, 0x8000");
-                    context.Emit($"XOR r{aLow.Value}, r{lhsBase.Value}");
-                    context.Emit($"XOR r{bLow.Value}, r{lhsBase.Value}");
+                    context.Emit($"LDI r{signBit.Value}, 0x8000");
+                    context.Emit($"XOR r{aLow.Value}, r{signBit.Value}");
+                    context.Emit($"XOR r{bLow.Value}, r{signBit.Value}");
                     context.Emit($"CMP r{aLow.Value}, r{bLow.Value}");
 
                     context.Emit($"{labelCmpDone}:");
