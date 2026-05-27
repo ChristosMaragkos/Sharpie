@@ -3,6 +3,7 @@
     <Project Path="src/Sharpie.Cli/Sharpie.Cli.csproj" />
     <Project Path="src/Sharpie.Core/Sharpie.Core.csproj" />
     <Project Path="src/Sharpie.Runner/RaylibCs/Sharpie.Runner.RaylibCs.csproj" />
+    <Project Path="src/Sharpie.Runner/Headless/Sharpie.Runner.Headless.csproj" />
     <Project Path="src/Sharpie.CCompiler/Sharpie.CCompiler.csproj" />
     <Project Path="src/Sharpie.Generator/Sharpie.Generator.csproj" />
     <Project Path="src/Sharpie.Assembler/Sharpie.Assembler.csproj" />
