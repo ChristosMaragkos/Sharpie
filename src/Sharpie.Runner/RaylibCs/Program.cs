@@ -112,7 +112,7 @@ emulator.Save -= saveHandler.SaveToDisk;
 video.Cleanup();
 audio.Cleanup();
 
-return;
+return emulator.ExitCode;
 
 void TryLoadCart()
 {

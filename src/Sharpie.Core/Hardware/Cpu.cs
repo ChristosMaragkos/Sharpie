@@ -27,6 +27,8 @@ internal partial class Cpu
     private ushort[] _registers = new ushort[32];
     private int _registerBankOffset => ((FlagRegister & 0x8000) >> 15) == 1 ? 16 : 0;
 
+    public int GetExitCode() => _registers[0];
+
     private ref ushort GetRegister(int index) => ref _registers[index + _registerBankOffset];
 
     private void FlipRegisterBanks()

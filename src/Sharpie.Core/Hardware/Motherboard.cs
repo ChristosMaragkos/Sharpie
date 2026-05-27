@@ -549,4 +549,6 @@ internal class Motherboard : IMotherboard
     {
         _ppu.Mode = mode;
     }
+
+    public int GetExitCode() => _cpu.GetExitCode();
 }
