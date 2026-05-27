@@ -302,6 +302,7 @@ Alloca:
 ; This subroutine overwrites these registers:
 ; - R1
 ; - R2
+; - R3
 FreeFrame:
 .SCOPE
     ICMP r1, 0
@@ -315,8 +316,6 @@ FreeFrame:
 
     PUSH r2
     Return:
-        GETSP r0
-        IADD r0, 2
         RET
 .ENDSCOPE
 
