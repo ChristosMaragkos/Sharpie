@@ -1,20 +1,21 @@
 int main(void) {
-  int x = 0;
-  for (int i = 0; i < 10; i++) {
-    x++;
-  }
+    int x = 150;
 
-  int y = 0;
-  int j = 0;
-  while (j < 9) {
-    y += j;
-    j++;
-  }
+    for (int i = 0; i < 50; ++i) {
+        --x;
+    }
 
-  int z = 1000;
-  int k = 0;
-  do {
-    z -= k;
-    k++;
-  } while (k < 10);
+    while (x > 50) {
+        --x;
+    }
+
+    do {
+        --x;
+    } while (x > 0);
+
+    if (x == 0) {
+        return 0;
+    }
+
+    return 1;
 }
