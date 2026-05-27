@@ -680,7 +680,13 @@ public static class Optimizer
                 }
 
                 // MOV rA, rB followed by ADD/SUB/AND/OR/XOR rC, rA -> use rB directly
-                // Also remove redundant trailing MOV rB, rA (store-back) when rA==rC
+                // Also remove redundant trailing MOV rB, rX (store-back) when possible.
+                // The rA == rC case (MOV rA, rB; ADD rA, rX) changes the destination
+                // register from rA to rB — this is ONLY allowed when the ADD is
+                // immediately followed by MOV rB, rA (a store-back that confirms rB
+                // is meant to be the accumulation target). Without the store-back,
+                // the transformation is blocked as it could destroy a loop-carried
+                // value (e.g. MOV r2, r9; ADD r2, r8 would corrupt r9).
                 if (
                     !current.IsAlt && !next.IsAlt
                     && current.Mnemonic == "MOV"
@@ -689,7 +695,28 @@ public static class Optimizer
                 {
                     if (current.Arg1 == next.Arg1)
                     {
-                        next.Arg1 = current.Arg2;
+                        // Only allow when followed by MOV rB, rA (store-back pattern)
+                        if (
+                            i + 2 < instructions.Count
+                            && !instructions[i + 2].IsLabel && !instructions[i + 2].IsAlt
+                            && instructions[i + 2].Mnemonic == "MOV"
+                            && instructions[i + 2].Arg1 == current.Arg2
+                            && instructions[i + 2].Arg2 == current.Arg1
+                        )
+                        {
+                            next.Arg1 = current.Arg2;
+                            next.RebuildText();
+                            instructions.RemoveAt(i + 2); // trailing store-back
+                            instructions.RemoveAt(i);     // MOV rA, rB
+                            changed = true;
+                            break;
+                        }
+                        // no store-back → unsafe to change destination
+                        continue;
+                    }
+                    else if (current.Arg1 == next.Arg2)
+                    {
+                        next.Arg2 = current.Arg2;
                         next.RebuildText();
 
                         if (
@@ -697,7 +724,7 @@ public static class Optimizer
                             && !instructions[i + 2].IsLabel && !instructions[i + 2].IsAlt
                             && instructions[i + 2].Mnemonic == "MOV"
                             && instructions[i + 2].Arg1 == current.Arg2
-                            && instructions[i + 2].Arg2 == current.Arg1
+                            && instructions[i + 2].Arg2 == next.Arg1
                         )
                         {
                             instructions.RemoveAt(i + 2);
@@ -707,14 +734,82 @@ public static class Optimizer
                         changed = true;
                         break;
                     }
-                    else if (current.Arg1 == next.Arg2)
+                }
+
+                // Scanning: MOV rA, rB; ...neutral...; OP rC, rA  ->  use rB directly
+                // Also handles CMP/ICMP (always safe since they're read-only).
+                // Stops at labels, jumps, and any instruction that uses or redefines rA
+                // (or redefines rB, which would invalidate the replacement value).
+                if (!current.IsAlt && current.Mnemonic == "MOV")
+                {
+                    bool foundTarget = false;
+                    for (int scan = 1; i + scan < instructions.Count; scan++)
                     {
-                        next.Arg2 = current.Arg2;
-                        next.RebuildText();
-                        instructions.RemoveAt(i);
-                        changed = true;
-                        break;
+                        var mid = instructions[i + scan];
+                        if (mid.IsComment || mid.IsDirective)
+                            continue;
+                        if (mid.IsLabel)
+                            break; // don't cross basic block boundaries
+
+                        if (mid.IsAlt) break;
+
+                        // MOV -> ... -> ADD/SUB/AND/OR/XOR rC, rA
+                        if (mid.Mnemonic is "ADD" or "SUB" or "AND" or "OR" or "XOR")
+                        {
+                            if (mid.Arg2 == current.Arg1 && mid.Arg1 != current.Arg1)
+                            {
+                                instructions.RemoveAt(i);
+                                var target = instructions[i + scan - 1];
+                                target.Arg2 = current.Arg2;
+                                target.RebuildText();
+
+                                // trailing MOV rB, rX (store-back)
+                                if (
+                                    i + scan < instructions.Count
+                                    && !instructions[i + scan].IsLabel && !instructions[i + scan].IsAlt
+                                    && instructions[i + scan].Mnemonic == "MOV"
+                                    && instructions[i + scan].Arg1 == current.Arg2
+                                    && instructions[i + scan].Arg2 == target.Arg1
+                                )
+                                {
+                                    instructions.RemoveAt(i + scan);
+                                }
+
+                                foundTarget = true;
+                                break;
+                            }
+                            // Arg1 == rA means destination change — blocked.
+                            // If rA is not in this op at all, continue scanning.
+                        }
+
+                        // MOV -> ... -> CMP/ICMP rA, rOther  (always safe, read-only)
+                        if (mid.Mnemonic is "CMP" or "ICMP")
+                        {
+                            if (mid.Arg1 == current.Arg1 || mid.Arg2 == current.Arg1)
+                            {
+                                string oldReg = current.Arg1;
+                                string newReg = current.Arg2;
+                                instructions.RemoveAt(i);
+                                var target = instructions[i + scan - 1];
+                                if (target.Arg1 == oldReg) target.Arg1 = newReg;
+                                if (target.Arg2 == oldReg) target.Arg2 = newReg;
+                                target.RebuildText();
+                                foundTarget = true;
+                                break;
+                            }
+                        }
+
+                        var midDefs = GetDefs(mid);
+                        var midUses = GetUses(mid);
+                        if (midDefs.Contains(current.Arg1) || midUses.Contains(current.Arg1))
+                            break;
+                        if (midDefs.Contains(current.Arg2))
+                            break; // rB redefined — value no longer matches rA
+
+                        if (mid.Mnemonic is "JMP" or "RET" or "HALT")
+                            break;
                     }
+                    if (foundTarget) { changed = true; break; }
                 }
 
                 // LDI rA, X -> LDI rB, Y -> MUL/ADD rA, rB => LDI rA, X*Y

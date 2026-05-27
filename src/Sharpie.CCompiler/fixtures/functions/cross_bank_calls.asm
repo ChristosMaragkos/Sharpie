@@ -12,6 +12,7 @@
 .GLOBAL
 
 Main:
+    PUSH r8
     PUSH r15
     GETSP r15
     MOV r6, r15
@@ -26,6 +27,7 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
+    MOV r8, r0
     LDI r2, _func_calculate_path
     MOV r6, r15
     IADD r6, 2
@@ -43,7 +45,8 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    MOV r1, r0
+    MOV r1, r8
+    ADD r1, r0
     STA r1, r15
     MOV r0, r15
     IADD r0, 4
@@ -55,14 +58,12 @@ Main:
     CALL SYS_FAR_CALL
     POP r14
     POP r13
-    LDP r1, r15
-    ADD r1, r0
-    MOV r0, r1
 epilogue_L0:
     MOV r6, r15
     IADD r6, 6
     SETSP r6
     POP r15
+    POP r8
     HALT
 .ENDGLOBAL
 

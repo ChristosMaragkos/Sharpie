@@ -21,8 +21,7 @@ Main:
     XOR r11, r11
     XOR r10, r10
 for_start_L1:
-    MOV r1, r10
-    ICMP r1, 10
+    ICMP r10, 10
     JGE for_end_L3
     INC r11
 for_inc_L2:
@@ -32,8 +31,7 @@ for_end_L3:
     XOR r12, r12
     XOR r8, r8
 while_start_L4:
-    MOV r1, r8
-    ICMP r1, 9
+    ICMP r8, 9
     JGE while_end_L5
     ADD r12, r8
     INC r8
@@ -45,8 +43,7 @@ do_start_L6:
     SUB r13, r9
     INC r9
 do_cond_L7:
-    MOV r1, r9
-    ICMP r1, 10
+    ICMP r9, 10
     JLT do_start_L6
 do_end_L8:
     XOR r0, r0

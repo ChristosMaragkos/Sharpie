@@ -22,8 +22,7 @@ Main:
     MOV r2, r9
     STV r2, r1
 while_start_L1:
-    MOV r1, r8
-    ICMP r1, 0
+    ICMP r8, 0
     JNE while_end_L2
     XOR r1, r1
     INPUT r1, r0

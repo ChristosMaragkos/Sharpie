@@ -49,7 +49,6 @@ Main:
     MOV r2, r3
     MOV r3, r4
     CALL _func_do_math
-    MOV r1, r0
 epilogue_L0:
     MOV r6, r15
     IADD r6, 6

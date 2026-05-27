@@ -57,27 +57,28 @@ epilogue_L0:
 .GLOBAL
 
 _func_add_six_numbers:
+    PUSH r8
     PUSH r12
-    PUSH r13
     PUSH r15
     GETSP r15
     MOV r6, r15
-    IADD r6, 16
+    IADD r6, 14
     LDP r7, r6
     MOV r12, r7
     MOV r6, r15
-    IADD r6, 18
+    IADD r6, 16
     LDP r7, r6
-    MOV r13, r7
+    MOV r8, r1
+    ADD r1, r2
     ADD r1, r3
     ADD r1, r4
     ADD r1, r12
-    ADD r1, r13
+    ADD r1, r7
     MOV r0, r1
 epilogue_L1:
     POP r15
-    POP r13
     POP r12
+    POP r8
     RET
 .ENDGLOBAL
 

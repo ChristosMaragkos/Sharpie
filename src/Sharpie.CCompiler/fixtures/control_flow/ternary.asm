@@ -22,8 +22,7 @@ Main:
     STA r1, r15
     LDI r1, 2
     ALT RND r0, r1
-    MOV r1, r0
-    ICMP r1, 0
+    ICMP r0, 0
     JNE ternary_false_L1
     LDI r0, 69
     JMP ternary_end_L2

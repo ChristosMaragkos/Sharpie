@@ -353,9 +353,8 @@ while_start_L1:
     CLS r1
     XOR r8, r8
 for_start_L3:
-    MOV r1, r8
     LDI r2, 24
-    CMP r1, r2
+    CMP r8, r2
     JGE for_end_L5
     LDI r1, _global_vertices
     LDI r3, _global_edges
@@ -798,12 +797,10 @@ if_L34:
     SUB r1, r10
     MOV r12, r1
 while_start_L38:
-    MOV r1, r8
     LDP r2, r14
-    CMP r1, r2
+    CMP r8, r2
     JEQ while_end_L39
-    MOV r2, r8
-    ICMP r2, 0
+    ICMP r8, 0
     JGE rel_true_L50
     XOR r1, r1
     JMP rel_end_L51
@@ -812,9 +809,8 @@ rel_true_L50:
 rel_end_L51:
     ICMP r1, 0
     JEQ logical_false_L48
-    MOV r2, r8
     LDI r3, 255
-    CMP r2, r3
+    CMP r8, r3
     JLE rel_true_L52
     XOR r1, r1
     JMP rel_end_L53
@@ -830,8 +826,7 @@ logical_false_L48:
 logical_end_L49:
     ICMP r1, 0
     JEQ logical_false_L45
-    MOV r2, r9
-    ICMP r2, 0
+    ICMP r9, 0
     JGE rel_true_L54
     XOR r1, r1
     JMP rel_end_L55
@@ -847,9 +842,8 @@ logical_false_L45:
 logical_end_L46:
     ICMP r1, 0
     JEQ logical_false_L42
-    MOV r2, r9
     LDI r3, 255
-    CMP r2, r3
+    CMP r9, r3
     JLE rel_true_L56
     XOR r1, r1
     JMP rel_end_L57
@@ -875,8 +869,7 @@ logical_end_L43:
     LDI r2, 4
     STV r2, r1
 if_L40:
-    MOV r1, r12
-    ICMP r1, 0
+    ICMP r12, 0
     JLT if_L58
     MOV r1, r9
     MOV r3, r15
@@ -911,14 +904,12 @@ else_L37:
     SUB r1, r11
     MOV r12, r1
 while_start_L59:
-    MOV r1, r9
     MOV r3, r14
     IADD r3, 2
     LDP r2, r3
-    CMP r1, r2
+    CMP r9, r2
     JEQ while_end_L60
-    MOV r2, r8
-    ICMP r2, 0
+    ICMP r8, 0
     JGE rel_true_L71
     XOR r1, r1
     JMP rel_end_L72
@@ -927,9 +918,8 @@ rel_true_L71:
 rel_end_L72:
     ICMP r1, 0
     JEQ logical_false_L69
-    MOV r2, r8
     LDI r3, 255
-    CMP r2, r3
+    CMP r8, r3
     JLE rel_true_L73
     XOR r1, r1
     JMP rel_end_L74
@@ -945,8 +935,7 @@ logical_false_L69:
 logical_end_L70:
     ICMP r1, 0
     JEQ logical_false_L66
-    MOV r2, r9
-    ICMP r2, 0
+    ICMP r9, 0
     JGE rel_true_L75
     XOR r1, r1
     JMP rel_end_L76
@@ -962,9 +951,8 @@ logical_false_L66:
 logical_end_L67:
     ICMP r1, 0
     JEQ logical_false_L63
-    MOV r2, r9
     LDI r3, 255
-    CMP r2, r3
+    CMP r9, r3
     JLE rel_true_L77
     XOR r1, r1
     JMP rel_end_L78
@@ -990,8 +978,7 @@ logical_end_L64:
     LDI r2, 4
     STV r2, r1
 if_L61:
-    MOV r1, r12
-    ICMP r1, 0
+    ICMP r12, 0
     JLT if_L79
     MOV r1, r8
     LDP r2, r15
@@ -1019,8 +1006,7 @@ if_L79:
     JMP while_start_L59
 while_end_L60:
 if_L36:
-    MOV r2, r8
-    ICMP r2, 0
+    ICMP r8, 0
     JGE rel_true_L90
     XOR r1, r1
     JMP rel_end_L91
@@ -1029,9 +1015,8 @@ rel_true_L90:
 rel_end_L91:
     ICMP r1, 0
     JEQ logical_false_L88
-    MOV r2, r8
     LDI r3, 255
-    CMP r2, r3
+    CMP r8, r3
     JLE rel_true_L92
     XOR r1, r1
     JMP rel_end_L93
@@ -1047,8 +1032,7 @@ logical_false_L88:
 logical_end_L89:
     ICMP r1, 0
     JEQ logical_false_L85
-    MOV r2, r9
-    ICMP r2, 0
+    ICMP r9, 0
     JGE rel_true_L94
     XOR r1, r1
     JMP rel_end_L95
@@ -1064,9 +1048,8 @@ logical_false_L85:
 logical_end_L86:
     ICMP r1, 0
     JEQ logical_false_L82
-    MOV r2, r9
     LDI r3, 255
-    CMP r2, r3
+    CMP r9, r3
     JLE rel_true_L96
     XOR r1, r1
     JMP rel_end_L97

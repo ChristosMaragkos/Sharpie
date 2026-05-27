@@ -22,8 +22,6 @@ epilogue_L0:
 
 _func_get_score:
     PUSH r8
-    PUSH r9
-    MOV r9, r1
     ICMP r1, 5
     JLT default_L7
     ICMP r1, 20
@@ -49,7 +47,6 @@ default_L7:
 switch_end_L2:
     MOV r0, r8
 epilogue_L1:
-    POP r9
     POP r8
     RET
 .ENDGLOBAL
