@@ -239,7 +239,8 @@ public sealed class EmissionContext
         }
 
         throw new InvalidOperationException(
-            "Expression is too complex for temporary register budget."
+            "Expression requires too many temporary registers. "
+            + "Break it into local variables when working with `long` (32-bit) types."
         );
     }
 

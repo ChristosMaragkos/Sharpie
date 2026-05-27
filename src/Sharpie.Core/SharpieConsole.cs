@@ -9,6 +9,7 @@ public class SharpieConsole
     public bool IsInBootMode => _motherboard.IsInBootMode;
     public bool IsForcedUpdate => _motherboard.IsForcedYield;
     public int ExitCode => _motherboard.GetExitCode();
+    public bool IsHalted => _motherboard.IsHalted;
 
     public SharpieConsole(
         IDisplayOutput display,

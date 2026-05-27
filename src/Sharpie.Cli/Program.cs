@@ -7,9 +7,9 @@ using Sharpie.Tools;
 
 namespace Sharpie.Cli;
 
-static class Program
+public static class Program
 {
-    static void Main(string[] args)
+    public static int Main(string[] args)
     {
         if (args.Length == 0 || args.Contains("-h") || args.Contains("--help"))
         {
@@ -20,15 +20,14 @@ static class Program
         try
         {
             var options = ParseArgs(args);
-            int exitCode = RunPipeline(options);
-            Environment.Exit(exitCode);
+            return RunPipeline(options);
         }
         catch (Exception e)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.Error.WriteLine($"Error: {e.Message}");
             Console.ResetColor();
-            Environment.Exit(1);
+            return 1;
         }
     }
 

@@ -302,6 +302,7 @@ Alloca:
 ; This subroutine overwrites these registers:
 ; - R1
 ; - R2
+; - R3
 FreeFrame:
 .SCOPE
     ICMP r1, 0
@@ -315,8 +316,6 @@ FreeFrame:
 
     PUSH r2
     Return:
-        GETSP r0
-        IADD r0, 2
         RET
 .ENDSCOPE
 
@@ -534,7 +533,7 @@ NoBring:
     CMP r8, r4
 
 HighDone:
-    JLT SkipSub         ; if remainder < divisor, skip
+    JC SkipSub          ; if remainder < divisor (unsigned), skip
 
     ; Subtract divisor from remainder
     SUB r8, r4

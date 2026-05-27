@@ -3,7 +3,7 @@ namespace Sharpie.Core.Drivers;
 public interface IDisplayOutput
 {
     void Initialize(int internalResolution, string windowTitle);
-    bool ShouldCloseWindow();
+    bool ShouldCloseWindow(SharpieConsole? emulator = null);
     void Cleanup();
     void HandleFramebuffer(byte[] frameBuffer);
 
