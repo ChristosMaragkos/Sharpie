@@ -1,11 +1,11 @@
 int main(void) {
-  int x = 500;
-  int *p = &x;
+    int x = 500;
+    int *p = &x;
 
-  // Manual pointer math
-  int *ptr = (int *)1000;
-  *ptr = 42;      // STA
-  int val = *ptr; // LDP
+    int *ptr = (int *)1000;
+    *ptr = 42;
+    int val = *ptr;
 
-  return val;
+    if (val != 42) return 1;
+    return 0;
 }
