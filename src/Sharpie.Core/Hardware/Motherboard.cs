@@ -551,4 +551,5 @@ internal class Motherboard : IMotherboard
     }
 
     public int GetExitCode() => _cpu.GetExitCode();
+    public bool IsHalted => _cpu.IsHalted;
 }
