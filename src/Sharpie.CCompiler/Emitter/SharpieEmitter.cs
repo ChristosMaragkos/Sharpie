@@ -670,11 +670,11 @@ public sealed partial class SharpieEmitter
                 {
                     var initExpr = PeelExpression(normalExprs[^1]);
 
+                    var typeKind = global.Type.CanonicalType.kind;
+
                     if (initExpr.Kind == CXCursorKind.CXCursor_StringLiteral)
                     {
                         ExtractStringLiteral(initExpr, out var rawString, out var existingLabel);
-
-                        var typeKind = global.Type.CanonicalType.kind;
 
                         // Array: char my_string[] = "Hello";
                         if (
@@ -696,7 +696,10 @@ public sealed partial class SharpieEmitter
                         }
                     }
                     // --- STANDARD NUMBERS ---
-                    else
+                    else if (
+                        typeKind != CXTypeKind.CXType_ConstantArray
+                        && typeKind != CXTypeKind.CXType_IncompleteArray
+                    )
                     {
                         long v = initExpr.Evaluate.AsLongLong;
                         if (sizeBytes <= 2)
