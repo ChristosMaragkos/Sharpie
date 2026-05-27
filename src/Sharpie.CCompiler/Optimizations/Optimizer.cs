@@ -657,8 +657,8 @@ public static class Optimizer
                 if (
                     !current.IsAlt
                     && !next.IsAlt
-                    && current.Mnemonic == "MOV"
-                    && next.Mnemonic == "CMP"
+                    && current.Mnemonic is "MOV"
+                    && next.Mnemonic is "CMP" or "ICMP"
                 )
                 {
                     if (current.Arg1 == next.Arg1)
