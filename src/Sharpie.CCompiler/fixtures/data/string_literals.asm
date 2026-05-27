@@ -26,10 +26,7 @@ Main:
     LDI r1, 20
     CALL SYS_ALLOC_STACKFRAME
     LDI r1, 97
-    MOV r2, r0
-    XOR r3, r3
-    ADD r2, r3
-    ALT STA r1, r2
+    ALT STA r1, r0
     XOR r1, r1
     MOV r2, r0
     IADD r2, 19

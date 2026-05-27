@@ -35,10 +35,7 @@ Main:
     LDI r3, 1
     CALL SYS_PRINT
     LDI r1, 90
-    MOV r2, r8
-    XOR r3, r3
-    ADD r2, r3
-    ALT STA r1, r2
+    ALT STA r1, r8
     MOV r1, r15
     LDI r2, str_L2
     LDI r3, 16

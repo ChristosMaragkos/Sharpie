@@ -136,6 +136,33 @@ public static class Optimizer
                     break;
                 }
 
+                if (
+                    !current.IsAlt && !next.IsAlt
+                    && current.Mnemonic is "XOR"
+                    && current.Arg1 == current.Arg2
+                    && current.Arg1 == next.Arg2
+                        )
+                {
+                    // XOR rX, rX; ADD/SUB rY, rX -> remove both
+                    if (next.Mnemonic is "ADD" or "SUB")
+                    {
+                        instructions.RemoveAt(i + 1);
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                    // XOR rX, rX; MUL rY, rX -> XOR rY, rY
+                    else if (next.Mnemonic is "MUL")
+                    {
+                        next.Mnemonic = "XOR";
+                        next.Arg2 = next.Arg1;
+                        next.RebuildText();
+                        instructions.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                }
+
                 // ALT IADD rX, 1 -> DINC rX
                 if (current.IsAlt && current.Arg2 == "1")
                 {
@@ -1228,10 +1255,9 @@ public static class Optimizer
                 var defs = GetDefs(inst);
                 foreach (var d in defs)
                 {
-                    if (d.StartsWith('r') && regToOffset.ContainsKey(d))
+                    if (d.StartsWith('r') && regToOffset.ContainsKey(d) && inst.Mnemonic != "MOV" && inst.Mnemonic is not ("IADD" or "ISUB"))
                     {
-                        if (inst.Mnemonic != "MOV" && inst.Mnemonic is not ("IADD" or "ISUB"))
-                            regToOffset.Remove(d);
+                        regToOffset.Remove(d);
                     }
                 }
 
@@ -1239,19 +1265,23 @@ public static class Optimizer
                     regToOffset["r15"] = 0;
 
                 if (!inst.IsAlt && inst.Mnemonic == "MOV" && inst.Arg2 == "r15")
+                {
                     regToOffset[inst.Arg1] = 0;
+                }
                 else if (!inst.IsAlt && inst.Mnemonic is "IADD" or "ISUB"
                          && regToOffset.ContainsKey(inst.Arg1)
                          && int.TryParse(inst.Arg2, out int iaddVal))
                 {
                     if (inst.Mnemonic == "IADD")
-                        regToOffset[inst.Arg1] = regToOffset[inst.Arg1] + iaddVal;
+                        regToOffset[inst.Arg1] += iaddVal;
                     else
-                        regToOffset[inst.Arg1] = regToOffset[inst.Arg1] - iaddVal;
+                        regToOffset[inst.Arg1] -= iaddVal;
                 }
                 else if (!inst.IsAlt && inst.Mnemonic == "MOV"
                          && regToOffset.TryGetValue(inst.Arg2, out int srcOff))
+                {
                     regToOffset[inst.Arg1] = srcOff;
+                }
 
                 // LDP from a known stack offset invalidates any STA before it
                 if (!inst.IsAlt && inst.Mnemonic == "LDP"
@@ -1289,9 +1319,7 @@ public static class Optimizer
                 if (inst.IsLabel || inst.IsComment || inst.IsDirective)
                     continue;
 
-                var defs = GetDefs(inst);
-
-                foreach (var d in defs)
+                foreach (var d in GetDefs(inst))
                 {
                     invalidAfter[d] = i;
                     if (d == "r15")
