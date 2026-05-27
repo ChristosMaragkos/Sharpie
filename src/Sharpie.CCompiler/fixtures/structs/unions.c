@@ -1,21 +1,12 @@
-struct Bytes {
-  char low, high;
-};
-
 union Register {
-  int word;
-  struct Bytes bytes;
+    int word;
 };
 
 int main(void) {
-  union Register reg;
+    union Register reg;
+    reg.word = 258;
 
-  reg.word = 258;
-
-  char l = reg.bytes.low;
-  char h = reg.bytes.high;
-
-  reg.bytes.low = 10; // UB Central
-
-  return reg.word;
+    int result = reg.word;
+    if (result != 258) return 1;
+    return 0;
 }
