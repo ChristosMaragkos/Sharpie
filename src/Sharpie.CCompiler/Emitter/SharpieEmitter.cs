@@ -56,6 +56,23 @@ public sealed partial class SharpieEmitter
             if (storageClass == CX_StorageClass.CX_SC_Extern)
                 continue;
 
+            // Skip incomplete-type tentative definitions that lack an initializer
+            // (e.g. `int arr[];`).  Without a completing definition elsewhere in the
+            // TU the type is never completed, so no storage should be emitted — it
+            // behaves like an `extern` declaration.  Emitting a default-sized stub
+            // (2 bytes when Type.SizeOf ≤ 0) would cause redefinition errors when
+            // another TU provides the real definition, and buffer overflows when that
+            // real definition is larger than the stub.
+            if (c.Type.SizeOf <= 0)
+            {
+                var hasInitExpr = GetChildren(c).Any(k =>
+                    k.Kind >= CXCursorKind.CXCursor_FirstExpr
+                    && k.Kind <= CXCursorKind.CXCursor_LastExpr
+                );
+                if (!hasInitExpr)
+                    continue;
+            }
+
             // Skip if a previous translation unit already emitted storage for this global
             // (only applies to extern linkage globals — static globals are per-TU)
             if (_crossFileGlobals?.Contains(name) == true)
