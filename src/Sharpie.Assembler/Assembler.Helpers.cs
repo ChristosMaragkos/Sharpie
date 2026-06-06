@@ -93,10 +93,12 @@ public partial class SharpieRomEmitter
     private static void VerifyBiosPrefix(string name, int lineNumber)
     {
         if (name.StartsWith("SYS_"))
+        {
             throw new AssemblySyntaxException(
                 "The SYS_* prefix is reserved for BIOS calls - you cannot use it for constants, enums, enum members or labels.",
                 lineNumber
             );
+        }
     }
 
     private static void AddBiosLabels()
@@ -169,10 +171,12 @@ public partial class SharpieRomEmitter
         {
             int result = Convert.ToInt32(cleanArg, style);
             if (result > limit)
+            {
                 throw new AssemblySyntaxException(
                     $"Numeric literal '{result}' is over the allowed limit of {limit}",
                     lineNumber
                 );
+            }
 
             return !negative ? result : -result;
         }
@@ -186,9 +190,11 @@ public partial class SharpieRomEmitter
     {
         var isChar = arg.StartsWith('\'') && arg.EndsWith('\'');
         if (isChar)
+        {
             return arg.Length == 3
                 ? TextHelper.AsciiToByte(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
+        }
 
         if (TryResolveConstant(arg, out var val))
             return (ushort)val;
@@ -220,9 +226,11 @@ public partial class SharpieRomEmitter
     {
         var isChar = arg.StartsWith('\'') && arg.EndsWith('\'');
         if (isChar)
+        {
             return arg.Length == 3
                 ? TextHelper.AsciiToByte(arg[1])
                 : throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
+        }
 
         if (TryResolveConstant(arg, out var val))
             return (byte)val;
@@ -247,10 +255,13 @@ public partial class SharpieRomEmitter
             ResolveEnumValue(arg, lineNum, out split, out value);
 
             if (value > 0x0F)
+            {
                 throw new AssemblySyntaxException(
                     $"Enum value {split[0]}::{split[1]} is not a valid register index - must be 0-15",
                     lineNum
                 );
+            }
+
             return (byte)value;
         }
 
@@ -262,10 +273,12 @@ public partial class SharpieRomEmitter
 
             var charVal = TextHelper.AsciiToByte(arg[1]);
             if (charVal < 0 || charVal >= 16)
+            {
                 throw new AssemblySyntaxException(
                     $"Register index {arg} ({charVal}) is not valid - must be 0-15",
                     lineNum
                 );
+            }
         }
 
         var cleanArg = arg;
@@ -275,25 +288,31 @@ public partial class SharpieRomEmitter
         if (TryResolveConstant(arg, out var constant))
         {
             if (constant < 0 || constant >= 16)
+            {
                 throw new AssemblySyntaxException(
                     $"Register index {constant} is not valid - must be 0-15",
                     lineNum
                 );
+            }
 
             return (byte)constant;
         }
 
         if (!byte.TryParse(cleanArg, out byte parsed))
+        {
             throw new AssemblySyntaxException(
                 $"Register index {arg} is not a valid number.",
                 lineNum
             );
+        }
 
         if (parsed < 0 || parsed >= 16)
+        {
             throw new AssemblySyntaxException(
                 $"Register index {parsed} is not valid - must be 0-15",
                 lineNum
             );
+        }
 
         return parsed;
     }
@@ -302,16 +321,18 @@ public partial class SharpieRomEmitter
     {
         split = arg.Split("::");
         if (split.Length != 2)
-            throw new AssemblySyntaxException($"Unexpected token: {split.Last()}", lineNum);
+            throw new AssemblySyntaxException($"Unexpected token: {split[^1]}", lineNum);
 
         if (!TryResolveEnum(split[0]))
             throw new AssemblySyntaxException($"Unknown enum {split[0]}", lineNum);
 
         if (!TryResolveEnumMember(split[0], split[1], out value))
+        {
             throw new AssemblySyntaxException(
                 $"Unknown value {split[1]} for enum {split[0]}",
                 lineNum
             );
+        }
     }
 
     private static int CalculateSpriteAddress(byte spriteIndex)

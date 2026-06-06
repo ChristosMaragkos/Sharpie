@@ -6,14 +6,15 @@ public struct TokenLine
     public string[]? Args { get; set; }
     public int? SourceLine { get; set; }
     public int? Address { get; set; }
+    public byte[]? BinaryData { get; set; }
 
     public TokenLine()
     {
-        (Opcode, Args, SourceLine) = (null, null, null);
+        (Opcode, Args, SourceLine, BinaryData) = (null, null, null, null);
     }
 
     /// Returns whether all properties are null, effectively determining if a non-empty line was processed.
-    public readonly bool ArePropertiesNull() => Opcode == null && Args == null;
+    public readonly bool ArePropertiesNull() => Opcode == null && Args == null && BinaryData == null;
 
     public override readonly string ToString()
     {
@@ -25,6 +26,9 @@ public struct TokenLine
         else
             for (int i = 0; i < Args.Length; i++)
                 str += $"\nArgs[{i}] = {Args[i]}";
+
+        if (BinaryData != null)
+            str += $"\nBinaryData = byte[{BinaryData.Length}]";
 
         return str;
     }

@@ -72,7 +72,10 @@ public class ScopeLevel
             Enums.TryGetValue(enumName, out var members)
             && members.TryGetValue(memberName, out value)
         )
+        {
             return true;
+        }
+
         value = 0;
         return Parent?.TryResolveEnumMember(enumName, memberName, out value) ?? false;
     }

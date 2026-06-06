@@ -22,13 +22,19 @@ public interface IRomBuffer
     public void WriteByte(byte value)
     {
         if (Cursor >= ByteBuffer.Length)
+        {
             throw new SharpieRomSizeException(
                 $"Could not write to {Name} - it would exceed the maximum size of {Size} by {Cursor - Size} bytes."
             );
+        }
+
         if (TouchedBytes[Cursor])
+        {
             throw new SharpieRomSizeException(
                 $"Could not write to {Name} - there has already been a write at address {Cursor} ({Cursor:X4})"
             );
+        }
+
         ByteBuffer[Cursor] = value;
         TouchedBytes[Cursor] = true;
         AdvanceCursor();
@@ -98,7 +104,7 @@ public class BankBuffer : IRomBuffer
     public ushort Cursor { get; private set; }
     public byte[] ByteBuffer { get; }
     public bool[] TouchedBytes { get; }
-    public static int TotalBanksCreated = 0;
+    public static int TotalBanksCreated;
     public string Name { get; init; }
     public List<TokenLine> Tokens { get; init; } = [];
     public Stack<ScopeLevel> Scopes { get; init; } = new();
@@ -144,9 +150,11 @@ public abstract class SpriteCapableBuffer : IRomBuffer
     public virtual void PositionCursor(int spriteIndex)
     {
         if (spriteIndex >= 256 || spriteIndex < 0)
+        {
             throw new AssemblySyntaxException(
                 $"Sprite index {spriteIndex} is out of the [0-255] range."
             );
+        }
     }
 
     public void SetCursor(int address)

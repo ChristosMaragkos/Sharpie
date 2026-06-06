@@ -5,7 +5,7 @@ namespace Sharpie.Assembler;
 
 public partial class SharpieRomEmitter
 {
-    private readonly bool _firmwareMode = false;
+    private readonly bool _firmwareMode;
 
     public SharpieRomEmitter(bool firmwareMode)
     {
@@ -51,9 +51,11 @@ public partial class SharpieRomEmitter
         else
         {
             if (!AllRegions.TryGetValue("FIRMWARE", out var frmwr))
+            {
                 throw new AssemblySyntaxException(
                     "How did you manage to exit the firmware region bank?"
                 );
+            }
 
             rom.AddRange(ProcessTokens(ref lineNum, frmwr));
         }
@@ -73,10 +75,12 @@ public partial class SharpieRomEmitter
             buffer.SetCursor(token.Address!.Value);
 
             if (token.Args == null)
+            {
                 throw new AssemblySyntaxException(
                     $"Expected arguments for opcode {token.Opcode}",
                     lineNum
                 );
+            }
 
             for (int i = 0; i < token.Args.Length; i++)
                 token.Args[i] = token.Args[i].Trim(' ', ',');
@@ -98,29 +102,29 @@ public partial class SharpieRomEmitter
                     case ".DB":
                     case ".BYTES":
                     case ".DATA":
-                    {
-                        int offset = 0;
-                        for (int i = 0; i < token.Args.Length; i++)
                         {
-                            var arg = token.Args[i];
-                            if (arg.StartsWith('"') && arg.EndsWith('"') && arg.Length >= 2)
+                            int offset = 0;
+                            for (int i = 0; i < token.Args.Length; i++)
                             {
-                                // Quoted string literal emits raw ASCII bytes.
-                                var str = arg.Substring(1, arg.Length - 2);
-                                foreach (char c in str)
+                                var arg = token.Args[i];
+                                if (arg.StartsWith('"') && arg.EndsWith('"') && arg.Length >= 2)
                                 {
-                                    WriteToRom(TextHelper.AsciiToByte(c), buffer, offset);
+                                    // Quoted string literal emits raw ASCII bytes.
+                                    var str = arg.Substring(1, arg.Length - 2);
+                                    foreach (char c in str)
+                                    {
+                                        WriteToRom(TextHelper.AsciiToByte(c), buffer, offset);
+                                        offset++;
+                                    }
+                                }
+                                else
+                                {
+                                    WriteToRom(ParseByte(arg, lineNum), buffer, offset);
                                     offset++;
                                 }
                             }
-                            else
-                            {
-                                WriteToRom(ParseByte(arg, lineNum), buffer, offset);
-                                offset++;
-                            }
+                            break;
                         }
-                        break;
-                    }
 
                     case ".DW":
                     case ".WORDS":
@@ -134,6 +138,21 @@ public partial class SharpieRomEmitter
                         for (int i = 0; i < ParseNumberLiteral(token.Args[0], false, lineNum); i++)
                         {
                             WriteToRom(0, buffer, i);
+                        }
+                        break;
+
+                    case ".INCBIN":
+                        if (token.BinaryData == null)
+                        {
+                            throw new AssemblySyntaxException(
+                                "Binary data is null for .INCBIN",
+                                lineNum
+                            );
+                        }
+
+                        for (int i = 0; i < token.BinaryData.Length; i++)
+                        {
+                            WriteToRom(token.BinaryData[i], buffer, i);
                         }
                         break;
                 }
@@ -204,9 +223,11 @@ public partial class SharpieRomEmitter
             }
         }
         if (scopeOpens != scopeCloses)
+        {
             throw new AssemblySyntaxException(
                 $"A .SCOPE directive was left without a matching .ENSCOPE in bank {buffer.Name}"
             );
+        }
 
         return buffer.ByteBuffer;
     }
