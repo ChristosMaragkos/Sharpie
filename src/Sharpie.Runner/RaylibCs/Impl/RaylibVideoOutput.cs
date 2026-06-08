@@ -51,6 +51,7 @@ public class RaylibVideoOutput : IDisplayOutput
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.AlwaysRunWindow);
         Raylib.InitWindow(startingSize, startingSize, title);
         Raylib.SetTargetFPS(60);
+        Raylib.SetWindowMonitor(0);
 
         var blank = Raylib.GenImageColor(_resolution, _resolution, Color.Blank);
         _screenTexture = Raylib.LoadTextureFromImage(blank);
