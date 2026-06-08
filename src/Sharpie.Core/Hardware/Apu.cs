@@ -4,23 +4,23 @@ namespace Sharpie.Core.Hardware;
 
 internal class Apu
 {
-    private IMotherboard _mobo;
+    private readonly IMotherboard _mobo;
 
-    private float[] _phases = new float[8];
+    private readonly float[] _phases = new float[8];
 
-    private float[] _volumes = new float[8];
-    private AdsrStage[] _stages = new AdsrStage[8];
+    private readonly float[] _volumes = new float[8];
+    private readonly AdsrStage[] _stages = new AdsrStage[8];
 
-    private ushort[] _lastFreq = new ushort[8];
-    private byte[] _lastControl = new byte[8];
+    private readonly ushort[] _lastFreq = new ushort[8];
+    private readonly byte[] _lastControl = new byte[8];
 
-    private Random _noiseGen = new();
-    private float[] _noiseValue = new float[8];
-    private int[] _noiseTimer = new int[8];
+    private readonly Random _noiseGen = new();
+    private readonly float[] _noiseValue = new float[8];
+    private readonly int[] _noiseTimer = new int[8];
 
-    private bool[] _notePriority = new bool[8];
+    private readonly bool[] _notePriority = new bool[8];
 
-    private static int SequencerCounter = 0;
+    private static int SequencerCounter;
 
     public Apu(IMotherboard mobo)
     {
@@ -98,14 +98,14 @@ internal class Apu
             var delta = currentFreq / 44100f;
             _phases[channel] += delta;
             if (_phases[channel] >= 1f)
-                _phases[channel] -= 1f;
+                _phases[channel]--;
 
             return channel switch
-                {
-                    0 or 1 => Square(_phases[channel], delta),
-                    2 or 3 => Triangle(_phases[channel]),
-                    _ => Sawtooth(_phases[channel], delta),
-                } * volume;
+            {
+                0 or 1 => Square(_phases[channel], delta),
+                2 or 3 => Triangle(_phases[channel]),
+                _ => Sawtooth(_phases[channel], delta),
+            } * volume;
         }
 
         // --- NOISE CHANNELS (6-7) ---
@@ -124,7 +124,7 @@ internal class Apu
         if (_noiseTimer[channel] >= period)
         {
             _noiseTimer[channel] = 0;
-            _noiseValue[channel] = (_noiseGen.NextSingle() * 2f - 1f) * 0.3f;
+            _noiseValue[channel] = ((_noiseGen.NextSingle() * 2f) - 1f) * 0.3f;
         }
 
         return _noiseValue[channel] * volume * volume * 2f;
@@ -133,31 +133,28 @@ internal class Apu
     private float ProcessEnvelope(int channel, byte control)
     {
         var gateOn = (control & 0x01) != 0;
-        var instrumentId = (control >> 1);
+        var instrumentId = control >> 1;
         var chanBaseAddr = Memory.AudioRamStart + (channel * 4);
         var chanMaxVolume = _mobo.ReadByte(chanBaseAddr + 2) / 255f;
         const float divisor = 100000f;
 
-        var instr = _mobo.ReadInstrument(instrumentId);
+        var (Attack, Decay, Sustain, Release) = _mobo.ReadInstrument(instrumentId);
 
-        var aStep = (instr.Attack / divisor) + 0.000001f;
-        var dStep = ((instr.Decay + 1) / divisor) + 0.000001f;
-        var sLevel = instr.Sustain / 255f;
+        var aStep = (Attack / divisor) + 0.000001f;
+        var dStep = ((Decay + 1) / divisor) + 0.000001f;
+        var sLevel = Sustain / 255f;
         var realSustain = sLevel * chanMaxVolume; // always a percentage of max volume
-        var rStep = (instr.Release / divisor) + 0.000001f;
+        var rStep = (Release / divisor) + 0.000001f;
 
         if (!gateOn)
         {
             if (_stages[channel] != AdsrStage.Idle)
                 _stages[channel] = AdsrStage.Release;
         }
-        else
+        else if (_stages[channel] == AdsrStage.Idle)
         {
-            if (_stages[channel] == AdsrStage.Idle)
-            {
-                _stages[channel] = AdsrStage.Attack;
-                _volumes[channel] = 0f;
-            }
+            _stages[channel] = AdsrStage.Attack;
+            _volumes[channel] = 0f;
         }
 
         switch (_stages[channel])
@@ -186,8 +183,6 @@ internal class Apu
                     _stages[channel] = AdsrStage.Idle;
                 }
                 break;
-            default:
-                break;
         }
 
         return _volumes[channel];
@@ -195,25 +190,23 @@ internal class Apu
 
     private static float Sawtooth(float phase, float delta)
     {
-        var initial = (phase * 2f - 1f);
+        var initial = (phase * 2f) - 1f;
         return initial - PolyBlep(phase, delta);
     }
 
     private static float Triangle(float phase)
     {
-        var value = 0f;
         if (phase < 0.25f)
-            value = phase * 4f;
+            return phase * 4f;
         else if (phase < 0.75f)
-            value = 2f - (phase * 4f);
+            return 2f - (phase * 4f);
         else
-            value = (phase * 4f) - 4f;
-        return value;
+            return (phase * 4f) - 4f;
     }
 
     private static float Square(float phase, float delta)
     {
-        var initial = (phase < 0.5f ? 1f : -1f);
+        var initial = phase < 0.5f ? 1f : -1f;
         var correction = PolyBlep(phase, delta);
         var shift = (phase + 0.5f) % 1f;
         correction -= PolyBlep(shift, delta);
@@ -291,17 +284,17 @@ internal class Apu
 
     internal void LoadDefaultInstruments()
     {
-        byte[][] defaults = new byte[][]
-        {
+        byte[][] defaults =
+        [
             // 0: Fast Attack, Full Sustain, Short Release
-            new byte[] { 0x0F, 0x00, 0xFF, 0x05 },
+            [0x0F, 0x00, 0xFF, 0x05],
             // 1: Soft Attack, Med Decay, Med Sustain
-            new byte[] { 0x05, 0x10, 0xAA, 0x10 },
+            [0x05, 0x10, 0xAA, 0x10],
             // 2: Slow Attack, Long Release
-            new byte[] { 0x02, 0x05, 0x88, 0x40 },
+            [0x02, 0x05, 0x88, 0x40],
             // 3: Instant Attack, Fast Decay, No Sustain
-            new byte[] { 0xF0, 0x20, 0x00, 0xF0 },
-        };
+            [0xF0, 0x20, 0x00, 0xF0],
+        ];
 
         for (var i = 0; i < 4; i++)
         {
@@ -315,12 +308,12 @@ internal class Apu
         if (phase < delta) // are we at the start of the way?
         {
             phase /= delta;
-            return (phase + phase - phase * phase - 1f); // phase phase phase phase phase phase
+            return phase + phase - (phase * phase) - 1f; // phase phase phase phase phase phase
         }
         else if (phase > 1f - delta) // are we at the end?
         {
             phase = (phase - 1f) / delta;
-            return (phase + phase + phase * phase + 1f);
+            return phase + phase + (phase * phase) + 1f;
         }
 
         return 0f; // no need to smooth non edge values
