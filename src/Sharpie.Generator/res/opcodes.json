@@ -708,12 +708,12 @@
   {
     "hex": "0xC2",
     "name": "SAVE",
-    "len": 1,
+    "len": 2,
     "logic": null,
-    "words": 0,
-    "pattern": "",
-    "desc": "Alerts the motherboard that a save was requested.",
-    "alt": ""
+    "words": 2,
+    "pattern": "RR",
+    "desc": "Saves R2 bytes starting from R1 to the save file.",
+    "alt": "Loads R2 bytes starting in R1 from the save file."
   },
   {
     "hex": "0xF0",

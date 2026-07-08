@@ -833,7 +833,8 @@ internal partial class Cpu
 
     private partial void Execute_SAVE(byte opcode, ref ushort pcDelta)
     {
-        _mobo.InvokeSave();
+        var (x, y) = ReadRegisterArgs();
+        _mobo.SaveToDisk(GetRegister(x), GetRegister(y));
     }
 
     private partial void Execute_INSTR(byte opcode, ref ushort pcDelta)

@@ -18,7 +18,8 @@ public static class Program
         HeadlessAudioOutput audio = new();
         HeadlessInputHandler input = new();
         HeadlessDebugOutput debug = new(100);
-        SharpieConsole emulator = new(video, audio, input, debug);
+        HeadlessSaveHandler saveHandler = new();
+        SharpieConsole emulator = new(video, audio, input, debug, saveHandler);
         emulator.LoadBios(GetEmbeddedBiosBinary());
         emulator.LoadCartridge(File.ReadAllBytes(args[0]));
 

@@ -15,11 +15,11 @@ public class SharpieConsole
         IDisplayOutput display,
         IAudioOutput audio,
         InputHandler input,
-        DebugOutput? debug
+        DebugOutput? debug,
+        ISaveHandler? save
     )
     {
-        _motherboard = new Motherboard(display, audio, input, debug);
-        _motherboard.SaveRequested += OnSaveRequested;
+        _motherboard = new Motherboard(display, audio, input, debug, save);
     }
 
     public void Step() => _motherboard.Step();
@@ -35,16 +35,4 @@ public class SharpieConsole
 
     public static void FillAudioBufferRange(float[] audioBuffer, int sampleAmount) =>
         Motherboard.FillAudioBufferRange(audioBuffer, sampleAmount);
-
-    public ReadOnlySpan<byte> GetSaveRam() => _motherboard.SaveRam();
-
-    public void LoadSaveData(byte[] saveData) => _motherboard.LoadSaveData(saveData);
-
-    private void OnSaveRequested(bool append = false)
-    {
-        Console.WriteLine($"A save was requested at {DateTime.Now}");
-        Save?.Invoke(GetSaveRam(), append);
-    }
-
-    public event Action<ReadOnlySpan<byte>, bool>? Save;
 }

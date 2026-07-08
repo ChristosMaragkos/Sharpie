@@ -354,7 +354,7 @@ internal partial class Cpu {
                 break;
 
             case 0xC2: //SAVE
-                pcDelta = 1;
+                pcDelta = 2;
                 Execute_SAVE(opcode, ref pcDelta);
                 break;
 

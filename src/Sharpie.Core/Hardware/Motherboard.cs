@@ -27,10 +27,17 @@ internal class Motherboard : IMotherboard
     private readonly IAudioOutput _audioDevice;
     private readonly InputHandler _inputDevice;
     private readonly DebugOutput? _dbg;
+    private readonly ISaveHandler? _ioDevice;
 
-    public event Action<bool>? SaveRequested;
+    public void SaveToDisk(ushort start, ushort length) => _ioDevice?.SaveToDisk(SaveRam(start, length));
+    public void LoadFromDisk(ushort dest, ushort amount)
+    {
+        if (_ioDevice is null) return;
 
-    public void InvokeSave(bool append = false) => SaveRequested?.Invoke(append);
+        var saveData = _ioDevice.LoadSaveData(amount);
+        if (saveData.IsEmpty) return;
+        _ram.LoadData(dest, saveData);
+    }
 
 #pragma warning disable RCS1169, IDE0044 // Make field read-only
     private bool _isPoweringOn = true;
@@ -49,7 +56,8 @@ internal class Motherboard : IMotherboard
         IDisplayOutput display,
         IAudioOutput audio,
         InputHandler input,
-        DebugOutput? dbg = null
+        DebugOutput? dbg = null,
+        ISaveHandler? io = null
     )
     {
         _ram = new Memory();
@@ -79,6 +87,7 @@ internal class Motherboard : IMotherboard
         _audioDevice = audio;
         _inputDevice = input;
         _dbg = dbg;
+        _ioDevice = io;
         SetupDisplay();
         SetupAudio();
         IsInBootMode = true;
@@ -509,7 +518,7 @@ internal class Motherboard : IMotherboard
         );
     }
 
-    public ReadOnlySpan<byte> SaveRam() => _ram.View(Memory.SaveRamStart, 512);
+    public ReadOnlySpan<byte> SaveRam(ushort start, ushort length) => _ram.View(start, length);
 
     public void Step()
     {

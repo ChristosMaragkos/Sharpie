@@ -48,7 +48,9 @@ internal class HeadlessSaveHandler : ISaveHandler
 {
     public string? SavePath => string.Empty;
 
-    public void SaveToDisk(ReadOnlySpan<byte> saveRam, bool append = false) { }
+    public void SaveToDisk(ReadOnlySpan<byte> saveRam) { }
+
+    public ReadOnlySpan<byte> LoadSaveData(ushort byteAmount) => [];
 }
 
 internal class HeadlessDebugOutput : DebugOutput

@@ -85,8 +85,8 @@ void __sharpie_vblnk(void);
 void __sharpie_force_vblnk(void);
 void __sharpie_switch_bank(unsigned char bank);
 unsigned char __sharpie_get_bank();
-void __sharpie_save(void);
-void __sharpie_halt(void);
+void __sharpie_save(void *start, size_t length);
+void __sharpie_load(void *dest, size_t length);
 void __sharpie_crash(void);
 int __sharpie_random(int maxExclusive);
 void __sharpie_set_cursor(int x, int y);
@@ -107,6 +107,9 @@ void __sharpie_debug(int value_to_print);
 // Automatically packs Attr (Low Byte) and Type (High Byte)
 #define draw_sprite(x, y, id, attr, type)                                      \
     __sharpie_draw(x, y, id, (attr) | ((type) << 8))
+
+#define save_data(src, size) __sharpie_save(src, size)
+#define load_data(src, size) __sharpie_load(src, size)
 
 #define yield() __sharpie_vblnk()
 #define restart_frame() __sharpie_force_vblnk()

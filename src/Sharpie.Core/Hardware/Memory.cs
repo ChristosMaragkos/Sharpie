@@ -19,7 +19,7 @@ internal class Memory
 
     private byte[][]? _banks;
     private int _currentBankIndex;
-    public int BankCount => _banks != null ? _banks.Length : 0;
+    public int BankCount => (_banks?.Length) ?? 0;
 
     public Memory(ushort lastAddress = ushort.MaxValue)
     {
@@ -88,9 +88,9 @@ internal class Memory
 
     public void WriteWord(int address, ushort value) => WriteWord((ushort)address, value);
 
-    public void LoadData(ushort startAddress, byte[] data)
+    public void LoadData(ushort startAddress, ReadOnlySpan<byte> data)
     {
-        Array.Copy(data, 0, _contents, startAddress, data.Length);
+        data.CopyTo(_contents.AsSpan(startAddress));
     }
 
     public void ClearRange(int from, int amount) => Array.Clear(_contents, from, amount);

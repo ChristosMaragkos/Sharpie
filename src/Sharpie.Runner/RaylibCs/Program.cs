@@ -27,7 +27,7 @@ if (args.Length != 0)
     }
 }
 
-var emulator = new SharpieConsole(video, audio, input, logger);
+var emulator = new SharpieConsole(video, audio, input, logger, saveHandler);
 emulator.LoadBios(biosBytes);
 
 #if Linux
@@ -68,8 +68,8 @@ while (!video.ShouldCloseWindow())
             if (filePath?.EndsWith(".shr") == true)
             {
                 romBytes = File.ReadAllBytes(filePath);
-                TryLoadCart();
                 saveHandler.SavePath = Path.ChangeExtension(filePath, ".sav");
+                TryLoadCart();
             }
         }
         catch (Exception e)
@@ -108,7 +108,6 @@ while (!video.ShouldCloseWindow())
     logger.LogAll();
 }
 
-emulator.Save -= saveHandler.SaveToDisk;
 video.Cleanup();
 audio.Cleanup();
 
@@ -118,11 +117,8 @@ void TryLoadCart()
 {
     if (romBytes != null)
     {
-        emulator.Save += saveHandler.SaveToDisk;
         Console.WriteLine($"Set up save callback with path: {saveHandler.SavePath}");
         emulator.LoadCartridge(romBytes);
-        if (File.Exists(saveHandler.SavePath))
-            emulator.LoadSaveData(File.ReadAllBytes(saveHandler.SavePath));
     }
 }
 

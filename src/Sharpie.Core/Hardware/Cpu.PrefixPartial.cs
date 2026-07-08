@@ -105,6 +105,15 @@ internal partial class Cpu
                     break;
                 }
 
+            case 0xC2:
+                {
+                    pcDelta = 2;
+                    var (x, y) = ReadRegisterArgs();
+
+                    _mobo.LoadFromDisk(GetRegister(x), GetRegister(y));
+                    break;
+                }
+
             case 0x40: // ADD
                 {
                     pcDelta = 2;

@@ -1,3 +1,4 @@
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
 using Sharpie.Core.Drivers;
 
 namespace Sharpie.Runner.RaylibCs.Impl;
@@ -6,27 +7,26 @@ public class RaylibSaveHandler : ISaveHandler
 {
     public string? SavePath { get; set; }
 
-    public void SaveToDisk(ReadOnlySpan<byte> saveRam, bool append = false)
+    public void SaveToDisk(ReadOnlySpan<byte> saveRam)
     {
+        Console.WriteLine($"Saving to {SavePath}");
         if (string.IsNullOrWhiteSpace(SavePath))
             throw new ArgumentNullException(nameof(SavePath), "No save path defined.");
-        var directoryName =
-            Path.GetDirectoryName(SavePath) ?? throw new ArgumentNullException(nameof(SavePath));
-        Directory.CreateDirectory(directoryName);
 
-        if (!append)
-            File.WriteAllBytes(SavePath, saveRam);
-        else
-        {
-            var existing = File.Open(SavePath, FileMode.Append);
-            if (!existing.CanWrite)
-            {
-                Console.WriteLine($"Missing necessary file permissions to write to {SavePath}");
-                return;
-            }
-
-            existing.Write(saveRam);
-        }
+        File.WriteAllBytes(SavePath, saveRam);
         Console.WriteLine($"Successfully wrote save data to {SavePath}");
+    }
+
+    public ReadOnlySpan<byte> LoadSaveData(ushort byteAmount)
+    {
+        Console.WriteLine("Loading");
+        if (string.IsNullOrWhiteSpace(SavePath))
+            throw new ArgumentNullException(nameof(SavePath), "No save path defined.");
+        if (!File.Exists(SavePath))
+            return [];
+
+        var data = File.ReadAllBytes(SavePath);
+        var totalAmount = data.Length < byteAmount ? data.Length : byteAmount;
+        return data.AsSpan(0, totalAmount);
     }
 }

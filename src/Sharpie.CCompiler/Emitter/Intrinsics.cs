@@ -116,10 +116,10 @@ public partial class SharpieEmitter
                 context.Emit("BANK r1");
                 return true;
             case "__sharpie_save":
-                context.Emit("SAVE");
+                context.Emit("SAVE r1, r2");
                 return true;
-            case "__sharpie_append_save":
-                context.Emit("ALT SAVE");
+            case "__sharpie_load":
+                context.Emit("ALT SAVE r1, r2");
                 return true;
             case "__sharpie_halt":
                 context.Emit("HALT");
