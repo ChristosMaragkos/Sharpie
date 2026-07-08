@@ -52,6 +52,7 @@ public class RaylibVideoOutput : IDisplayOutput
         Raylib.InitWindow(startingSize, startingSize, title);
         Raylib.SetTargetFPS(60);
         Raylib.SetWindowMonitor(0);
+        Raylib.MaximizeWindow();
 
         var blank = Raylib.GenImageColor(_resolution, _resolution, Color.Blank);
         _screenTexture = Raylib.LoadTextureFromImage(blank);
