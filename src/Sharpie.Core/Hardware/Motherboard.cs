@@ -15,7 +15,6 @@ internal class Motherboard : IMotherboard
     private readonly Sequencer _sequencer;
 
     public bool IsInBootMode { get; private set; }
-    private const ushort ReservedSpaceStart = Memory.ReservedSpaceStart;
     private byte[] _cartPalette = new byte[16];
 
     public byte FontColorIndex { get; private set; } = 1;
@@ -33,7 +32,9 @@ internal class Motherboard : IMotherboard
 
     public void InvokeSave(bool append = false) => SaveRequested?.Invoke(append);
 
+#pragma warning disable RCS1169, IDE0044 // Make field read-only
     private bool _isPoweringOn = true;
+#pragma warning restore RCS1169, IDE0044 // Make field read-only
 
     private enum BiosFlagAddresses : ushort
     {
@@ -67,8 +68,12 @@ internal class Motherboard : IMotherboard
         _sequencer = new Sequencer(this);
 
         for (int i = 0; i < 32; i++)
+        {
             for (int j = 0; j < 32; j++)
+            {
                 TextGrid[i, j] = 0xFF;
+            }
+        }
 
         _displayDevice = display;
         _audioDevice = audio;
@@ -200,7 +205,7 @@ internal class Motherboard : IMotherboard
             _ram.WriteByte((ushort)BiosFlagAddresses.Version, versionLow);
             _ram.WriteByte((ushort)BiosFlagAddresses.Version + 1, versionHigh);
 
-            _cartPalette = header.Skip(48).ToArray();
+            _cartPalette = [.. header.Skip(48)];
 
             var cartData = fileData.Skip(80).ToArray();
 
@@ -216,7 +221,7 @@ internal class Motherboard : IMotherboard
                 cartData.AsSpan(spriteAtlasOffset, SpriteAtlasSize).ToArray()
             );
 
-            var bankDataOffset = FixedRomSize;
+            const int bankDataOffset = FixedRomSize;
             var bankDataLength = spriteAtlasOffset - bankDataOffset;
             var bankCount = bankDataLength / BankSize;
 
@@ -226,7 +231,7 @@ internal class Motherboard : IMotherboard
 
                 for (int i = 0; i < bankCount; i++)
                 {
-                    banks[i] = cartData.AsSpan(bankDataOffset + i * BankSize, BankSize).ToArray();
+                    banks[i] = cartData.AsSpan(bankDataOffset + (i * BankSize), BankSize).ToArray();
                 }
 
                 _ram.SetBanks(banks);
@@ -413,7 +418,9 @@ internal class Motherboard : IMotherboard
                 (targAttr & (ushort)SpriteFlags.Background) != 0
                 || (targAttr & (ushort)SpriteFlags.Hud) != 0
             )
+            {
                 continue;
+            }
 
             // if this seems unintuitive, it's because it's actual math. Don't worry about it.
             if (x < targX + 8 && x + 8 > targX && y < targY + 8 && y + 8 > targY)
@@ -517,10 +524,7 @@ internal class Motherboard : IMotherboard
             }
 
             GetInputState();
-            if (!IsForcedYield)
-            {
-                VBlank();
-            }
+            VBlank();
             _cpu.IsAwaitingVBlank = false;
         }
         catch (Exception e)
@@ -533,7 +537,7 @@ internal class Motherboard : IMotherboard
 
     internal void LoadSaveData(byte[] saveData)
     {
-        _ram.LoadData(Memory.SaveRamStart, saveData.Take(512).ToArray());
+        _ram.LoadData(Memory.SaveRamStart, [.. saveData.Take(512)]);
     }
 
     public int GetCurrentBank()
