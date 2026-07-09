@@ -13,9 +13,6 @@ typedef unsigned char uint8_t;
 typedef signed long int32_t;
 typedef unsigned long uint32_t;
 
-#define SRAM_START ((volatile uint8_t *)0xF820)
-#define SRAM_SIZE 512
-
 #define ARAM_START ((volatile uint8_t *)0xF800)
 
 #define BANK(n) __attribute__((annotate("bank_" #n)))
