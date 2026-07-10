@@ -1,25 +1,8 @@
 #pragma once
 
+#include "sharpie_defs.h"
+
 // TODO: Colors enum?
-
-typedef unsigned int size_t;
-
-typedef signed int int16_t;
-typedef unsigned int uint16_t;
-
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-
-typedef signed long int32_t;
-typedef unsigned long uint32_t;
-
-#define ARAM_START ((volatile uint8_t *)0xF800)
-
-#define BANK(n) __attribute__((annotate("bank_" #n)))
-
-#ifndef NULL
-#define NULL ((void *)(0))
-#endif
 
 typedef enum {
     ATTR_NONE = 0,
@@ -42,17 +25,22 @@ typedef enum {
 } AudioChannel;
 
 typedef enum {
-    UP = 1 << 0,
-    DOWN = 1 << 1,
-    LEFT = 1 << 2,
-    RIGHT = 1 << 3,
-    A = 1 << 4,
-    B = 1 << 5,
-    START = 1 << 6,
-    OPTION = 1 << 7
+    BTN_UP = 1 << 0,
+    BTN_DOWN = 1 << 1,
+    BTN_LEFT = 1 << 2,
+    BTN_RIGHT = 1 << 3,
+    BTN_A = 1 << 4,
+    BTN_B = 1 << 5,
+    BTN_START = 1 << 6,
+    BTN_OPTION = 1 << 7
 } Button;
 
-typedef enum { DEFAULT = 0, NO_TEXT = 1, NO_OAM = 2, NONE = 3 } BlitMode;
+typedef enum {
+    BLT_DEFAULT = 0,
+    BLT_NO_TEXT = 1,
+    BLT_NO_OAM = 2,
+    BLT_NONE = 3
+} BlitMode;
 
 // BIOS
 void *__sharpie_alloca(size_t byteAmount);

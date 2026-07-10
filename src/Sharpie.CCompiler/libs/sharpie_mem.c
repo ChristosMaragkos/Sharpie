@@ -1,5 +1,5 @@
 #include "sharpie_mem.h"
-#include "sharpie.h"
+#include "sharpie_defs.h"
 
 struct ArenaAllocator {
     void *data;

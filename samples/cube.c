@@ -1,4 +1,4 @@
-#include "../headers/sharpie.h"
+#include "./include/sharpie.h"
 
 // cube.c contains an entirely software-driven 3D wireframe renderer that runs
 // natively on Sharpie. It runs thanks to v0.4's VRAM access instructions and a
@@ -40,18 +40,10 @@ const unsigned char CENTER = 128;
 
 const int FOV = 96;
 
-typedef struct {
-    int x, y;
-} Vec2;
-
-typedef struct {
-    int x, y, z;
-} Vec3;
-
 /*
  *   Draws a single pixel at the X and Y points of a 2D vector.
  */
-void draw_point(Vec2 *p) {
+void draw_point(Vector2 *p) {
     if (p->x > WIDTH || p->x < 0 || p->y > HEIGHT || p->y < 0)
         return;
 
@@ -61,8 +53,8 @@ void draw_point(Vec2 *p) {
  *   Converts a given 2D vector representing world coordinates to one
  *   representing screen coordinates.
  */
-Vec2 world_to_screen(Vec3 *p) {
-    Vec2 out;
+Vector2 world_to_screen(Vector3 *p) {
+    Vector2 out;
 
     if (p->z <= 0) {
         out.x = -1;
@@ -75,7 +67,7 @@ Vec2 world_to_screen(Vec3 *p) {
     return out;
 }
 
-void rotate_xz(Vec3 *p, unsigned char angle) {
+void rotate_xz(Vector3 *p, unsigned char angle) {
     // x' = x * cos - z * sin, z' = x * sin + z * cos
     int s = sin(angle);
     int c = cos(angle);
@@ -92,9 +84,9 @@ void rotate_xz(Vec3 *p, unsigned char angle) {
 /*
  * Shove our cube further down the "world" since Z is also centered on us
  */
-void translate_z(Vec3 *p, int amount) { p->z += amount; }
+void translate_z(Vector3 *p, int amount) { p->z += amount; }
 
-void line_bresenham(Vec2 *p1, Vec2 *p2) {
+void line_bresenham(Vector2 *p1, Vector2 *p2) {
     int stepX, stepY;
     int dx = p2->x - p1->x;
     if (dx > 0) {
@@ -113,7 +105,7 @@ void line_bresenham(Vec2 *p1, Vec2 *p2) {
     }
 
     int error;
-    Vec2 v;
+    Vector2 v;
 
     int x = p1->x;
     int y = p1->y;
@@ -153,7 +145,7 @@ void line_bresenham(Vec2 *p1, Vec2 *p2) {
         write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
 }
 
-Vec3 vertices[8] = {
+Vector3 vertices[8] = {
     {-32, 32, 32},
     {32, 32, 32},
     {32, -32, 32},
@@ -172,10 +164,10 @@ unsigned char angle = 0;
 unsigned char dAngle = 0;
 
 int main(void) {
-    set_blit_mode(NONE);
+    set_blit_mode(BLT_NONE);
 
-    Vec3 v, v1;
-    Vec2 p, p1;
+    Vector3 v, v1;
+    Vector2 p, p1;
 
     while (1) {
         clear_screen(0);

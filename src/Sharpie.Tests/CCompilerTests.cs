@@ -56,7 +56,8 @@ public class CCompilerTests
 
     public static TheoryData<string> GetFixtures()
     {
-        var files = Directory.GetFiles(FixturesDir, "*.c", SearchOption.AllDirectories);
+        var files = Directory.GetFiles(FixturesDir, "*.c", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "headers" + Path.DirectorySeparatorChar));
         var cache = LoadCache();
 
         files = [.. files.Where(f =>
