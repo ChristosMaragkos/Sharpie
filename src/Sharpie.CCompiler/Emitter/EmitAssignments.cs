@@ -239,157 +239,58 @@ public partial class SharpieEmitter
         context.Emit($"LDP r{lhsHigh.Value}, r{addrReg.Value}");
         context.Emit($"IADD r{addrReg.Value}, -2");
 
-        if (
-            kind
-            is CXBinaryOperatorKind.CXBinaryOperator_ShlAssign
-                or CXBinaryOperatorKind.CXBinaryOperator_ShrAssign
-        )
+        string cmpName = kind switch
         {
-            using var shift = context.AcquireTempRegister();
-            var shiftedPeeledRhs = PeelExpression(rhs);
+            CXBinaryOperatorKind.CXBinaryOperator_AddAssign => "add",
+            CXBinaryOperatorKind.CXBinaryOperator_SubAssign => "sub",
+            CXBinaryOperatorKind.CXBinaryOperator_MulAssign => "mul",
+            CXBinaryOperatorKind.CXBinaryOperator_AndAssign => "and",
+            CXBinaryOperatorKind.CXBinaryOperator_OrAssign => "or",
+            CXBinaryOperatorKind.CXBinaryOperator_XorAssign => "xor",
+            CXBinaryOperatorKind.CXBinaryOperator_ShlAssign => "shl",
+            CXBinaryOperatorKind.CXBinaryOperator_ShrAssign => "shr",
+            CXBinaryOperatorKind.CXBinaryOperator_DivAssign => "div",
+            CXBinaryOperatorKind.CXBinaryOperator_RemAssign => "mod",
+            _ => throw new InvalidOperationException($"Unsupported long compound assignment: {kind}")
+        };
 
-            if (shiftedPeeledRhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+        if (kind is CXBinaryOperatorKind.CXBinaryOperator_ShlAssign or CXBinaryOperatorKind.CXBinaryOperator_ShrAssign)
+        {
+            var peeledRhs = PeelExpression(rhs);
+            if (peeledRhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
             {
-                long sv = shiftedPeeledRhs.Evaluate.AsLongLong;
-                context.Emit($"LDI r{shift.Value}, {unchecked((ushort)sv)}");
+                long sv = peeledRhs.Evaluate.AsLongLong;
+                if (sv == 0)
+                {
+                    context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
+                    context.Emit($"IADD r{addrReg.Value}, 2");
+                    context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
+                    return;
+                }
+                context.Emit($"LDI r4, {unchecked((ushort)sv)}");
             }
             else
             {
-                EmitExpression(rhs, shift.Value, context);
+                using var src = context.AcquireTempRegister();
+                EmitExpression(rhs, src.Value, context);
+                context.Emit($"MOV r4, r{src.Value}");
             }
-
-            if (kind == CXBinaryOperatorKind.CXBinaryOperator_ShlAssign)
-            {
-                using var origLow = context.AcquireTempRegister();
-                context.Emit($"MOV r{origLow.Value}, r{lhsLow.Value}");
-                context.Emit($"SHL r{lhsLow.Value}, r{shift.Value}");
-                context.Emit($"SHL r{lhsHigh.Value}, r{shift.Value}");
-                context.Emit($"ALT SHL r{origLow.Value}, r{shift.Value}");
-                context.Emit($"OR r{lhsHigh.Value}, r{origLow.Value}");
-            }
-            else
-            {
-                using var origHigh = context.AcquireTempRegister();
-                context.Emit($"MOV r{origHigh.Value}, r{lhsHigh.Value}");
-                context.Emit($"SHR r{lhsHigh.Value}, r{shift.Value}");
-                context.Emit($"SHR r{lhsLow.Value}, r{shift.Value}");
-                context.Emit($"ALT SHR r{origHigh.Value}, r{shift.Value}");
-                context.Emit($"OR r{lhsLow.Value}, r{origHigh.Value}");
-            }
-
-            context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
-            context.Emit($"IADD r{addrReg.Value}, 2");
-            context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
-            return;
-        }
-
-        using var rhsLow = context.AcquireTempRegister();
-        using var rhsHigh = context.AcquireTempRegister();
-        var peeledRhs = PeelExpression(rhs);
-
-        if (peeledRhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-        {
-            long v = peeledRhs.Evaluate.AsLongLong;
-            context.Emit($"LDI r{rhsLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-            context.Emit($"LDI r{rhsHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+            context.Emit($"XOR r3, r3");
         }
         else
         {
-            using var src = context.AcquireTempRegister();
-            EmitExpression(rhs, src.Value, context);
-            context.Emit($"LDP r{rhsLow.Value}, r{src.Value}");
-            context.Emit($"IADD r{src.Value}, 2");
-            context.Emit($"LDP r{rhsHigh.Value}, r{src.Value}");
+            LoadLongToHighLow(rhs, PeelExpression(rhs), 3, 4, context);
         }
 
-        switch (kind)
-        {
-            case CXBinaryOperatorKind.CXBinaryOperator_AddAssign:
-                context.Emit($"ADD r{lhsLow.Value}, r{rhsLow.Value}");
-                context.Emit($"ALT ADD r{lhsHigh.Value}, r{rhsHigh.Value}");
-                break;
-            case CXBinaryOperatorKind.CXBinaryOperator_SubAssign:
-                context.Emit($"SUB r{lhsLow.Value}, r{rhsLow.Value}");
-                context.Emit($"ALT SUB r{lhsHigh.Value}, r{rhsHigh.Value}");
-                break;
-            case CXBinaryOperatorKind.CXBinaryOperator_AndAssign:
-                context.Emit($"AND r{lhsLow.Value}, r{rhsLow.Value}");
-                context.Emit($"AND r{lhsHigh.Value}, r{rhsHigh.Value}");
-                break;
-            case CXBinaryOperatorKind.CXBinaryOperator_OrAssign:
-                context.Emit($"OR r{lhsLow.Value}, r{rhsLow.Value}");
-                context.Emit($"OR r{lhsHigh.Value}, r{rhsHigh.Value}");
-                break;
-            case CXBinaryOperatorKind.CXBinaryOperator_XorAssign:
-                context.Emit($"XOR r{lhsLow.Value}, r{rhsLow.Value}");
-                context.Emit($"XOR r{lhsHigh.Value}, r{rhsHigh.Value}");
-                break;
-            case CXBinaryOperatorKind.CXBinaryOperator_MulAssign:
-                {
-                    using var origLow = context.AcquireTempRegister();
-                    using var acc = context.AcquireTempRegister();
-                    context.Emit($"MOV r{origLow.Value}, r{lhsLow.Value}");
-                    context.Emit($"MUL r{lhsLow.Value}, r{rhsLow.Value}");
-                    context.Emit($"MOV r{acc.Value}, r{origLow.Value}");
-                    context.Emit($"ALT MUL r{acc.Value}, r{rhsLow.Value}");
-                    context.Emit($"MUL r{origLow.Value}, r{rhsHigh.Value}");
-                    context.Emit($"ADD r{acc.Value}, r{origLow.Value}");
-                    context.Emit($"MOV r{origLow.Value}, r{lhsHigh.Value}");
-                    context.Emit($"MUL r{origLow.Value}, r{rhsLow.Value}");
-                    context.Emit($"ADD r{acc.Value}, r{origLow.Value}");
-                    context.Emit($"MOV r{lhsHigh.Value}, r{acc.Value}");
-                    break;
-                }
-            case CXBinaryOperatorKind.CXBinaryOperator_DivAssign:
-            case CXBinaryOperatorKind.CXBinaryOperator_RemAssign:
-                {
-                    var tempLabel = EmissionContext.GenerateLabel("div_temp");
-                    var tempSpace = context.AllocateStorage(tempLabel, true, 4);
-                    using var bufAddr = context.AcquireTempRegister();
-                    context.Emit($"MOV r{bufAddr.Value}, r15");
-                    AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
+        context.Emit("MOV r0, r{addrReg.Value}");
+        context.Emit($"MOV r1, r{lhsHigh.Value}");
+        context.Emit($"MOV r2, r{lhsLow.Value}");
 
-                    context.Emit($"PUSH r{addrReg.Value}");
+        context.Emit($"CALL _func___injected_32bit_{cmpName}");
 
-                    context.Emit($"MOV r1, r{lhsHigh.Value}");
-                    context.Emit($"MOV r2, r{lhsLow.Value}");
-
-                    context.Emit($"MOV r3, r{rhsHigh.Value}");
-                    context.Emit($"MOV r4, r{rhsLow.Value}");
-
-                    int mode = kind == CXBinaryOperatorKind.CXBinaryOperator_DivAssign ? 0 : 1;
-                    context.Emit($"LDI r0, {mode}");
-                    context.Emit("PUSH r0");
-                    context.Emit($"PUSH r{bufAddr.Value}");
-
-                    context.Emit("CALL SYS_DIV_32");
-
-                    context.Emit("POP r0");
-                    context.Emit("POP r0");
-
-                    context.Emit($"POP r{addrReg.Value}");
-
-                    context.Emit($"MOV r{bufAddr.Value}, r15");
-                    AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
-
-                    context.Emit($"LDP r{lhsLow.Value}, r{bufAddr.Value}");
-                    context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
-                    context.Emit($"IADD r{bufAddr.Value}, 2");
-                    context.Emit($"IADD r{addrReg.Value}, 2");
-                    context.Emit($"LDP r{lhsHigh.Value}, r{bufAddr.Value}");
-                    context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
-                    break;
-                }
-            default:
-                throw new InvalidOperationException($"Unsupported long compound assignment: {kind}");
-        }
-
-        if (kind != CXBinaryOperatorKind.CXBinaryOperator_DivAssign && kind != CXBinaryOperatorKind.CXBinaryOperator_RemAssign)
-        {
-            context.Emit($"STA r{lhsLow.Value}, r{addrReg.Value}");
-            context.Emit($"IADD r{addrReg.Value}, 2");
-            context.Emit($"STA r{lhsHigh.Value}, r{addrReg.Value}");
-        }
+        context.Emit("STA r2, r0");
+        context.Emit("IADD r0, 2");
+        context.Emit("STA r1, r0");
     }
 
     private static void EmitVariableDeclaration(CXCursor varDecl, EmissionContext context)

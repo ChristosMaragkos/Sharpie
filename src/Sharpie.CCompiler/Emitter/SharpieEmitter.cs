@@ -417,6 +417,9 @@ public sealed partial class SharpieEmitter
             asm.AppendLine("");
         }
 
+        // Inject 32-bit helper functions into the default region
+        defAsm.AppendLine(InjectedFunctions.GenerateAll());
+
         var result = new StringBuilder();
 
         string defaultRegionName = defaultBank == -1 ? "FIXED" : $"BANK_{defaultBank}";

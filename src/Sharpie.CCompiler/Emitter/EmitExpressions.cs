@@ -597,7 +597,21 @@ public partial class SharpieEmitter
         {
             if (lhs.Type.SizeOf > 2 || rhs.Type.SizeOf > 2)
             {
-                EmitLongComparison(kind, lhs, rhs, outReg, context);
+                string name = kind switch
+                {
+                    CXBinaryOperatorKind.CXBinaryOperator_EQ => "eq",
+                    CXBinaryOperatorKind.CXBinaryOperator_NE => "neq",
+                    CXBinaryOperatorKind.CXBinaryOperator_LT => "lt",
+                    CXBinaryOperatorKind.CXBinaryOperator_GT => "gt",
+                    CXBinaryOperatorKind.CXBinaryOperator_LE => "le",
+                    CXBinaryOperatorKind.CXBinaryOperator_GE => "ge",
+                    _ => throw new InvalidOperationException($"Unsupported long comparison: {kind}")
+                };
+
+                LoadLongToHighLow(lhs, PeelExpression(lhs), 1, 2, context);
+                LoadLongToHighLow(rhs, PeelExpression(rhs), 3, 4, context);
+                context.Emit($"CALL _func___injected_32bit_{name}");
+                context.Emit($"MOV r{outReg}, r2");
 
                 if (targetReg >= 0 && targetReg != outReg)
                     context.Emit($"MOV r{targetReg}, r{outReg}");

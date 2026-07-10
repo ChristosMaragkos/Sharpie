@@ -69,62 +69,16 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
-                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
-                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
+                        string name = kind == CXBinaryOperatorKind.CXBinaryOperator_Add ? "add" : "sub";
 
-                        using var lhsLow = context.AcquireTempRegister();
-                        using var lhsHigh = context.AcquireTempRegister();
-
-                        if (lhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(lhsLow.Value, lhsHigh.Value, lhsSlot, context);
-                        }
-                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = lhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{lhsLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{lhsHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[0], src.Value, context);
-                            context.Emit($"LDP r{lhsLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{lhsHigh.Value}, r{src.Value}");
-                        }
-
-                        using var rhsLow = context.AcquireTempRegister();
-                        using var rhsHigh = context.AcquireTempRegister();
-
-                        if (rhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(rhsLow.Value, rhsHigh.Value, rhsSlot, context);
-                        }
-                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = rhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{rhsLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{rhsHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[1], src.Value, context);
-                            context.Emit($"LDP r{rhsLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{rhsHigh.Value}, r{src.Value}");
-                        }
-
-                        string op = kind == CXBinaryOperatorKind.CXBinaryOperator_Add ? "ADD" : "SUB";
-                        string altOp = kind == CXBinaryOperatorKind.CXBinaryOperator_Add ? "ALT ADD" : "ALT SUB";
-
-                        context.Emit($"{op} r{lhsLow.Value}, r{rhsLow.Value}");
-                        context.Emit($"{altOp} r{lhsHigh.Value}, r{rhsHigh.Value}");
-
-                        context.Emit($"STA r{lhsLow.Value}, r{destAddrReg}");
-                        context.Emit($"IADD r{destAddrReg}, 2");
-                        context.Emit($"STA r{lhsHigh.Value}, r{destAddrReg}");
+                        context.Emit($"PUSH r{destAddrReg}");
+                        LoadLongToHighLow(operands[0], lhs, 1, 2, context);
+                        LoadLongToHighLow(operands[1], rhs, 3, 4, context);
+                        context.Emit($"CALL _func___injected_32bit_{name}");
+                        context.Emit("POP r0");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                     }
                     else if (
                         kind
@@ -137,107 +91,23 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
-                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
-                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
-
-                        using var aLow = context.AcquireTempRegister();
-                        using var aHigh = context.AcquireTempRegister();
-                        using var bLow = context.AcquireTempRegister();
-                        using var bHigh = context.AcquireTempRegister();
-
-                        if (lhsSlot >= 0)
+                        string name = kind switch
                         {
-                            LoadLongFromBuffer(aLow.Value, aHigh.Value, lhsSlot, context);
-                        }
-                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = lhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{aLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{aHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[0], src.Value, context);
-                            context.Emit($"LDP r{aLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{aHigh.Value}, r{src.Value}");
-                        }
+                            CXBinaryOperatorKind.CXBinaryOperator_Mul => "mul",
+                            CXBinaryOperatorKind.CXBinaryOperator_And => "and",
+                            CXBinaryOperatorKind.CXBinaryOperator_Or => "or",
+                            CXBinaryOperatorKind.CXBinaryOperator_Xor => "xor",
+                            _ => throw new InvalidOperationException($"Unsupported long binary operator: {kind}")
+                        };
 
-                        if (rhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(bLow.Value, bHigh.Value, rhsSlot, context);
-                        }
-                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = rhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{bLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{bHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[1], src.Value, context);
-                            context.Emit($"LDP r{bLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{bHigh.Value}, r{src.Value}");
-                        }
-
-                        if (kind == CXBinaryOperatorKind.CXBinaryOperator_Mul)
-                        {
-                            using var origALow = context.AcquireTempRegister();
-
-                            context.Emit($"MOV r{origALow.Value}, r{aLow.Value}");
-
-                            context.Emit($"MUL r{aLow.Value}, r{bLow.Value}");
-                            context.Emit($"MOV r0, r{origALow.Value}");
-                            context.Emit($"ALT MUL r0, r{bLow.Value}");
-
-                            // ALT MUL gives the SIGNED high word; correct it to unsigned:
-                            //   unsigned_high = signed_high + (a_low<0 ? b_low : 0) + (b_low<0 ? a_low : 0)
-                            // Use CMP+JGE (CMP writes no registers, immune to dead store eliminator)
-                            using var zero = context.AcquireTempRegister();
-                            var skip1 = EmissionContext.GenerateLabel("mulcorr1");
-                            context.Emit($"XOR r{zero.Value}, r{zero.Value}");
-                            context.Emit($"CMP r{origALow.Value}, r{zero.Value}");
-                            context.Emit($"JGE {skip1}");
-                            context.Emit($"ADD r0, r{bLow.Value}");
-                            context.Emit($"{skip1}:");
-                            var skip2 = EmissionContext.GenerateLabel("mulcorr2");
-                            context.Emit($"XOR r{zero.Value}, r{zero.Value}");
-                            context.Emit($"CMP r{bLow.Value}, r{zero.Value}");
-                            context.Emit($"JGE {skip2}");
-                            context.Emit($"ADD r0, r{origALow.Value}");
-                            context.Emit($"{skip2}:");
-
-                            context.Emit($"MUL r{origALow.Value}, r{bHigh.Value}");
-                            context.Emit($"ADD r0, r{origALow.Value}");
-
-                            context.Emit($"MOV r{origALow.Value}, r{aHigh.Value}");
-                            context.Emit($"MUL r{origALow.Value}, r{bLow.Value}");
-                            context.Emit($"ADD r0, r{origALow.Value}");
-
-                            context.Emit($"MOV r{aHigh.Value}, r0");
-                            context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
-                            context.Emit($"IADD r{destAddrReg}, 2");
-                            context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
-                        }
-                        else
-                        {
-                            string op = kind switch
-                            {
-                                CXBinaryOperatorKind.CXBinaryOperator_And => "AND",
-                                CXBinaryOperatorKind.CXBinaryOperator_Or => "OR",
-                                CXBinaryOperatorKind.CXBinaryOperator_Xor => "XOR",
-                                _ => throw new InvalidOperationException($"Unsupported long binary operator: {kind}")
-                            };
-
-                            context.Emit($"{op} r{aLow.Value}, r{bLow.Value}");
-                            context.Emit($"{op} r{aHigh.Value}, r{bHigh.Value}");
-                            context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
-                            context.Emit($"IADD r{destAddrReg}, 2");
-                            context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
-                        }
+                        context.Emit($"PUSH r{destAddrReg}");
+                        LoadLongToHighLow(operands[0], lhs, 1, 2, context);
+                        LoadLongToHighLow(operands[1], rhs, 3, 4, context);
+                        context.Emit($"CALL _func___injected_32bit_{name}");
+                        context.Emit("POP r0");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                     }
                     else if (
                         kind
@@ -248,71 +118,41 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
-                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
+                        string name = kind == CXBinaryOperatorKind.CXBinaryOperator_Shl ? "shl" : "shr";
 
-                        using var aLow = context.AcquireTempRegister();
-                        using var aHigh = context.AcquireTempRegister();
+                        context.Emit($"PUSH r{destAddrReg}");
+                        using var aHighS = context.AcquireTempRegister();
+                        using var aLowS = context.AcquireTempRegister();
+                        LoadLongToHighLow(operands[0], lhs, aHighS.Value, aLowS.Value, context);
 
-                        if (lhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(aLow.Value, aHigh.Value, lhsSlot, context);
-                        }
-                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = lhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{aLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{aHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[0], src.Value, context);
-                            context.Emit($"LDP r{aLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{aHigh.Value}, r{src.Value}");
-                        }
-
-                        using var shift = context.AcquireTempRegister();
                         var peeledRhs = PeelExpression(rhs);
                         if (peeledRhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
                         {
                             long sv = peeledRhs.Evaluate.AsLongLong;
                             if (sv == 0)
                             {
-                                context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
-                                context.Emit($"IADD r{destAddrReg}, 2");
-                                context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
+                                context.Emit("POP r0");
+                                context.Emit("STA r2, r0");
+                                context.Emit("IADD r0, 2");
+                                context.Emit("STA r1, r0");
                                 return;
                             }
-                            context.Emit($"LDI r{shift.Value}, {unchecked((ushort)sv)}");
+                            context.Emit($"LDI r4, {unchecked((ushort)sv)}");
+                            context.Emit($"XOR r3, r3");
                         }
                         else
                         {
-                            EmitExpression(operands[1], shift.Value, context);
+                            using var src = context.AcquireTempRegister();
+                            EmitExpression(operands[1], src.Value, context);
+                            context.Emit($"MOV r4, r{src.Value}");
+                            context.Emit($"XOR r3, r3");
                         }
 
-                        if (kind == CXBinaryOperatorKind.CXBinaryOperator_Shl)
-                        {
-                            using var origLow = context.AcquireTempRegister();
-                            context.Emit($"MOV r{origLow.Value}, r{aLow.Value}");
-                            context.Emit($"SHL r{aLow.Value}, r{shift.Value}");
-                            context.Emit($"SHL r{aHigh.Value}, r{shift.Value}");
-                            context.Emit($"ALT SHL r{origLow.Value}, r{shift.Value}");
-                            context.Emit($"OR r{aHigh.Value}, r{origLow.Value}");
-                        }
-                        else
-                        {
-                            using var origHigh = context.AcquireTempRegister();
-                            context.Emit($"MOV r{origHigh.Value}, r{aHigh.Value}");
-                            context.Emit($"SHR r{aHigh.Value}, r{shift.Value}");
-                            context.Emit($"SHR r{aLow.Value}, r{shift.Value}");
-                            context.Emit($"ALT SHR r{origHigh.Value}, r{shift.Value}");
-                            context.Emit($"OR r{aLow.Value}, r{origHigh.Value}");
-                        }
-
-                        context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
-                        context.Emit($"IADD r{destAddrReg}, 2");
-                        context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
+                        context.Emit($"CALL _func___injected_32bit_{name}");
+                        context.Emit("POP r0");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                     }
                     else if (
                         kind
@@ -323,84 +163,16 @@ public partial class SharpieEmitter
                         var lhs = PeelExpression(operands[0]);
                         var rhs = PeelExpression(operands[1]);
 
-                        var tempLabel = EmissionContext.GenerateLabel("div_temp");
-                        var tempSpace = context.AllocateStorage(tempLabel, true, 4);
+                        string name = kind == CXBinaryOperatorKind.CXBinaryOperator_Div ? "div" : "mod";
 
-                        using var bufAddr = context.AcquireTempRegister();
-                        context.Emit($"MOV r{bufAddr.Value}, r15");
-                        AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
-
-                        // Save dest/buf to r7/r8 before LoadLongFromBuffer clobbers r1/r2
-                        context.Emit($"MOV r7, r{destAddrReg}");
-                        context.Emit($"MOV r8, r{bufAddr.Value}");
-
-                        int lhsSlot = EmitLongToBufferIfComplex(operands[0], lhs, context);
-
-                        if (lhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(2, 1, lhsSlot, context);
-                        }
-                        else if (lhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = lhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r1, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                            context.Emit($"LDI r2, {unchecked((ushort)(v & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[0], src.Value, context);
-                            context.Emit($"LDP r2, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r1, r{src.Value}");
-                        }
-
-                        int rhsSlot = EmitLongToBufferIfComplex(operands[1], rhs, context);
-
-                        if (rhsSlot >= 0)
-                        {
-                            LoadLongFromBuffer(4, 3, rhsSlot, context);
-                        }
-                        else if (rhs.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = rhs.Evaluate.AsLongLong;
-                            context.Emit($"LDI r3, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                            context.Emit($"LDI r4, {unchecked((ushort)(v & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operands[1], src.Value, context);
-                            context.Emit($"LDP r4, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r3, r{src.Value}");
-                        }
-
-                        context.Emit($"PUSH r7");  // saved dest address (r7 preserved by Div32)
-                        int mode = kind == CXBinaryOperatorKind.CXBinaryOperator_Div ? 0 : 1;
-                        context.Emit($"LDI r0, {mode}");
-                        context.Emit("PUSH r0");
-                        context.Emit($"PUSH r8");  // saved buf address (r8 preserved by Div32)
-
-                        context.Emit("CALL SYS_DIV_32");
-
+                        context.Emit($"PUSH r{destAddrReg}");
+                        LoadLongToHighLow(operands[0], lhs, 1, 2, context);
+                        LoadLongToHighLow(operands[1], rhs, 3, 4, context);
+                        context.Emit($"CALL _func___injected_32bit_{name}");
                         context.Emit("POP r0");
-                        context.Emit("POP r0");
-
-                        context.Emit($"POP r{destAddrReg}");
-
-                        context.Emit($"MOV r{bufAddr.Value}, r15");
-                        AccumulateOffset(bufAddr.Value, tempSpace.Value, context);
-
-                        using var resultLow = context.AcquireTempRegister();
-                        using var resultHigh = context.AcquireTempRegister();
-                        context.Emit($"LDP r{resultLow.Value}, r{bufAddr.Value}");
-                        context.Emit($"IADD r{bufAddr.Value}, 2");
-                        context.Emit($"LDP r{resultHigh.Value}, r{bufAddr.Value}");
-
-                        context.Emit($"STA r{resultLow.Value}, r{destAddrReg}");
-                        context.Emit($"IADD r{destAddrReg}, 2");
-                        context.Emit($"STA r{resultHigh.Value}, r{destAddrReg}");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                     }
                     else if (
                         kind
@@ -412,12 +184,28 @@ public partial class SharpieEmitter
                             or CXBinaryOperatorKind.CXBinaryOperator_GE
                     )
                     {
-                        using var result = context.AcquireTempRegister();
-                        EmitLongComparison(kind, operands[0], operands[1], result.Value, context);
-                        context.Emit($"STA r{result.Value}, r{destAddrReg}");
-                        context.Emit($"IADD r{destAddrReg}, 2");
-                        context.Emit($"LDI r{result.Value}, 0");
-                        context.Emit($"STA r{result.Value}, r{destAddrReg}");
+                        var lhs = PeelExpression(operands[0]);
+                        var rhs = PeelExpression(operands[1]);
+
+                        string name = kind switch
+                        {
+                            CXBinaryOperatorKind.CXBinaryOperator_EQ => "eq",
+                            CXBinaryOperatorKind.CXBinaryOperator_NE => "neq",
+                            CXBinaryOperatorKind.CXBinaryOperator_LT => "lt",
+                            CXBinaryOperatorKind.CXBinaryOperator_GT => "gt",
+                            CXBinaryOperatorKind.CXBinaryOperator_LE => "le",
+                            CXBinaryOperatorKind.CXBinaryOperator_GE => "ge",
+                            _ => throw new InvalidOperationException($"Unsupported long comparison: {kind}")
+                        };
+
+                        context.Emit($"PUSH r{destAddrReg}");
+                        LoadLongToHighLow(operands[0], lhs, 1, 2, context);
+                        LoadLongToHighLow(operands[1], rhs, 3, 4, context);
+                        context.Emit($"CALL _func___injected_32bit_{name}");
+                        context.Emit("POP r0");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                     }
                     else
                     {
@@ -470,43 +258,17 @@ public partial class SharpieEmitter
                     )
                     {
                         var operand = GetChildren(peeled).First();
-                        bool isNeg = unaryKind == CXUnaryOperatorKind.CXUnaryOperator_Minus;
+                        string name = unaryKind == CXUnaryOperatorKind.CXUnaryOperator_Minus ? "neg" : "not";
 
-                        using var aLow = context.AcquireTempRegister();
-                        using var aHigh = context.AcquireTempRegister();
-                        var peeledOp = PeelExpression(operand);
-
-                        if (peeledOp.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-                        {
-                            long v = peeledOp.Evaluate.AsLongLong;
-                            context.Emit($"LDI r{aLow.Value}, {unchecked((ushort)(v & 0xFFFF))}");
-                            context.Emit($"LDI r{aHigh.Value}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-                        }
-                        else
-                        {
-                            using var src = context.AcquireTempRegister();
-                            EmitExpression(operand, src.Value, context);
-                            context.Emit($"LDP r{aLow.Value}, r{src.Value}");
-                            context.Emit($"IADD r{src.Value}, 2");
-                            context.Emit($"LDP r{aHigh.Value}, r{src.Value}");
-                        }
-
-                        if (isNeg)
-                        {
-                            context.Emit($"NOT r{aLow.Value}");
-                            context.Emit($"NOT r{aHigh.Value}");
-                            context.Emit($"ADD r{aLow.Value}, 1");
-                            context.Emit($"ALT ADD r{aHigh.Value}, 0");
-                        }
-                        else
-                        {
-                            context.Emit($"NOT r{aLow.Value}");
-                            context.Emit($"NOT r{aHigh.Value}");
-                        }
-
-                        context.Emit($"STA r{aLow.Value}, r{destAddrReg}");
-                        context.Emit($"IADD r{destAddrReg}, 2");
-                        context.Emit($"STA r{aHigh.Value}, r{destAddrReg}");
+                        context.Emit($"PUSH r{destAddrReg}");
+                        using var aHighU = context.AcquireTempRegister();
+                        using var aLowU = context.AcquireTempRegister();
+                        LoadLongToHighLow(operand, PeelExpression(operand), aHighU.Value, aLowU.Value, context);
+                        context.Emit($"CALL _func___injected_32bit_{name}");
+                        context.Emit("POP r0");
+                        context.Emit("STA r2, r0");
+                        context.Emit("IADD r0, 2");
+                        context.Emit("STA r1, r0");
                         return;
                     }
 
@@ -526,122 +288,7 @@ public partial class SharpieEmitter
         }
     }
 
-    private static void EmitLongComparison(
-        CXBinaryOperatorKind kind,
-        CXCursor lhs,
-        CXCursor rhs,
-        int resultReg,
-        EmissionContext context
-    )
-    {
-        Console.Error.WriteLine($"EmitLongComparison called: kind={kind} lhs.Type.SizeOf={lhs.Type.SizeOf} rhs.Type.SizeOf={rhs.Type.SizeOf}");
-        var peeledLhs = PeelExpression(lhs);
-        var peeledRhs = PeelExpression(rhs);
-
-        int lhsSlot = EmitLongToBufferIfComplex(lhs, peeledLhs, context);
-        int rhsSlot = EmitLongToBufferIfComplex(rhs, peeledRhs, context);
-
-        using var aLow = context.AcquireTempRegister();
-        using var aHigh = context.AcquireTempRegister();
-        using var bLow = context.AcquireTempRegister();
-        using var bHigh = context.AcquireTempRegister();
-
-        void LoadLongOperand(CXCursor operand, CXCursor peeled, int slot, int lowReg, int highReg)
-        {
-            if (slot >= 0)
-            {
-                LoadLongFromBuffer(lowReg, highReg, slot, context);
-            }
-            else if (peeled.Kind == CXCursorKind.CXCursor_IntegerLiteral)
-            {
-                long v = peeled.Evaluate.AsLongLong;
-                context.Emit($"LDI r{lowReg}, {unchecked((ushort)(v & 0xFFFF))}");
-                context.Emit($"LDI r{highReg}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
-            }
-            else
-            {
-                using var src = context.AcquireTempRegister();
-                EmitExpression(operand, src.Value, context);
-                context.Emit($"LDP r{lowReg}, r{src.Value}");
-                context.Emit($"IADD r{src.Value}, 2");
-                context.Emit($"LDP r{highReg}, r{src.Value}");
-            }
-        }
-
-        LoadLongOperand(lhs, peeledLhs, lhsSlot, aLow.Value, aHigh.Value);
-        LoadLongOperand(rhs, peeledRhs, rhsSlot, bLow.Value, bHigh.Value);
-
-        var doneLabel = EmissionContext.GenerateLabel("cmp_done");
-
-        if (kind == CXBinaryOperatorKind.CXBinaryOperator_EQ || kind == CXBinaryOperatorKind.CXBinaryOperator_NE)
-        {
-            var notEqualLabel = EmissionContext.GenerateLabel("cmp_ne");
-            context.Emit($"CMP r{aHigh.Value}, r{bHigh.Value}");
-            context.Emit($"JNE {notEqualLabel}");
-            context.Emit($"CMP r{aLow.Value}, r{bLow.Value}");
-            context.Emit($"JNE {notEqualLabel}");
-            context.Emit($"LDI r{resultReg}, {(kind == CXBinaryOperatorKind.CXBinaryOperator_EQ ? "1" : "0")}");
-            context.Emit($"JMP {doneLabel}");
-            context.Emit($"{notEqualLabel}:");
-            context.Emit($"LDI r{resultReg}, {(kind == CXBinaryOperatorKind.CXBinaryOperator_EQ ? "0" : "1")}");
-        }
-        else
-        {
-            var trueLabel = EmissionContext.GenerateLabel("cmp_true");
-            var falseLabel = EmissionContext.GenerateLabel("cmp_false");
-
-            context.Emit($"CMP r{aHigh.Value}, r{bHigh.Value}");
-            switch (kind)
-            {
-                case CXBinaryOperatorKind.CXBinaryOperator_LT:
-                case CXBinaryOperatorKind.CXBinaryOperator_LE:
-                    context.Emit($"JLT {trueLabel}");
-                    context.Emit($"JGT {falseLabel}");
-                    break;
-                case CXBinaryOperatorKind.CXBinaryOperator_GT:
-                case CXBinaryOperatorKind.CXBinaryOperator_GE:
-                    context.Emit($"JGT {trueLabel}");
-                    context.Emit($"JLT {falseLabel}");
-                    break;
-            }
-
-            using var signBit = context.AcquireTempRegister();
-            context.Emit($"LDI r{signBit.Value}, 0x8000");
-            context.Emit($"XOR r{aLow.Value}, r{signBit.Value}");
-            context.Emit($"XOR r{bLow.Value}, r{signBit.Value}");
-            context.Emit($"CMP r{aLow.Value}, r{bLow.Value}");
-
-            switch (kind)
-            {
-                case CXBinaryOperatorKind.CXBinaryOperator_LT:
-                    context.Emit($"JLT {trueLabel}");
-                    break;
-                case CXBinaryOperatorKind.CXBinaryOperator_LE:
-                    context.Emit($"JGT {falseLabel}");
-                    break;
-                case CXBinaryOperatorKind.CXBinaryOperator_GT:
-                    context.Emit($"JGT {trueLabel}");
-                    break;
-                case CXBinaryOperatorKind.CXBinaryOperator_GE:
-                    context.Emit($"JLT {falseLabel}");
-                    break;
-            }
-
-            if (kind == CXBinaryOperatorKind.CXBinaryOperator_LE || kind == CXBinaryOperatorKind.CXBinaryOperator_GE)
-                context.Emit($"LDI r{resultReg}, 1");
-            else
-                context.Emit($"LDI r{resultReg}, 0");
-
-            context.Emit($"JMP {doneLabel}");
-            context.Emit($"{trueLabel}:");
-            context.Emit($"LDI r{resultReg}, 1");
-            context.Emit($"JMP {doneLabel}");
-            context.Emit($"{falseLabel}:");
-            context.Emit($"LDI r{resultReg}, 0");
-        }
-
-        context.Emit($"{doneLabel}:");
-    }
+    
 
     private static int EmitLongToBufferIfComplex(CXCursor operand, CXCursor peeled, EmissionContext context)
     {
@@ -664,6 +311,28 @@ public partial class SharpieEmitter
         context.Emit($"LDP r{lowReg}, r0");
         context.Emit($"IADD r0, 2");
         context.Emit($"LDP r{highReg}, r0");
+    }
+
+    private static void LoadLongToHighLow(CXCursor operand, CXCursor peeled, int highReg, int lowReg, EmissionContext context)
+    {
+        int slot = EmitLongToBufferIfComplex(operand, peeled, context);
+        if (slot >= 0)
+        {
+            LoadLongFromBuffer(lowReg, highReg, slot, context);
+        }
+        else if (peeled.Kind == CXCursorKind.CXCursor_IntegerLiteral)
+        {
+            long v = peeled.Evaluate.AsLongLong;
+            context.Emit($"LDI r{lowReg}, {unchecked((ushort)(v & 0xFFFF))}");
+            context.Emit($"LDI r{highReg}, {unchecked((ushort)((v >> 16) & 0xFFFF))}");
+        }
+        else
+        {
+            EmitExpression(operand, 0, context);
+            context.Emit($"LDP r{lowReg}, r0");
+            context.Emit($"IADD r0, 2");
+            context.Emit($"LDP r{highReg}, r0");
+        }
     }
 
     private static bool IsComplexLongExpression(CXCursor peeled)
