@@ -438,7 +438,6 @@ NameTable:
     .DB "PRINT:", 0
     .DB "MEMMOVE:", 0
     .DB "FAR-CALL:", 0
-    .DB "DIV-32BIT:", 0
     .DB 0
 
 AddrTable:
@@ -456,4 +455,3 @@ AddrTable:
     .DW Print
     .DW MemMove
     .DW FarCall
-    .DW Div32

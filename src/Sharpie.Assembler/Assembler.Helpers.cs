@@ -22,7 +22,6 @@ public partial class SharpieRomEmitter
         { "SYS_PRINT", 64275 },
         { "SYS_MEM_MOVE", 64294 },
         { "SYS_FAR_CALL", 64329 },
-        { "SYS_DIV_32", 64349},
     };
 
     private ScopeLevel GetCurrentScope() =>
@@ -43,8 +42,7 @@ public partial class SharpieRomEmitter
         var result = currentScope.TryDefineLabel(name, (ushort)(address + offset));
         if (result)
         {
-            int bank = CurrentRegion is BankBuffer b ? b.BankId : -1;
-            _labelBanks[name] = bank;
+            _labelBanks[name] = CurrentRegion is BankBuffer b ? b.BankId : -1;
         }
         return result;
     }
@@ -109,7 +107,6 @@ public partial class SharpieRomEmitter
 
     private int? ParseNumberLiteral(
         string input,
-        bool allowAddrPref,
         int lineNumber,
         int limit = ushort.MaxValue
     )
@@ -124,7 +121,7 @@ public partial class SharpieRomEmitter
 
         bool negative = input.StartsWith('-');
         if (negative)
-            input = new string(input.Skip(1).ToArray());
+            input = new string([.. input.Skip(1)]);
 
         if (input.Contains("::"))
         {
@@ -162,7 +159,7 @@ public partial class SharpieRomEmitter
             style = 10;
         }
         // CAREFUL! just C4 is treated as a hex, but #C4 is treated as a note
-        else if (Regex.IsMatch(input, "^[A-Fa-f]+$"))
+        else if (MyRegex().IsMatch(input))
         {
             style = 16;
         }
@@ -197,7 +194,7 @@ public partial class SharpieRomEmitter
         }
 
         if (TryResolveConstant(arg, out var val))
-            return (ushort)val;
+            return val;
 
         if (TryResolveLabel(arg, out var addr))
         {
@@ -212,8 +209,8 @@ public partial class SharpieRomEmitter
             return addr;
         }
 
-        var num = ParseNumberLiteral(arg, true, lineNum);
-        if (num.HasValue && num.Value <= ushort.MaxValue)
+        var num = ParseNumberLiteral(arg, lineNum);
+        if (num <= ushort.MaxValue)
             return (ushort)num;
 
         throw new AssemblySyntaxException(
@@ -235,8 +232,8 @@ public partial class SharpieRomEmitter
         if (TryResolveConstant(arg, out var val))
             return (byte)val;
 
-        var num = ParseNumberLiteral(arg, true, lineNumber: lineNum);
-        if (num.HasValue && num.Value <= byte.MaxValue)
+        var num = ParseNumberLiteral(arg, lineNum);
+        if (num <= byte.MaxValue)
             return (byte)num;
 
         throw new AssemblySyntaxException(
@@ -250,9 +247,7 @@ public partial class SharpieRomEmitter
         var isEnum = arg.Contains("::");
         if (isEnum)
         {
-            string[] split;
-            ushort value;
-            ResolveEnumValue(arg, lineNum, out split, out value);
+            ResolveEnumValue(arg, lineNum, out string[] split, out ushort value);
 
             if (value > 0x0F)
             {
@@ -272,7 +267,7 @@ public partial class SharpieRomEmitter
                 throw new AssemblySyntaxException($"Invalid character literal: {arg}", lineNum);
 
             var charVal = TextHelper.AsciiToByte(arg[1]);
-            if (charVal < 0 || charVal >= 16)
+            if (charVal >= 16)
             {
                 throw new AssemblySyntaxException(
                     $"Register index {arg} ({charVal}) is not valid - must be 0-15",
@@ -287,7 +282,7 @@ public partial class SharpieRomEmitter
 
         if (TryResolveConstant(arg, out var constant))
         {
-            if (constant < 0 || constant >= 16)
+            if (constant >= 16)
             {
                 throw new AssemblySyntaxException(
                     $"Register index {constant} is not valid - must be 0-15",
@@ -306,7 +301,7 @@ public partial class SharpieRomEmitter
             );
         }
 
-        if (parsed < 0 || parsed >= 16)
+        if (parsed >= 16)
         {
             throw new AssemblySyntaxException(
                 $"Register index {parsed} is not valid - must be 0-15",
@@ -347,7 +342,7 @@ public partial class SharpieRomEmitter
     // the amount of googling this took was vomit inducing at best.
     private static int? ParseNote(string input)
     {
-        var match = Regex.Match(input.ToUpper(), @"^([A-G])(#|B)?(-?\d+)$"); // thank God for regex101
+        var match = MyRegex1().Match(input.ToUpper()); // thank God for regex101
 
         if (!match.Success)
             return null;
@@ -373,7 +368,12 @@ public partial class SharpieRomEmitter
         else if (acdntl == "B")
             baseNote--;
 
-        var finalNote = (octave + 1) * 12 + baseNote;
+        var finalNote = ((octave + 1) * 12) + baseNote;
         return (finalNote >= 0 && finalNote <= 127) ? finalNote : null;
     }
+
+    [GeneratedRegex("^[A-Fa-f]+$")]
+    private static partial Regex MyRegex();
+    [GeneratedRegex(@"^([A-G])(#|B)?(-?\d+)$")]
+    private static partial Regex MyRegex1();
 }

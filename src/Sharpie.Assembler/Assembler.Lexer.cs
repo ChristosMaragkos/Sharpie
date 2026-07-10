@@ -6,6 +6,7 @@ namespace Sharpie.Assembler;
 
 public partial class SharpieRomEmitter
 {
+    private static readonly System.Buffers.SearchValues<char> s_disallowedEnumChars = System.Buffers.SearchValues.Create(":,#= '\"");
     private static readonly char[] CommonDelimiters = [',', ' '];
 
     private IEnumerable<string>? FileContents { get; set; }
@@ -355,7 +356,7 @@ public partial class SharpieRomEmitter
                     );
                 }
 
-                if (enumMember.ContainsAny(DisallowedEnumChars))
+                if (enumMember.ContainsAny(s_disallowedEnumChars))
                 {
                     var invalidChar = enumMember.First(c => DisallowedEnumChars.Contains(c));
                     throw new AssemblySyntaxException(
@@ -428,15 +429,10 @@ public partial class SharpieRomEmitter
 
         var (name, valueStr) = (args[1], args[2]);
 
-        var value = ParseNumberLiteral(valueStr, true, lineNumber);
-        if (value == null)
-        {
-            throw new AssemblySyntaxException(
+        var value = ParseNumberLiteral(valueStr, lineNumber) ?? throw new AssemblySyntaxException(
                 $"Unexpected token: {valueStr} - expected a number",
                 lineNumber
             );
-        }
-
         if (
             TryResolveLabel(name, out _)
             || !TryDefineConstant(name, (ushort)value, lineNumber, _globalMode)
@@ -521,7 +517,7 @@ public partial class SharpieRomEmitter
             new TokenLine
             {
                 Opcode = "SETCRS",
-                Args = new[] { coordArgs[0], coordArgs[1] },
+                Args = [coordArgs[0], coordArgs[1]],
                 SourceLine = lineNumber,
                 Address = CurrentRegion!.Cursor,
             }
@@ -534,7 +530,7 @@ public partial class SharpieRomEmitter
             TokenLine tl = new()
             {
                 Opcode = "TEXT",
-                Args = new[] { TextHelper.AsciiToByte(c).ToString() },
+                Args = [TextHelper.AsciiToByte(c).ToString()],
                 SourceLine = lineNumber,
                 Address = CurrentRegion!.Cursor,
             };
@@ -543,17 +539,15 @@ public partial class SharpieRomEmitter
         }
 
         var remainder = line.Substring(lastQuote + 1).TrimStart(CommonDelimiters).Trim();
-        var extraArgs = remainder.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        foreach (var arg in extraArgs)
+        foreach (var arg in remainder.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             var cleanArg = arg.Trim(CommonDelimiters).Trim();
-            var value = ParseRegister(cleanArg, lineNumber);
+            _ = ParseRegister(cleanArg, lineNumber);
             AddToken(
                 new()
                 {
                     Opcode = "ALT",
-                    Args = Array.Empty<string>(),
+                    Args = [],
                     SourceLine = lineNumber,
                     Address = CurrentRegion?.Cursor,
                 }
@@ -564,7 +558,7 @@ public partial class SharpieRomEmitter
                 new()
                 {
                     Opcode = "TEXT",
-                    Args = new[] { cleanArg },
+                    Args = [cleanArg],
                     SourceLine = lineNumber,
                     Address = CurrentRegion?.Cursor,
                 }
@@ -588,7 +582,7 @@ public partial class SharpieRomEmitter
 
     public byte[] LoadRawAsm(string asm)
     {
-        string[] lines = asm.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        string[] lines = asm.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         return Assemble(lines);
     }
 
@@ -603,7 +597,7 @@ public partial class SharpieRomEmitter
     {
         if (!line.Contains(';'))
             return;
-        var comment = Regex.Match(line, ";");
+        var comment = MyRegex2().Match(line);
         if (comment.Success)
         {
             line = line.Remove(comment.Index).Trim();
@@ -612,14 +606,14 @@ public partial class SharpieRomEmitter
 
     private void RemoveLabel(ref string line, int lineNumber)
     {
-        var labelRegex = Regex.Match(line, @"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:(?!:)");
+        var labelRegex = MyRegex3().Match(line);
         if (!labelRegex.Success)
             return;
 
         var label = labelRegex.Groups[1].Value;
 
         if (
-            !TryDefineLabel(label, (ushort)CurrentRegion!.Cursor, lineNumber, _globalMode)
+            !TryDefineLabel(label, CurrentRegion!.Cursor, lineNumber, _globalMode)
             || TryResolveConstant(label, out _)
             || TryResolveEnum(label)
         )
@@ -675,10 +669,9 @@ public partial class SharpieRomEmitter
         if (tokenStart >= 0)
             tokens.Add(line.Substring(tokenStart));
 
-        return tokens
+        return [.. tokens
             .Select(str => str.Trim(CommonDelimiters))
-            .Where(str => !string.IsNullOrWhiteSpace(str))
-            .ToArray();
+            .Where(str => !string.IsNullOrWhiteSpace(str))];
     }
 
     private void Tokenize(string line, string originalLine, ref TokenLine tokenLine, int lineNumber)
@@ -686,7 +679,7 @@ public partial class SharpieRomEmitter
         var args = SplitArgsPreservingQuotedLiterals(line, lineNumber);
 
         tokenLine.Opcode = args[0];
-        tokenLine.Args = args.Skip(1).ToArray();
+        tokenLine.Args = [.. args.Skip(1)];
 
         if (tokenLine.Opcode.StartsWith('.'))
         {
@@ -694,15 +687,19 @@ public partial class SharpieRomEmitter
             {
                 case ".ORG":
                     if (args.Length > 2)
+                    {
                         throw new AssemblySyntaxException(
                             $"Unexpected token: {args[^1]}",
                             lineNumber
                         );
+                    }
                     else if (args.Length < 2)
+                    {
                         throw new AssemblySyntaxException(
-                            "Directive .ORG expected a valid memory address",
-                            lineNumber
-                        );
+                                                "Directive .ORG expected a valid memory address",
+                                                lineNumber
+                                            );
+                    }
                     else
                     {
                         if (CurrentRegion == null)
@@ -729,15 +726,19 @@ public partial class SharpieRomEmitter
 
                 case ".SPRITE":
                     if (args.Length > 2)
+                    {
                         throw new AssemblySyntaxException(
                             $"Unexpected token: {args[^1]}",
                             lineNumber
                         );
+                    }
                     else if (args.Length < 2)
+                    {
                         throw new AssemblySyntaxException(
-                            "Directive .SPRITE expected a valid sprite index 0-255",
-                            lineNumber
-                        );
+                                                "Directive .SPRITE expected a valid sprite index 0-255",
+                                                lineNumber
+                                            );
+                    }
                     else
                     {
                         if (CurrentRegion is not SpriteCapableBuffer spriteBuf)
@@ -758,16 +759,15 @@ public partial class SharpieRomEmitter
                 case ".DB":
                 case ".BYTES":
                 case ".DATA":
-                    {
-                        tokenLine.Address = CurrentRegion?.Cursor;
-                        // Reparse args from the original (mixed-case) line so that:
-                        //   1. Quoted string literals are kept as a single token.
-                        //   2. Case inside strings is preserved for raw ASCII emission.
-                        tokenLine.Args = ParseDbArgs(originalLine, lineNumber);
-                        var byteCount = CountDbBytes(originalLine, lineNumber);
-                        CurrentRegion!.AdvanceCursor(byteCount);
-                        break;
-                    }
+                    tokenLine.Address = CurrentRegion?.Cursor;
+                    // Reparse args from the original (mixed-case) line so that:
+                    //   1. Quoted string literals are kept as a single token.
+                    //   2. Case inside strings is preserved for raw ASCII emission.
+                    tokenLine.Args = ParseDbArgs(originalLine, lineNumber);
+                    var byteCount = CountDbBytes(originalLine, lineNumber);
+                    CurrentRegion!.AdvanceCursor(byteCount);
+                    break;
+
 
                 case ".DW":
                     tokenLine.Address = CurrentRegion?.Cursor;
@@ -782,7 +782,7 @@ public partial class SharpieRomEmitter
                         );
                     }
 
-                    var amount = ParseNumberLiteral(args[1], false, lineNumber);
+                    var amount = ParseNumberLiteral(args[1], lineNumber);
                     if (!amount.HasValue)
                     {
                         throw new AssemblySyntaxException(
@@ -803,135 +803,130 @@ public partial class SharpieRomEmitter
                     break;
 
                 case ".INCBIN":
+                    if (_baseDirectory == null)
                     {
-                        if (_baseDirectory == null)
-                        {
-                            throw new AssemblySyntaxException(
-                                ".INCBIN is not available when assembling from raw text",
-                                lineNumber
-                            );
-                        }
+                        throw new AssemblySyntaxException(
+                            ".INCBIN is not available when assembling from raw text",
+                            lineNumber
+                        );
+                    }
 
-                        var firstQuote = originalLine.IndexOf('"');
-                        var lastQuote = originalLine.LastIndexOf('"');
+                    var firstQuote = originalLine.IndexOf('"');
+                    var lastQuote = originalLine.LastIndexOf('"');
 
-                        if (firstQuote == -1 || lastQuote <= firstQuote)
-                        {
-                            throw new AssemblySyntaxException(
-                                "Expected quoted filename for .INCBIN",
-                                lineNumber
-                            );
-                        }
+                    if (firstQuote == -1 || lastQuote <= firstQuote)
+                    {
+                        throw new AssemblySyntaxException(
+                            "Expected quoted filename for .INCBIN",
+                            lineNumber
+                        );
+                    }
 
-                        var filename = originalLine.Substring(
-                            firstQuote + 1,
-                            lastQuote - firstQuote - 1
+                    var filename = originalLine.Substring(
+                        firstQuote + 1,
+                        lastQuote - firstQuote - 1
+                    );
+
+                    var afterQuotes = originalLine
+                        .Substring(lastQuote + 1)
+                        .Trim();
+
+                    int? offset = null;
+                    int? length = null;
+
+                    if (!string.IsNullOrEmpty(afterQuotes))
+                    {
+                        var extraArgs = afterQuotes.Split(
+                            ',',
+                            StringSplitOptions.RemoveEmptyEntries
+                                | StringSplitOptions.TrimEntries
                         );
 
-                        var afterQuotes = originalLine
-                            .Substring(lastQuote + 1)
-                            .Trim();
-
-                        int? offset = null;
-                        int? length = null;
-
-                        if (!string.IsNullOrEmpty(afterQuotes))
+                        if (extraArgs.Length > 2)
                         {
-                            var extraArgs = afterQuotes.Split(
-                                ',',
-                                StringSplitOptions.RemoveEmptyEntries
-                                    | StringSplitOptions.TrimEntries
+                            throw new AssemblySyntaxException(
+                                "Too many arguments for .INCBIN",
+                                lineNumber
                             );
+                        }
 
-                            if (extraArgs.Length > 2)
+                        if (
+                            extraArgs.Length >= 1
+                            && !string.IsNullOrEmpty(extraArgs[0])
+                        )
+                        {
+                            var parsed = ParseNumberLiteral(
+                                extraArgs[0].ToUpperInvariant(),
+                                lineNumber
+                            );
+                            if (!parsed.HasValue)
                             {
                                 throw new AssemblySyntaxException(
-                                    "Too many arguments for .INCBIN",
+                                    "Expected a valid offset for .INCBIN",
                                     lineNumber
                                 );
                             }
 
-                            if (
-                                extraArgs.Length >= 1
-                                && !string.IsNullOrEmpty(extraArgs[0])
-                            )
+                            offset = parsed.Value;
+                        }
+
+                        if (
+                            extraArgs.Length >= 2
+                            && !string.IsNullOrEmpty(extraArgs[1])
+                        )
+                        {
+                            var parsed = ParseNumberLiteral(
+                                extraArgs[1].ToUpperInvariant(),
+                                lineNumber
+                            );
+                            if (!parsed.HasValue)
                             {
-                                var parsed = ParseNumberLiteral(
-                                    extraArgs[0].ToUpperInvariant(),
-                                    false,
+                                throw new AssemblySyntaxException(
+                                    "Expected a valid length for .INCBIN",
                                     lineNumber
                                 );
-                                if (!parsed.HasValue)
-                                {
-                                    throw new AssemblySyntaxException(
-                                        "Expected a valid offset for .INCBIN",
-                                        lineNumber
-                                    );
-                                }
-
-                                offset = (int)parsed.Value;
                             }
 
-                            if (
-                                extraArgs.Length >= 2
-                                && !string.IsNullOrEmpty(extraArgs[1])
-                            )
-                            {
-                                var parsed = ParseNumberLiteral(
-                                    extraArgs[1].ToUpperInvariant(),
-                                    false,
-                                    lineNumber
-                                );
-                                if (!parsed.HasValue)
-                                {
-                                    throw new AssemblySyntaxException(
-                                        "Expected a valid length for .INCBIN",
-                                        lineNumber
-                                    );
-                                }
-
-                                length = (int)parsed.Value;
-                            }
+                            length = parsed.Value;
                         }
-
-                        var fullPath = Path.Combine(_baseDirectory, filename);
-
-                        if (!File.Exists(fullPath))
-                        {
-                            throw new AssemblySyntaxException(
-                                $"Could not find binary file '{fullPath}'",
-                                lineNumber
-                            );
-                        }
-
-                        var binaryData = File.ReadAllBytes(fullPath);
-
-                        var startIdx = offset ?? 0;
-                        var count = length ?? binaryData.Length - startIdx;
-
-                        if (startIdx < 0 || startIdx > binaryData.Length)
-                        {
-                            throw new AssemblySyntaxException(
-                                $"Offset {startIdx} is out of range for file '{filename}' (size {binaryData.Length})",
-                                lineNumber
-                            );
-                        }
-
-                        if (count < 0 || startIdx + count > binaryData.Length)
-                        {
-                            throw new AssemblySyntaxException(
-                                $"Length {count} at offset {startIdx} is out of range for file '{filename}' (size {binaryData.Length})",
-                                lineNumber
-                            );
-                        }
-
-                        var segment = binaryData.AsSpan(startIdx, count).ToArray();
-
-                        tokenLine.BinaryData = segment;
-                        tokenLine.Address = CurrentRegion?.Cursor;
-                        CurrentRegion!.AdvanceCursor(count);
-                        break;
                     }
+
+                    var fullPath = Path.Combine(_baseDirectory, filename);
+
+                    if (!File.Exists(fullPath))
+                    {
+                        throw new AssemblySyntaxException(
+                            $"Could not find binary file '{fullPath}'",
+                            lineNumber
+                        );
+                    }
+
+                    var binaryData = File.ReadAllBytes(fullPath);
+
+                    var startIdx = offset ?? 0;
+                    var count = length ?? binaryData.Length - startIdx;
+
+                    if (startIdx < 0 || startIdx > binaryData.Length)
+                    {
+                        throw new AssemblySyntaxException(
+                            $"Offset {startIdx} is out of range for file '{filename}' (size {binaryData.Length})",
+                            lineNumber
+                        );
+                    }
+
+                    if (count < 0 || startIdx + count > binaryData.Length)
+                    {
+                        throw new AssemblySyntaxException(
+                            $"Length {count} at offset {startIdx} is out of range for file '{filename}' (size {binaryData.Length})",
+                            lineNumber
+                        );
+                    }
+
+                    tokenLine.BinaryData = binaryData.AsSpan(startIdx, count).ToArray();
+                    tokenLine.Address = CurrentRegion?.Cursor;
+                    CurrentRegion!.AdvanceCursor(count);
+                    break;
+
 
                 case ".REGION":
                 case ".ENDREGION":
@@ -959,7 +954,7 @@ public partial class SharpieRomEmitter
                 new TokenLine
                 {
                     Opcode = "ALT",
-                    Args = Array.Empty<string>(),
+                    Args = [],
                     SourceLine = lineNumber,
                     Address = CurrentRegion!.Cursor,
                 }
@@ -1005,7 +1000,7 @@ public partial class SharpieRomEmitter
         // Skip past the directive keyword.
         var keywordEnd = originalLine.IndexOf(' ');
         if (keywordEnd < 0)
-            return Array.Empty<string>();
+            return [];
 
         var afterKeyword = originalLine.Substring(keywordEnd).Trim();
         var result = new List<string>();
@@ -1064,7 +1059,7 @@ public partial class SharpieRomEmitter
             }
         }
 
-        return result.ToArray();
+        return [.. result];
     }
 
     /// <summary>
@@ -1100,9 +1095,14 @@ public partial class SharpieRomEmitter
                         && j + 1 < afterKeyword.Length
                         && afterKeyword[j + 1] == '"'
                     )
+                    {
                         j += 2; // escaped quote counts as one char
+                    }
                     else
+                    {
                         j++;
+                    }
+
                     total++;
                 }
                 if (j >= afterKeyword.Length)
@@ -1141,7 +1141,7 @@ public partial class SharpieRomEmitter
         return total;
     }
 
-    private List<string> PreProcess(IEnumerable<string> lines, string currentDir)
+    private static List<string> PreProcess(IEnumerable<string> lines, string currentDir)
     {
         var expandedLines = new List<string>();
         var lineNum = 0;
@@ -1189,4 +1189,9 @@ public partial class SharpieRomEmitter
         expandedLines.Add("END-INCLUDE-ABCDEFGHIJKLMNOPQRSTUVWXYZ-BANANA"); // technically this means if you write that you trick the assembler. I don't care.
         return expandedLines;
     }
+
+    [GeneratedRegex(";")]
+    private static partial Regex MyRegex2();
+    [GeneratedRegex(@"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:(?!:)")]
+    private static partial Regex MyRegex3();
 }

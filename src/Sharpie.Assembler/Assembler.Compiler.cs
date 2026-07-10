@@ -60,7 +60,7 @@ public partial class SharpieRomEmitter
             rom.AddRange(ProcessTokens(ref lineNum, frmwr));
         }
 
-        return rom.ToArray();
+        return [.. rom];
     }
 
     private byte[] ProcessTokens(ref int lineNum, IRomBuffer buffer)
@@ -110,8 +110,7 @@ public partial class SharpieRomEmitter
                                 if (arg.StartsWith('"') && arg.EndsWith('"') && arg.Length >= 2)
                                 {
                                     // Quoted string literal emits raw ASCII bytes.
-                                    var str = arg.Substring(1, arg.Length - 2);
-                                    foreach (char c in str)
+                                    foreach (char c in arg.Substring(1, arg.Length - 2))
                                     {
                                         WriteToRom(TextHelper.AsciiToByte(c), buffer, offset);
                                         offset++;
@@ -135,7 +134,7 @@ public partial class SharpieRomEmitter
                         break;
 
                     case ".PAD":
-                        for (int i = 0; i < ParseNumberLiteral(token.Args[0], false, lineNum); i++)
+                        for (int i = 0; i < ParseNumberLiteral(token.Args[0], lineNum); i++)
                         {
                             WriteToRom(0, buffer, i);
                         }
@@ -181,9 +180,7 @@ public partial class SharpieRomEmitter
 
             for (int p = isFam ? 1 : 0; p < pattern.Length; p++)
             {
-                var cmd = pattern[p];
-
-                switch (cmd)
+                switch (pattern[p])
                 {
                     case 'R':
                         if (p + 1 < pattern.Length && pattern[p + 1] == 'R')
