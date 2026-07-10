@@ -160,7 +160,9 @@ internal partial class Ppu
                 || localX >= DisplayWidth
                 || localY >= DisplayHeight
             )
+            {
                 continue; // sprite is fully outside camera
+            }
 
             DecodeSprite(spriteId, attributes);
 
@@ -187,6 +189,7 @@ internal partial class Ppu
     private void ProcessText()
     {
         var textColor = _mobo.FontColorIndex;
+        textColor = (byte)(_mobo.ReadByte(Memory.ColorPaletteStart + textColor) % 32);
         for (var charX = 0; charX < 32; charX++)
         {
             for (var charY = 0; charY < 32; charY++)
@@ -213,7 +216,10 @@ internal partial class Ppu
         {
             for (int column = startX; column < endX; column++)
             {
-                WritePixel(x + column, y + row, _spriteBuffer[(row * 8) + column]);
+                int colorIndex = _spriteBuffer[(row * 8) + column];
+                if (colorIndex == 16) colorIndex = 0;
+                colorIndex = _mobo.ReadByte(Memory.ColorPaletteStart + colorIndex) % 32;
+                WritePixel(x + column, y + row, (byte)colorIndex);
             }
         }
     }
