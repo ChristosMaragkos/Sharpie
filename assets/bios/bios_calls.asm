@@ -199,8 +199,8 @@ LutGetPtr:
 ; This overwrites everything from (end) to (end + byteAmount - 1).
 ;
 ; Parameters:
-; R1 - Paste start: The address of the first byte to copy.
-; R2 - Copy start: The address to start copying to.
+; R1 - Paste start: The address to start copying to.
+; R2 - Copy start: The address to start copying from.
 ; R3 - Byte amount: The amount of bytes to copy.
 ;
 ; This subroutine overwrites these registers:
@@ -217,16 +217,34 @@ MemCopy:
     CMP r2, r1
     JEQ Return
 
-    Loop:
-        ALT STP r2, r1
-        INC r2
-        INC r1
+    PUSH r1
 
-        DEC r3
-        JNE Loop
+    MOV r0, r3
+    IAND r0, 1
 
-    Return:
-        RET
+    ICMP r0, 0
+    JEQ WordLoop
+
+    ALT STP r2, r1
+    INC r2
+    INC r1
+    DEC r3
+    JEQ PopR1
+
+WordLoop:
+    STP r2, r1
+    IADD r2, 2
+    IADD r1, 2
+
+    ISUB r3, 2
+    JNE WordLoop
+
+PopR1:
+    POP r1
+
+Return:
+    MOV r0, r1
+    RET
 .ENDSCOPE
 
 ; SYS_PAL_RESET
@@ -326,15 +344,36 @@ MemSet:
     ICMP r3, 0
     JEQ Return
 
-    Loop:
-        ALT STA r2, r1
-        INC r1
+    PUSH r1
 
-        DEC r3
-        JGT Loop
+    MOV  r4, r2
+    MOV  r0, 8
+    SHL  r4, r0
+    OR   r2, r4
 
-    Return:
-        RET
+    MOV  r0, r3
+    IAND r0, 1
+    ICMP r0, 0
+    JEQ  WordLoop
+
+    ALT STA r2, r1
+    INC  r1
+    DEC  r3
+    JEQ  PopR1
+
+WordLoop:
+    STA  r2, r1
+    IADD r1, 2
+
+    ISUB r3, 2
+    JNE  WordLoop
+
+PopR1:
+    POP  r1
+
+Return:
+    MOV  r0, r1
+    RET
 .ENDSCOPE
 
 ; SYS_MEM_CMP
@@ -400,23 +439,43 @@ MemMove:
         RET
 
     Backward:
-        MOV r4, r1
-        ADD r1, r3
-        ADD r2, r3
+        PUSH r1
+        ICMP r3, 0
+        JEQ  PopR1
 
-        DEC r2 ; zero-based index
-        DEC r1
+        MOV  r4, r1
+        ADD  r1, r3
+        ADD  r2, r3
+        DEC  r2
+        DEC  r1
 
-        Loop:
-            ALT STP r2, r1
+        MOV  r0, r3
+        IAND r0, 1
+        ICMP r0, 0
+        JEQ  AlignPtr
 
-            DEC r1
-            DEC r2
+        ALT STP r2, r1
+        DEC  r1
+        DEC  r2
+        CMP  r1, r4
+        JLT  PopR1
 
-            CMP r1, r4
-            JGE Loop
+    AlignPtr:
+        DEC  r1
+        DEC  r2
+
+    BkwWordLoop:
+        STP  r2, r1
+        ISUB r1, 2
+        ISUB r2, 2
+        CMP  r1, r4
+        JGE  BkwWordLoop
+
+    PopR1:
+        POP  r1
 
     Return:
+        MOV  r0, r1
         RET
 .ENDSCOPE
 

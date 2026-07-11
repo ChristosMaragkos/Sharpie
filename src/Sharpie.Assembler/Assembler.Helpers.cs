@@ -14,14 +14,14 @@ public partial class SharpieRomEmitter
         { "SYS_IDX_WRITE_VAL", 64110 },
         { "SYS_IDX_READ_REF", 64133 },
         { "SYS_MEM_COPY", 64140 },
-        { "SYS_PAL_RESET", 64164 },
-        { "SYS_ALLOC_STACKFRAME", 64182 },
-        { "SYS_FREE_STACKFRAME", 64204 },
-        { "SYS_MEM_SET", 64221 },
-        { "SYS_MEM_CMP", 64238 },
-        { "SYS_PRINT", 64275 },
-        { "SYS_MEM_MOVE", 64294 },
-        { "SYS_FAR_CALL", 64329 },
+        { "SYS_PAL_RESET", 64195 },
+        { "SYS_ALLOC_STACKFRAME", 64213 },
+        { "SYS_FREE_STACKFRAME", 64235 },
+        { "SYS_MEM_SET", 64252 },
+        { "SYS_MEM_CMP", 64305 },
+        { "SYS_PRINT", 64342 },
+        { "SYS_MEM_MOVE", 64361 },
+        { "SYS_FAR_CALL", 64436 },
     };
 
     private ScopeLevel GetCurrentScope() =>
