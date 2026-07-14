@@ -151,6 +151,7 @@ public partial class SharpieEmitter
 
 
             case CXCursorKind.CXCursor_MemberRefExpr:
+            case CXCursorKind.CXCursor_MemberRef:
                 if (targetReg >= 0)
                 {
                     if (TryEmitMemberReadFromStructReturnCall(node, targetReg, context))
@@ -215,7 +216,11 @@ public partial class SharpieEmitter
         EmissionContext context
     )
     {
-        if (node.Kind != CXCursorKind.CXCursor_MemberRefExpr)
+        if (
+            node.Kind
+            is not CXCursorKind.CXCursor_MemberRefExpr
+                and not CXCursorKind.CXCursor_MemberRef
+        )
             return false;
 
         var children = GetChildren(node);

@@ -35,9 +35,19 @@ public partial class SharpieEmitter
             var ptrExpr = GetChildren(peeled).First();
             EmitExpression(ptrExpr, targetReg, context);
         }
-        else if (peeled.Kind == CXCursorKind.CXCursor_MemberRefExpr)
+        else if (
+            peeled.Kind
+            is CXCursorKind.CXCursor_MemberRefExpr
+                or CXCursorKind.CXCursor_MemberRef
+        )
         {
-            var baseExpr = GetChildren(peeled).First();
+            var children = GetChildren(peeled);
+            if (children.Count == 0)
+                throw new InvalidOperationException(
+                    $"Cannot compute address for {peeled.Kind}: no base expression"
+                );
+
+            var baseExpr = children.First();
             bool isPointer = baseExpr.Type.CanonicalType.kind == CXTypeKind.CXType_Pointer;
 
             if (isPointer)
@@ -176,25 +186,62 @@ public partial class SharpieEmitter
         if (initList.Kind != CXCursorKind.CXCursor_InitListExpr)
             return;
 
-        var initVals = GetChildren(initList);
+        var rawChildren = GetChildren(initList);
         var decl = clang.getTypeDeclaration(compoundLiteralExpr.Type.CanonicalType);
         var fields = GetChildren(decl).Where(c => c.Kind == CXCursorKind.CXCursor_FieldDecl).ToList();
 
-        for (int i = 0; i < initVals.Count && i < fields.Count; i++)
+        int fieldIdx = 0;
+        foreach (var rawChild in rawChildren)
         {
-            long offsetBytes = clang.Cursor_getOffsetOfField(fields[i]) / 8;
-            long fieldSize = fields[i].Type.SizeOf;
+            var peeled = PeelExpression(rawChild);
+            if (peeled.Kind == CXCursorKind.CXCursor_MemberRef)
+            {
+                var fieldDecl = clang.getCursorReferenced(peeled);
+                if (fieldDecl.Kind == CXCursorKind.CXCursor_FieldDecl)
+                {
+                    long offsetBytes = clang.Cursor_getOffsetOfField(fieldDecl) / 8;
+                    long fieldSize = fieldDecl.Type.SizeOf;
 
-            using var valReg = context.AcquireTempRegister();
-            EmitExpression(initVals[i], valReg.Value, context);
-
-            using var addrReg = context.AcquireTempRegister();
-            context.Emit($"MOV r{addrReg.Value}, r{destinationAddressRegister}");
-            AccumulateOffset(addrReg.Value, (int)offsetBytes, context);
-
-            string altPrefix = (fieldSize == 1) ? "ALT " : "";
-            context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
+                    var initChildren = GetChildren(rawChild);
+                    var valExpr = initChildren.FirstOrDefault(
+                        c => c.Kind != CXCursorKind.CXCursor_MemberRef
+                    );
+                    if (valExpr.Kind != CXCursorKind.CXCursor_NoDeclFound)
+                    {
+                        EmitCompoundLiteralStoreField(valExpr, fieldSize, offsetBytes, destinationAddressRegister, context);
+                    }
+                }
+            }
+            else
+            {
+                if (fieldIdx < fields.Count)
+                {
+                    long offsetBytes = clang.Cursor_getOffsetOfField(fields[fieldIdx]) / 8;
+                    long fieldSize = fields[fieldIdx].Type.SizeOf;
+                    EmitCompoundLiteralStoreField(rawChild, fieldSize, offsetBytes, destinationAddressRegister, context);
+                }
+                fieldIdx++;
+            }
         }
+    }
+
+    private static void EmitCompoundLiteralStoreField(
+        CXCursor valExpr,
+        long fieldSize,
+        long offsetBytes,
+        int destinationAddressRegister,
+        EmissionContext context
+    )
+    {
+        using var valReg = context.AcquireTempRegister();
+        EmitExpression(valExpr, valReg.Value, context);
+
+        using var addrReg = context.AcquireTempRegister();
+        context.Emit($"MOV r{addrReg.Value}, r{destinationAddressRegister}");
+        AccumulateOffset(addrReg.Value, (int)offsetBytes, context);
+
+        string altPrefix = (fieldSize == 1) ? "ALT " : "";
+        context.Emit($"{altPrefix}STA r{valReg.Value}, r{addrReg.Value}");
     }
 
     private static void EmitCompoundLiteral(CXCursor expr, int targetReg, EmissionContext context)

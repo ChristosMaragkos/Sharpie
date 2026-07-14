@@ -42,6 +42,7 @@ public partial class SharpieEmitter
                 }
 
             case CXCursorKind.CXCursor_MemberRefExpr:
+            case CXCursorKind.CXCursor_MemberRef:
             case CXCursorKind.CXCursor_ArraySubscriptExpr:
                 {
                     using var srcReg = context.AcquireTempRegister();

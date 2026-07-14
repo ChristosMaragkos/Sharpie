@@ -473,6 +473,7 @@ public partial class SharpieEmitter
         bool isLvalue = peeled.Kind
             is CXCursorKind.CXCursor_DeclRefExpr
                 or CXCursorKind.CXCursor_MemberRefExpr
+                or CXCursorKind.CXCursor_MemberRef
                 or CXCursorKind.CXCursor_ArraySubscriptExpr;
         isLvalue |= peeled.Kind == CXCursorKind.CXCursor_UnaryOperator
             && GetUnaryOperatorKind(peeled) == CXUnaryOperatorKind.CXUnaryOperator_Deref;
