@@ -18,15 +18,22 @@ public sealed partial class SharpieEmitter
     private readonly bool _optimize;
     private readonly bool _allowLong;
     private readonly HashSet<string>? _crossFileGlobals;
+    private readonly HashSet<string>? _reachableFunctions;
 
     [GeneratedRegex(@"#pragma\s+bank\s+(\d+)")]
     private static partial Regex MyRegex();
 
-    public SharpieEmitter(bool optimizationsEnabled, bool allowLong = false, HashSet<string>? crossFileGlobals = null)
+    public SharpieEmitter(
+        bool optimizationsEnabled,
+        bool allowLong = false,
+        HashSet<string>? crossFileGlobals = null,
+        HashSet<string>? reachableFunctions = null
+    )
     {
         _optimize = optimizationsEnabled;
         _allowLong = allowLong;
         _crossFileGlobals = crossFileGlobals;
+        _reachableFunctions = reachableFunctions;
     }
 
     public string EmitTranslationUnit(CXCursor translationUnitCursor)
@@ -242,6 +249,10 @@ public sealed partial class SharpieEmitter
                 continue;
 
             var funcName = func.Spelling.ToString();
+
+            if (_optimize && _reachableFunctions != null && !_reachableFunctions.Contains(funcName))
+                continue;
+
             int bank = functionBanks[funcName];
             if (bank < 0) bank = defaultBank;
             var asm = bankAsm[bank];
@@ -897,5 +908,100 @@ public sealed partial class SharpieEmitter
         if (bankStr != null && int.TryParse(bankStr, out var bank))
             return bank;
         return -1;
+    }
+
+    public static (
+        Dictionary<string, HashSet<string>> CallGraph,
+        HashSet<string> AddressTaken
+    ) CollectCallGraph(CXCursor translationUnitCursor)
+    {
+        var functions = GetChildren(translationUnitCursor)
+            .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
+            .ToList();
+
+        var callGraph = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        var addressTaken = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var func in functions)
+        {
+            var hasBody = GetChildren(func).Any(c => c.Kind == CXCursorKind.CXCursor_CompoundStmt);
+            if (!hasBody)
+                continue;
+
+            var funcName = func.Spelling.ToString();
+            var callees = new HashSet<string>(StringComparer.Ordinal);
+            var queue = new Queue<CXCursor>();
+            queue.Enqueue(func);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+
+                if (current.Kind == CXCursorKind.CXCursor_CallExpr)
+                {
+                    var children = GetChildren(current);
+                    if (children.Count > 0)
+                    {
+                        var calleeCursor = PeelExpression(children[0]);
+                        var referenced = clang.getCursorReferenced(calleeCursor);
+                        if (referenced.Kind == CXCursorKind.CXCursor_FunctionDecl)
+                        {
+                            var calleeName = calleeCursor.Spelling.ToString();
+                            if (!calleeName.StartsWith("__sharpie_"))
+                                callees.Add(calleeName);
+                        }
+                    }
+                }
+
+                if (current.Kind == CXCursorKind.CXCursor_DeclRefExpr)
+                {
+                    var referenced = clang.getCursorReferenced(current);
+                    if (referenced.Kind == CXCursorKind.CXCursor_FunctionDecl)
+                    {
+                        var name = current.Spelling.ToString();
+                        if (!name.StartsWith("__sharpie_"))
+                            addressTaken.Add(name);
+                    }
+                }
+
+                foreach (var child in GetChildren(current))
+                    queue.Enqueue(child);
+            }
+
+            if (callees.Count > 0)
+                callGraph[funcName] = callees;
+        }
+
+        return (callGraph, addressTaken);
+    }
+
+    public static HashSet<string> ComputeReachability(
+        Dictionary<string, HashSet<string>> callGraph,
+        HashSet<string> addressTaken,
+        HashSet<string> allFunctions
+    )
+    {
+        var reachable = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<string>();
+
+        queue.Enqueue("main");
+
+        foreach (var f in addressTaken)
+            queue.Enqueue(f);
+
+        while (queue.Count > 0)
+        {
+            var func = queue.Dequeue();
+            if (!reachable.Add(func))
+                continue;
+
+            if (callGraph.TryGetValue(func, out var callees))
+            {
+                foreach (var callee in callees)
+                    queue.Enqueue(callee);
+            }
+        }
+
+        return reachable;
     }
 }
