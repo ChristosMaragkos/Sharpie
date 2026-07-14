@@ -1,0 +1,6 @@
+---
+BasedOnStyle: LLVM
+Language: C
+IndentCaseBlocks: true
+IndentWidth: 4
+BinPackArguments: true

@@ -4,7 +4,6 @@
 
 .vscode
 .editorconfig
-.clang-format
 
 *.bin
 *.shr
