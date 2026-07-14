@@ -1,4 +1,4 @@
-#include "../headers/sharpie.h"
+#include "../headers/sharpie/memory.h"
 
 struct Big {
     int a, b, c, d, e, f, g;
@@ -18,6 +18,7 @@ int do_stuff(struct Big *big) {
 int main(void) {
     struct Big big = {1, 2, 3, 4, 5, 6, 7};
     int result = do_stuff(&big);
-    if (result != 11) return 1;
+    if (result != 11)
+        return 1;
     return 0;
 }

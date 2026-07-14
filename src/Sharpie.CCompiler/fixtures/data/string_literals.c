@@ -1,4 +1,4 @@
-#include "../headers/sharpie.h"
+#include "../headers/sharpie/memory.h"
 
 int main(void) {
     char *a = "Hello from Sharpie";
@@ -9,7 +9,9 @@ int main(void) {
     allocated[0] = 'a';
     allocated[19] = 0;
 
-    if (allocated[0] != 'a') return 1;
-    if (allocated[19] != 0) return 1;
+    if (allocated[0] != 'a')
+        return 1;
+    if (allocated[19] != 0)
+        return 1;
     return 0;
 }

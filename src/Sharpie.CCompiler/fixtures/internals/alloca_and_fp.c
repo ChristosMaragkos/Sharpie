@@ -1,4 +1,4 @@
-#include "../headers/sharpie.h"
+#include "../headers/sharpie/memory.h"
 
 int main(void) {
     int before = 10;
@@ -7,6 +7,7 @@ int main(void) {
     int after = 20;
 
     int result = before + after + *buffer;
-    if (result != 72) return 1;
+    if (result != 72)
+        return 1;
     return 0;
 }
