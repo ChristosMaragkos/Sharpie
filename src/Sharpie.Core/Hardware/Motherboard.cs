@@ -543,12 +543,6 @@ internal class Motherboard : IMotherboard
             throw;
         }
     }
-
-    internal void LoadSaveData(byte[] saveData)
-    {
-        _ram.LoadData(Memory.SaveRamStart, [.. saveData.Take(512)]);
-    }
-
     public int GetCurrentBank()
     {
         return _ram.GetBank();

@@ -11,7 +11,6 @@ internal class Memory
     public const ushort SpriteAtlasBottom = 0xC800;
     public const ushort WorkRamStart = 0xE800;
     public const ushort AudioRamStart = 0xF800;
-    public const ushort SaveRamStart = AudioRamStart + 32;
     public const ushort ReservedSpaceStart = 0xF800 + 544;
     public const ushort ColorPaletteStart = 0xFFE0;
 

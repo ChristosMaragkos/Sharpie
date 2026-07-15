@@ -44,19 +44,30 @@ internal class OamBank
     [Flags]
     public enum SpriteFlags : byte
     {
+        None = 0,
+        /// <summary>
         /// Horizontal Flip, bit 0
+        /// </summary>
         FlipH = 1,
 
+        /// <summary>
         /// Vertical Flip, bit 1
+        /// </summary>
         FlipV = 2,
 
+        /// <summary>
         /// HUD toggle - ignore collision, ignore camera, draw with screen coordinates, bit 2
+        /// </summary>
         Hud = 4,
 
+        /// <summary>
         /// Background toggle - ignore collision, bit 3
+        /// </summary>
         Background = 8,
 
+        /// <summary>
         /// Alternate palette togle - offsets color by 16
+        /// </summary>
         AlternatePalette = 16,
     }
 
