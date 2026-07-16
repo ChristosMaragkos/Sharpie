@@ -11,18 +11,10 @@ typedef unsigned char uint8_t;
 typedef signed long int32_t;
 typedef unsigned long uint32_t;
 
+#define bool _Bool
+#define true 1
+#define false 0
+
 #define BANK(n) __attribute__((annotate("bank_" #n)))
 
 #define NULL ((void *)(0))
-
-typedef struct Vector2 {
-    signed int x, y;
-} Vector2;
-
-typedef struct Vector3 {
-    signed int x, y, z;
-} Vector3;
-
-typedef struct ScreenPos {
-    uint8_t x, y;
-} ScreenPos;

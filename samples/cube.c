@@ -1,4 +1,6 @@
-#include "./include/sharpie.h"
+#include "include/sharpie/graphics/hardware.h"
+#include "include/sharpie/graphics/software.h"
+#include "include/sharpie/physics.h"
 
 // cube.c contains an entirely software-driven 3D wireframe renderer that runs
 // natively on Sharpie. It runs thanks to v0.4's VRAM access instructions and a
@@ -33,21 +35,18 @@ const int sin_table[256] = {
     -97,  -92,  -86,  -80,  -74,  -68,  -62,  -56,  -49,  -43,  -37,  -31,
     -25,  -18,  -12,  -6};
 
-const unsigned char FOREGROUND = 4;
+const unsigned char FOREGROUND = CLR_GREEN;
 const unsigned char WIDTH = 255;
 const unsigned char HEIGHT = 255;
 const unsigned char CENTER = 128;
 
 const int FOV = 96;
 
-/*
- *   Draws a single pixel at the X and Y points of a 2D vector.
- */
 void draw_point(Vector2 *p) {
     if (p->x > WIDTH || p->x < 0 || p->y > HEIGHT || p->y < 0)
         return;
 
-    write_vram((unsigned char)p->x, (unsigned char)p->y, FOREGROUND);
+    write_pixel((unsigned char)p->x, (unsigned char)p->y, FOREGROUND);
 }
 /*
  *   Converts a given 2D vector representing world coordinates to one
@@ -115,7 +114,7 @@ void line_bresenham(Vector2 *p1, Vector2 *p2) {
 
         while (x != p2->x) {
             if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-                write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
+                write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
 
             if (error >= 0) {
                 y += stepY;
@@ -130,7 +129,7 @@ void line_bresenham(Vector2 *p1, Vector2 *p2) {
 
         while (y != p2->y) {
             if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-                write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
+                write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
 
             if (error >= 0) {
                 x += stepX;
@@ -142,19 +141,13 @@ void line_bresenham(Vector2 *p1, Vector2 *p2) {
         }
     }
     if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-        write_vram((unsigned char)x, (unsigned char)y, FOREGROUND);
+        write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
 }
 
 Vector3 vertices[8] = {
-    {-32, 32, 32},
-    {32, 32, 32},
-    {32, -32, 32},
-    {-32, -32, 32},
+    {-32, 32, 32},  {32, 32, 32},  {32, -32, 32},  {-32, -32, 32},
 
-    {-32, 32, -32},
-    {32, 32, -32},
-    {32, -32, -32},
-    {-32, -32, -32},
+    {-32, 32, -32}, {32, 32, -32}, {32, -32, -32}, {-32, -32, -32},
 };
 
 unsigned char edges[24] = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,

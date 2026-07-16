@@ -1,5 +1,15 @@
-#include "sharpie_mem.h"
-#include "sharpie_defs.h"
+#include "memory.h"
+#include "defs.h"
+
+void *__sharpie_memchr(const void *src, unsigned char c, size_t n) {
+    for (int i = 0; i < n; ++i) {
+        if (((unsigned char *)(src))[i] == c) {
+            return (void *)(src + i);
+        }
+    }
+
+    return NULL;
+}
 
 struct ArenaAllocator {
     void *data;
@@ -13,7 +23,7 @@ void arena_init(ArenaAllocator *arena, void *backing, size_t size) {
     arena->offset = 0;
 }
 
-void *arena_malloc(ArenaAllocator *arena, size_t size) {
+void *arena_alloc(ArenaAllocator *arena, size_t size) {
     void *ptr = arena->data + arena->offset;
     if (arena->offset + size > arena->size) {
         return NULL;
