@@ -30,6 +30,7 @@
 | `0x52` | **NOT** | `R` | 2 | Bitwise NOT (Invert all bits). |  |
 | `0x53` | **NEG** | `R` | 2 | Two's complement negation (0 - R). |  |
 | `0x54` | **PRNT** | `R` | 2 | Print character stored in register R. |  |
+| `0x55` | **SIGEX** | `R` | 2 | Sign-extend low byte of register R into high byte. |  |
 | `0x60` | **IADD** | `R, B` | 3 | Add immediate byte B to R. | Add byte B to word at `[R]` in memory. |
 | `0x61` | **ISUB** | `R, B` | 3 | Subtract immediate byte B from R. | Sub byte B from word at `[R]` in memory. |
 | `0x62` | **IMUL** | `R, B` | 3 | Multiply R by immediate byte B. | Mul word at `[R]` by B in memory. |

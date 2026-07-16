@@ -302,6 +302,16 @@
     "alt": ""
   },
   {
+    "hex": "0x55",
+    "name": "SIGEX",
+    "len": 2,
+    "logic": null,
+    "words": 1,
+    "pattern": "R",
+    "desc": "Sign-extend low byte of register R into high byte.",
+    "alt": ""
+  },
+  {
     "hex": "0x60",
     "name": "IADD",
     "len": 3,

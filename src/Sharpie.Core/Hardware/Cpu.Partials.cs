@@ -315,6 +315,16 @@ internal partial class Cpu
         GetRegister(x) = (ushort)result;
     }
 
+    private partial void Execute_SIGEX(byte opcode, ref ushort pcDelta)
+    {
+        var x = _mobo.ReadByte(_pc + 1);
+        var result = (ushort)(sbyte)(byte)GetRegister(x);
+        UpdateLogicFlags(result);
+        SetFlag(false, CpuFlags.Carry);
+        SetFlag(false, CpuFlags.Overflow);
+        GetRegister(x) = result;
+    }
+
     private partial void Execute_IADD(byte opcode, ref ushort pcDelta)
     {
         var x = _mobo.ReadByte(_pc + 1);

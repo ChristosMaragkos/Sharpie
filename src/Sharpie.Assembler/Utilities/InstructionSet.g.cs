@@ -36,6 +36,7 @@ public static class InstructionSet
         { "NOT", (2, 82, 1, false, "R") },
         { "NEG", (2, 83, 1, false, "R") },
         { "PRNT", (2, 84, 1, false, "R") },
+        { "SIGEX", (2, 85, 1, false, "R") },
         { "IADD", (3, 96, 2, false, "RB") },
         { "ISUB", (3, 97, 2, false, "RB") },
         { "IMUL", (3, 98, 2, false, "RB") },

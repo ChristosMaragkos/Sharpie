@@ -153,6 +153,11 @@ internal partial class Cpu {
                 Execute_PRNT(opcode, ref pcDelta);
                 break;
 
+            case 0x55: //SIGEX
+                pcDelta = 2;
+                Execute_SIGEX(opcode, ref pcDelta);
+                break;
+
             case 0x60: //IADD
                 pcDelta = 3;
                 Execute_IADD(opcode, ref pcDelta);
@@ -470,6 +475,7 @@ internal partial class Cpu {
     private partial void Execute_NOT(byte opcode, ref ushort pcDelta);
     private partial void Execute_NEG(byte opcode, ref ushort pcDelta);
     private partial void Execute_PRNT(byte opcode, ref ushort pcDelta);
+    private partial void Execute_SIGEX(byte opcode, ref ushort pcDelta);
     private partial void Execute_IADD(byte opcode, ref ushort pcDelta);
     private partial void Execute_ISUB(byte opcode, ref ushort pcDelta);
     private partial void Execute_IMUL(byte opcode, ref ushort pcDelta);
