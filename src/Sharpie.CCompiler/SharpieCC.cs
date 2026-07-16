@@ -18,7 +18,8 @@ public static class SharpieCC
         masterAssembly.AppendLine("; ------------------------");
         masterAssembly.AppendLine(".REGION FIXED");
         masterAssembly.AppendLine("    JMP Main");
-        masterAssembly.Append(InjectedFunctions.GenerateAll());
+        if (allowLong)
+            masterAssembly.Append(InjectedFunctions.GenerateAll());
         masterAssembly.AppendLine(".ENDREGION");
 
         using var index = ClangSharp.Interop.CXIndex.Create();
