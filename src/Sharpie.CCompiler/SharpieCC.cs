@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using ClangSharp.Interop;
 using Sharpie.CCompiler.Emitter;
 
@@ -22,7 +23,7 @@ public static class SharpieCC
             masterAssembly.Append(InjectedFunctions.GenerateAll());
         masterAssembly.AppendLine(".ENDREGION");
 
-        using var index = ClangSharp.Interop.CXIndex.Create();
+        using var index = CXIndex.Create();
         var clangArgs = new[] { "-std=gnu11", "-target", "msp430" };
 
         if (allowLong)
@@ -31,6 +32,9 @@ public static class SharpieCC
             Console.WriteLine("[WARNING] Compilation with 32-bit support enabled. Be mindful of the size of the emitted code.");
             Console.ResetColor();
         }
+
+        // discover included headers and find their sibling .c files
+        DiscoverSiblingCFiles(clangArgs, fileList);
 
         var emittedGlobals = new HashSet<string>(StringComparer.Ordinal);
         HashSet<string>? reachableFunctions = null;
@@ -41,15 +45,14 @@ public static class SharpieCC
             var globalAddressTaken = new HashSet<string>(StringComparer.Ordinal);
             var allFunctionNames = new HashSet<string>(StringComparer.Ordinal);
 
-            // Pass 1: collect call graph from all input files
             foreach (var file in fileList)
             {
-                using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
+                using var tu = CXTranslationUnit.Parse(
                     index,
                     file,
                     clangArgs,
                     [],
-                    ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
+                    CXTranslationUnit_Flags.CXTranslationUnit_None
                 );
 
                 if (HasErrors(tu, file))
@@ -59,10 +62,8 @@ public static class SharpieCC
 
                 var (fileCallGraph, fileAddressTaken) = SharpieEmitter.CollectCallGraph(tu.Cursor);
 
-                // Add address-taken functions
                 globalAddressTaken.UnionWith(fileAddressTaken);
 
-                // Add call graph edges
                 foreach (var (caller, callees) in fileCallGraph)
                 {
                     if (globalCallGraph.TryGetValue(caller, out var existingCallees))
@@ -71,7 +72,6 @@ public static class SharpieCC
                         globalCallGraph[caller] = new HashSet<string>(callees, StringComparer.Ordinal);
                 }
 
-                // Track all function names from this TU (with bodies)
                 var functions = GetChildren(tu.Cursor)
                     .Where(c => c.Kind == CXCursorKind.CXCursor_FunctionDecl)
                     .ToList();
@@ -83,7 +83,6 @@ public static class SharpieCC
                 }
             }
 
-            // Only apply DFE if 'main' exists in the program
             if (allFunctionNames.Contains("main"))
             {
                 reachableFunctions = SharpieEmitter.ComputeReachability(
@@ -92,15 +91,14 @@ public static class SharpieCC
             }
         }
 
-        // Pass 2 (or only pass if !optimize): emit
         foreach (var file in fileList)
         {
-            using var tu = ClangSharp.Interop.CXTranslationUnit.Parse(
+            using var tu = CXTranslationUnit.Parse(
                 index,
                 file,
                 clangArgs,
                 [],
-                ClangSharp.Interop.CXTranslationUnit_Flags.CXTranslationUnit_None
+                CXTranslationUnit_Flags.CXTranslationUnit_None
             );
 
             if (HasErrors(tu, file))
@@ -118,6 +116,77 @@ public static class SharpieCC
         }
 
         return masterAssembly.ToString();
+    }
+
+    private static void DiscoverSiblingCFiles(string[] clangArgs, List<string> fileList)
+    {
+        // Extract include directories from clang args
+        var includeDirs = new List<string>();
+        for (int i = 0; i < clangArgs.Length - 1; i++)
+        {
+            if (clangArgs[i] == "-I" && !string.IsNullOrEmpty(clangArgs[i + 1]))
+                includeDirs.Add(clangArgs[i + 1]);
+        }
+
+        var knownFiles = fileList
+            .Select(f => Path.GetFullPath(f))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        while (true)
+        {
+            var count = fileList.Count;
+
+            foreach (var file in fileList.ToList())
+            {
+                var content = File.ReadAllText(file);
+                var includeRegex = new Regex(
+                    @"#include\s+[""<]([^"">]+)[>"">]"
+                );
+
+                foreach (Match match in includeRegex.Matches(content))
+                {
+                    var includePath = match.Groups[1].Value;
+                    string? resolvedPath = null;
+
+                    // For "" includes, check relative to the including file's directory first
+                    if (match.Value.Contains('"'))
+                    {
+                        var fileDir = Path.GetDirectoryName(Path.GetFullPath(file))!;
+                        var relative = Path.GetFullPath(Path.Combine(fileDir, includePath));
+                        if (File.Exists(relative))
+                            resolvedPath = relative;
+                    }
+
+                    // Check include directories
+                    if (resolvedPath == null)
+                    {
+                        foreach (var dir in includeDirs)
+                        {
+                            var candidate = Path.GetFullPath(Path.Combine(dir, includePath));
+                            if (File.Exists(candidate))
+                            {
+                                resolvedPath = candidate;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (resolvedPath == null || !resolvedPath.EndsWith(".h", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var siblingC = Path.ChangeExtension(resolvedPath, ".c");
+                    if (!File.Exists(siblingC))
+                        continue;
+
+                    var fullPath = Path.GetFullPath(siblingC);
+                    if (knownFiles.Add(fullPath))
+                        fileList.Add(fullPath);
+                }
+            }
+
+            if (fileList.Count == count)
+                break;
+        }
     }
 
     private static List<CXCursor> GetChildren(CXCursor cursor)
@@ -139,20 +208,20 @@ public static class SharpieCC
         return children;
     }
 
-    private static bool HasErrors(ClangSharp.Interop.CXTranslationUnit tu, string filename)
+    private static bool HasErrors(CXTranslationUnit tu, string filename)
     {
         var hasErrors = false;
         for (uint i = 0; i < tu.NumDiagnostics; i++)
         {
             using var diag = tu.GetDiagnostic(i);
-            if (diag.Severity >= ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Warning)
+            if (diag.Severity >= CXDiagnosticSeverity.CXDiagnostic_Warning)
             {
                 Console.Error.WriteLine(
                     $"[{diag.Severity.ToString().ToUpper()}] {filename}: {diag.Spelling}"
                 );
             }
 
-            if (diag.Severity >= ClangSharp.Interop.CXDiagnosticSeverity.CXDiagnostic_Error)
+            if (diag.Severity >= CXDiagnosticSeverity.CXDiagnostic_Error)
                 hasErrors = true;
         }
         return hasErrors;

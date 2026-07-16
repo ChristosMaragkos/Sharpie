@@ -1,10 +1,15 @@
-#include "../headers/sharpie.h"
+#include "../headers/sharpie/graphics/software.h"
 
 int main(void) {
     set_blit_mode(BLT_NONE);
 
-    char color_white = 1;
-    write_vram(127, 127, color_white);
+    Color color_white = CLR_WHITE;
+    write_pixel(127, 127, color_white);
 
-    return 0;
+    Color read = read_pixel(127, 127);
+    if (read == CLR_WHITE) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
