@@ -92,7 +92,18 @@ public partial class SharpieEmitter
                 using var destAddrReg2 = context.AcquireTempRegister();
                 EmitLValueAddress(lhs, destAddrReg2.Value, context);
 
-                EmitInlineAggregateCopy(srcAddrReg.Value, destAddrReg2.Value, (int)assignSize, context);
+                if (assignSize <= 4)
+                {
+                    EmitInlineAggregateCopy(srcAddrReg.Value, destAddrReg2.Value, (int)assignSize, context);
+                }
+                else
+                {
+                    context.Emit($"PUSH r{srcAddrReg.Value}");
+                    context.Emit($"MOV r1, r{destAddrReg2.Value}");
+                    context.Emit("POP r2");
+                    context.Emit($"LDI r3, {assignSize}");
+                    context.Emit("CALL SYS_MEM_COPY");
+                }
             }
             else
             {
@@ -490,11 +501,18 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r{destReg.Value}, r15");
                 AccumulateOffset(destReg.Value, space.Value, context);
 
-                context.Emit($"PUSH r{srcReg.Value}");
-                context.Emit($"MOV r1, r{destReg.Value}");
-                context.Emit("POP r2");
-                context.Emit($"LDI r3, {sizeBytes}");
-                context.Emit("CALL SYS_MEM_MOVE");
+                if (sizeBytes <= 4)
+                {
+                    EmitInlineAggregateCopy(srcReg.Value, destReg.Value, (int)sizeBytes, context);
+                }
+                else
+                {
+                    context.Emit($"PUSH r{srcReg.Value}");
+                    context.Emit($"MOV r1, r{destReg.Value}");
+                    context.Emit("POP r2");
+                    context.Emit($"LDI r3, {sizeBytes}");
+                    context.Emit("CALL SYS_MEM_MOVE");
+                }
             }
             return;
         }

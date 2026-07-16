@@ -21,9 +21,13 @@ public partial class SharpieEmitter
                 {
                     EmitCallExpressionInto(peeled, context.HiddenRetPtrReg, context);
                 }
-                else if (retSizeBytes == 4)
+                else if (retSizeBytes <= 4)
                 {
-                    EmitLongToAddress(expr, context.HiddenRetPtrReg, context);
+                    using var srcReg = context.AcquireTempRegister();
+                    EmitExpression(expr, srcReg.Value, context);
+                    EmitInlineAggregateCopy(
+                        srcReg.Value, context.HiddenRetPtrReg, (int)retSizeBytes, context
+                    );
                 }
                 else
                 {
