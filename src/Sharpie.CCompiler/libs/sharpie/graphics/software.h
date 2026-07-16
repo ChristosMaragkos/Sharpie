@@ -95,10 +95,8 @@ typedef struct PixelData {
 
 // A postprocessing API that runs a per-pixel hook. Borderline insane to use it
 // given the 16k cycle budget but enables some neat visual effects.
-#ifdef SUPPORT_POSTPROCESSING
 void draw_image_postprocess(const Image *img, int x, int y,
                             void (*effect)(PixelData *));
-#endif
 
 // Creates an exact copy of an image. copy_buffer MUST be at least width *
 // height in size, but that is never verified at runtime, so allocate
@@ -112,7 +110,6 @@ Image image_from_sprite(uint8_t sprite_index);
 // These methods generate images. You have to deliberately opt in to use them.
 // As always, you (the programmer) are responsible for allocating a large enough
 // pixel buffer.
-#ifdef SUPPORT_IMAGE_GENERATION
 typedef enum NoiseDepth : unsigned char {
     NOISE_2 = 2,
     NOISE_3 = 3,
@@ -123,7 +120,3 @@ Image gen_image_color(uint8_t width, uint8_t height, Color color,
                       Color *data_buffer);
 Image gen_image_noise(uint8_t width, uint8_t height, Color *data_buffer,
                       NoiseDepth depth);
-#endif
-
-#if SUPPORT_SHAPES
-#endif

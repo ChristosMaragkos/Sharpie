@@ -81,7 +81,6 @@ Image image_from_sprite(uint8_t sprite_index) {
 }
 #pragma clang diagnostic pop
 
-#ifdef SUPPORT_POSTPROCESSING
 void draw_image_postprocess(const Image *img, int x, int y,
                             void (*effect)(PixelData *)) {
     int src_x = 0, src_y = 0;
@@ -110,21 +109,18 @@ void draw_image_postprocess(const Image *img, int x, int y,
         for (int col = 0; col < w; ++col) {
             uint8_t local_x = src_x + col;
             uint8_t local_y = src_y + row;
-            PixelData data = {
-                .screen_x = x + col,
-                .screen_y = y + row,
-                .tex_x = local_x,
-                .tex_y = local_y,
-                .color = img->pixels[img->width * local_y + local_x],
-            };
+            PixelData data;
+            data.screen_x = x + col;
+            data.screen_y = y + row;
+            data.tex_x = local_x;
+            data.tex_y = local_y;
+            data.color = img->pixels[img->width * local_y + local_x];
             effect(&data);
             write_pixel(data.screen_x, data.screen_y, data.color);
         }
     }
 }
-#endif
 
-#ifdef SUPPORT_IMAGE_GENERATION
 Image gen_image_noise(uint8_t width, uint8_t height, Color *data_buffer,
                       NoiseDepth depth) {
     const Color noise_colors[4] = {
@@ -156,4 +152,3 @@ Image gen_image_color(uint8_t width, uint8_t height, Color color,
         .pixels = memset(data_buffer, color, total_pixels),
     };
 }
-#endif
