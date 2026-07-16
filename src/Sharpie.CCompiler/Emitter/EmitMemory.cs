@@ -43,9 +43,11 @@ public partial class SharpieEmitter
         {
             var children = GetChildren(peeled);
             if (children.Count == 0)
+            {
                 throw new InvalidOperationException(
-                    $"Cannot compute address for {peeled.Kind}: no base expression"
+                    $"Cannot compute address for {peeled.Kind} ({peeled.Spelling}): no base expression"
                 );
+            }
 
             var baseExpr = children.First();
             bool isPointer = baseExpr.Type.CanonicalType.kind == CXTypeKind.CXType_Pointer;
