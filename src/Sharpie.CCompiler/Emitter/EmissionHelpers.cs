@@ -258,6 +258,22 @@ public partial class SharpieEmitter
         return true;
     }
 
+    private static bool IsSignedByteType(CXType type)
+    {
+        if (type.SizeOf != 1)
+            return false;
+
+        return type.CanonicalType.kind
+            is CXTypeKind.CXType_Char_S
+            or CXTypeKind.CXType_SChar;
+    }
+
+    private static void SignExtendIfSignedByte(int reg, CXType type, EmissionContext context)
+    {
+        if (IsSignedByteType(type))
+            context.Emit($"SIGEX r{reg}");
+    }
+
     private static void TruncateToByte(int reg, long sizeBytes, EmissionContext context)
     {
         if (sizeBytes == 1)

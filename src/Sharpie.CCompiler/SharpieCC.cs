@@ -5,7 +5,7 @@ using Sharpie.CCompiler.Emitter;
 
 namespace Sharpie.CCompiler;
 
-public static class SharpieCC
+public static partial class SharpieCC
 {
     public static string Compile(IEnumerable<string> inputFiles, bool optimize, bool allowLong = false)
     {
@@ -129,7 +129,7 @@ public static class SharpieCC
         }
 
         var knownFiles = fileList
-            .Select(f => Path.GetFullPath(f))
+            .Select(Path.GetFullPath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         while (true)
@@ -139,9 +139,7 @@ public static class SharpieCC
             foreach (var file in fileList.ToList())
             {
                 var content = File.ReadAllText(file);
-                var includeRegex = new Regex(
-                    @"#include\s+[""<]([^"">]+)[>"">]"
-                );
+                var includeRegex = MyRegex();
 
                 foreach (Match match in includeRegex.Matches(content))
                 {
@@ -171,7 +169,7 @@ public static class SharpieCC
                         }
                     }
 
-                    if (resolvedPath == null || !resolvedPath.EndsWith(".h", StringComparison.OrdinalIgnoreCase))
+                    if (resolvedPath?.EndsWith(".h", StringComparison.OrdinalIgnoreCase) != true)
                         continue;
 
                     var siblingC = Path.ChangeExtension(resolvedPath, ".c");
@@ -226,4 +224,8 @@ public static class SharpieCC
         }
         return hasErrors;
     }
+
+    [GeneratedRegex(@"#include\s+[""<]([^"">]+)[>"">]"
+    )]
+    private static partial Regex MyRegex();
 }

@@ -93,6 +93,7 @@ public partial class SharpieEmitter
                             AccumulateOffset(addrReg.Value, allocatedSpace.Value, context);
 
                             context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
+                            SignExtendIfSignedByte(targetReg, node.Type, context);
                         }
                         else if (targetReg != allocatedSpace.Value)
                         {
@@ -119,6 +120,7 @@ public partial class SharpieEmitter
                         var isByte = node.Type.SizeOf == 1;
                         var prefix = isByte ? "ALT " : "";
                         context.Emit($"{prefix}LDM r{targetReg}, _global_{name}");
+                        SignExtendIfSignedByte(targetReg, node.Type, context);
                     }
                     return;
                 }
@@ -169,6 +171,7 @@ public partial class SharpieEmitter
                     using var addrReg = context.AcquireTempRegister();
                     EmitLValueAddress(node, addrReg.Value, context);
                     context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
+                    SignExtendIfSignedByte(targetReg, node.Type, context);
                 }
                 return;
             case CXCursorKind.CXCursor_ArraySubscriptExpr:
@@ -186,6 +189,7 @@ public partial class SharpieEmitter
                     using var addrReg = context.AcquireTempRegister();
                     EmitLValueAddress(node, addrReg.Value, context);
                     context.Emit($"{prefix}LDP r{targetReg}, r{addrReg.Value}");
+                    SignExtendIfSignedByte(targetReg, node.Type, context);
                 }
                 return;
 
@@ -266,6 +270,7 @@ public partial class SharpieEmitter
         var isByte = node.Type.SizeOf == 1;
         var prefix = isByte ? "ALT " : "";
         context.Emit($"{prefix}LDP r{targetReg}, r{retAddrReg.Value}");
+        SignExtendIfSignedByte(targetReg, node.Type, context);
         EmitFreeStackframe(retSize, context);
 
         return true;
@@ -495,6 +500,7 @@ public partial class SharpieEmitter
                         var prefix = isByte ? "ALT " : "";
 
                         context.Emit($"{prefix}LDM r{mathReg}, _global_{name}");
+                        SignExtendIfSignedByte(mathReg, peeled.Type, context);
 
                         if (isPost)
                         {
