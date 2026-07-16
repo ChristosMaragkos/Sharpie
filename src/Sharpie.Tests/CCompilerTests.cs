@@ -111,7 +111,7 @@ public class CCompilerTests
     [MemberData(nameof(GetFixtures))]
     public void RunsCorrectly_Unoptimized(string fixturePath)
     {
-        Assert.True(CompileAndRun(fixturePath, optimize: false) == 0, $"{fixturePath} failed to run optimized.");
+        Assert.True(CompileAndRun(fixturePath, optimize: false) == 0, $"{fixturePath} failed to run unoptimized.");
         MarkCached(fixturePath, "run-o0");
     }
 
