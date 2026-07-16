@@ -504,7 +504,7 @@ internal partial class Cpu
             and <= 0x8F: // RND
                 {
                     pcDelta = 3;
-                    var x = IndexFromOpcode(opcode);
+                    var x = IndexFromOpcode(prefixed);
                     var max = GetRegister(_mobo.ReadWord(_pc + 1) & 0x0F);
                     GetRegister(x) = (ushort)_rng.Next(max);
                     break;
