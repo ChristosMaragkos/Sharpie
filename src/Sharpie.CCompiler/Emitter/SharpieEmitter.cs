@@ -957,7 +957,7 @@ public sealed partial class SharpieEmitter
                     {
                         var name = current.Spelling.ToString();
                         if (!name.StartsWith("__sharpie_"))
-                            addressTaken.Add(name);
+                            callees.Add(name);
                     }
                 }
 

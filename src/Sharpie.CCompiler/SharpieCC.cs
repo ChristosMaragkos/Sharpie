@@ -88,6 +88,7 @@ public static partial class SharpieCC
                 reachableFunctions = SharpieEmitter.ComputeReachability(
                     globalCallGraph, globalAddressTaken, allFunctionNames
                 );
+
             }
         }
 
