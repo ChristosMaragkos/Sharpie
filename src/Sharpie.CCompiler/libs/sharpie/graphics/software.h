@@ -46,6 +46,10 @@ typedef enum Color : unsigned char {
     CLR_CHARCOAL,
 } Color;
 
+typedef struct ScreenPos {
+    uint8_t x, y;
+} ScreenPos;
+
 typedef struct Gradient {
     uint8_t size;
     const Color colors[];
@@ -120,3 +124,5 @@ Image gen_image_color(uint8_t width, uint8_t height, Color color,
                       Color *data_buffer);
 Image gen_image_noise(uint8_t width, uint8_t height, Color *data_buffer,
                       NoiseDepth depth);
+
+void draw_line(int x1, int y1, int x2, int y2, Color color);

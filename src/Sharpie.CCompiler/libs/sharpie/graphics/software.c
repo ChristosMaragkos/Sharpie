@@ -152,3 +152,58 @@ Image gen_image_color(uint8_t width, uint8_t height, Color color,
         .pixels = memset(data_buffer, color, total_pixels),
     };
 }
+
+void draw_line(int x1, int y1, int x2, int y2, Color color) {
+    int stepX, stepY;
+    int dx = x2 - x1;
+    if (dx > 0) {
+        stepX = 1;
+    } else {
+        stepX = -1;
+        dx = -dx;
+    }
+
+    int dy = y2 - y1;
+    if (dy > 0) {
+        stepY = 1;
+    } else {
+        stepY = -1;
+        dy = -dy;
+    }
+
+    int error;
+
+    if (dx > dy) {
+        error = (2 * dy) - dx;
+
+        while (x1 != x2) {
+            if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT)
+                write_pixel((unsigned char)x1, (unsigned char)y1, color);
+
+            if (error >= 0) {
+                y1 += stepY;
+                error -= 2 * dx;
+            }
+
+            error += 2 * dy;
+            x1 += stepX;
+        }
+    } else {
+        error = (2 * dx) - dy;
+
+        while (y1 != y2) {
+            if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT)
+                write_pixel((unsigned char)x1, (unsigned char)y1, color);
+
+            if (error >= 0) {
+                x1 += stepX;
+                error -= 2 * dy;
+            }
+
+            error += 2 * dx;
+            y1 += stepY;
+        }
+    }
+    if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT)
+        write_pixel((unsigned char)x1, (unsigned char)y1, color);
+}

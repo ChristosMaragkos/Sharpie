@@ -35,19 +35,14 @@ const int sin_table[256] = {
     -97,  -92,  -86,  -80,  -74,  -68,  -62,  -56,  -49,  -43,  -37,  -31,
     -25,  -18,  -12,  -6};
 
-const unsigned char FOREGROUND = CLR_GREEN;
+const Color FOREGROUND = CLR_GREEN;
+const Color BACKGROUND = CLR_NONE;
 const unsigned char WIDTH = 255;
 const unsigned char HEIGHT = 255;
 const unsigned char CENTER = 128;
 
 const int FOV = 96;
 
-void draw_point(Vector2 *p) {
-    if (p->x > WIDTH || p->x < 0 || p->y > HEIGHT || p->y < 0)
-        return;
-
-    write_pixel((unsigned char)p->x, (unsigned char)p->y, FOREGROUND);
-}
 /*
  *   Converts a given 2D vector representing world coordinates to one
  *   representing screen coordinates.
@@ -83,66 +78,7 @@ void rotate_xz(Vector3 *p, unsigned char angle) {
 /*
  * Shove our cube further down the "world" since Z is also centered on us
  */
-void translate_z(Vector3 *p, int amount) { p->z += amount; }
-
-void line_bresenham(Vector2 *p1, Vector2 *p2) {
-    int stepX, stepY;
-    int dx = p2->x - p1->x;
-    if (dx > 0) {
-        stepX = 1;
-    } else {
-        stepX = -1;
-        dx = -dx;
-    }
-
-    int dy = p2->y - p1->y;
-    if (dy > 0) {
-        stepY = 1;
-    } else {
-        stepY = -1;
-        dy = -dy;
-    }
-
-    int error;
-    Vector2 v;
-
-    int x = p1->x;
-    int y = p1->y;
-
-    if (dx > dy) {
-        error = (2 * dy) - dx;
-
-        while (x != p2->x) {
-            if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-                write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
-
-            if (error >= 0) {
-                y += stepY;
-                error -= 2 * dx;
-            }
-
-            error += 2 * dy;
-            x += stepX;
-        }
-    } else {
-        error = (2 * dx) - dy;
-
-        while (y != p2->y) {
-            if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-                write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
-
-            if (error >= 0) {
-                x += stepX;
-                error -= 2 * dy;
-            }
-
-            error += 2 * dx;
-            y += stepY;
-        }
-    }
-    if (x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
-        write_pixel((unsigned char)x, (unsigned char)y, FOREGROUND);
-}
+inline void translate_z(Vector3 *p, int amount) { p->z += amount; }
 
 Vector3 vertices[8] = {
     {-32, 32, 32},  {32, 32, 32},  {32, -32, 32},  {-32, -32, 32},
@@ -163,7 +99,7 @@ int main(void) {
     Vector2 p, p1;
 
     while (1) {
-        clear_screen(0);
+        clear_screen(BACKGROUND);
 
         for (int i = 0; i < sizeof(edges); i += 2) {
             v = vertices[edges[i]];
@@ -177,7 +113,7 @@ int main(void) {
             p = world_to_screen(&v);
             p1 = world_to_screen(&v1);
 
-            line_bresenham(&p, &p1);
+            draw_line(p.x, p.y, p1.x, p1.y, FOREGROUND);
             restart_frame();
         }
 
