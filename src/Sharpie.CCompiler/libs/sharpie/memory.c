@@ -1,6 +1,12 @@
 #include "memory.h"
 #include "defs.h"
 
+struct ArenaAllocator {
+    void *data;
+    size_t offset;
+    size_t size;
+};
+
 void *__builtin_sharpie_memchr(const void *src, unsigned char c, size_t n) {
     for (int i = 0; i < n; ++i) {
         if (((unsigned char *)(src))[i] == c) {
@@ -11,10 +17,12 @@ void *__builtin_sharpie_memchr(const void *src, unsigned char c, size_t n) {
     return NULL;
 }
 
-void arena_init(ArenaAllocator *arena, void *backing, size_t size) {
-    arena->data = backing;
-    arena->size = size;
-    arena->offset = 0;
+ArenaAllocator arena_init(void *backing, size_t size) {
+    return (ArenaAllocator){
+        .data = backing,
+        .offset = 0,
+        .size = size,
+    };
 }
 
 void *arena_alloc(ArenaAllocator *arena, size_t size) {

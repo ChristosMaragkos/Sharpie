@@ -1,11 +1,7 @@
 #pragma once
 #include "defs.h"
 
-typedef struct ArenaAllocator {
-    void *data;
-    size_t offset;
-    size_t size;
-} ArenaAllocator;
+typedef struct ArenaAllocator ArenaAllocator;
 
 typedef size_t ArenaSnapshot;
 
@@ -28,7 +24,7 @@ void *__builtin_sharpie_memchr(const void *src, unsigned char c, size_t n);
 
 #define stackalloc(src, len) __sharpie_stackalloc(src, len)
 
-void arena_init(ArenaAllocator *arena, void *backing, size_t size);
+ArenaAllocator arena_init(void *backing, size_t size);
 void *arena_alloc(ArenaAllocator *arena, size_t size);
 void *arena_alloc_zero(ArenaAllocator *arena, size_t size);
 ArenaSnapshot arena_snapshot(ArenaAllocator *arena);
