@@ -7,9 +7,9 @@ int main(void) {
     b1 = body_create((Vector2){0, 0}, (Vector2){10, 10});
     b2 = body_create((Vector2){5, 5}, (Vector2){10, 10});
 
-    bool collide = body_collides(&b1, &b2); // they should collide
+    CollisionDirection dir = body_collides(&b1, &b2); // they should collide
 
-    if (!collide) {
+    if (dir == COL_NONE) {
         return 1;
     }
 
