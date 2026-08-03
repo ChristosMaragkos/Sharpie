@@ -20,8 +20,8 @@ void __sharpie_print(const char *str, int grid_x, int grid_y);
 #define draw_string(str, x, y) __sharpie_print(str, x, y)
 
 void __sharpie_draw(int x, int y, char id, int attr_and_meta);
-#define draw_sprite(x, y, id, attr, type)                                      \
-    __sharpie_draw(x, y, id, ((attr) | ((type) << 8)))
+#define draw_sprite(x, y, id, attr, metadata)                                  \
+    __sharpie_draw(x, y, id, ((attr) | ((metadata) << 8)))
 
 void __sharpie_cls(int color);
 #define clear_screen(color) __sharpie_cls(color)
