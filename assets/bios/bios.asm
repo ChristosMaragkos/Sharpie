@@ -350,9 +350,10 @@ BlueScreen:
 
     ; Load the correct string
     DEC r0
-    IMUL r0, 2
-    LDI r1, ErrorMessages
+    ADD r0, r0
+    LDI r1, ErrorTable
     ADD r1, r0
+    LDP r1, r1
 
     CALL Print
     JMP Crash
@@ -365,10 +366,20 @@ Crash:
     HALT
 
 ErrorMessages:
-    .DB "ERR-OAM-CRSR-OOB", 0
-    .DB "ERR-ILLEGAL-WRITE", 0
-    .DB "ERR-STACK-UNDERFLOW", 0
-    .DB "ERR-STACK-OVERFLOW", 0
+    OamOOB:
+        .DB "ERR-OAM-CRSR-OOB", 0
+    IllegalWrite:
+        .DB "ERR-ILLEGAL-WRITE", 0
+    StackUnderflow:
+        .DB "ERR-STACK-UNDERFLOW", 0
+    StackOverflow:
+        .DB "ERR-STACK-OVERFLOW", 0
+
+ErrorTable:
+    .DW OamOOB
+    .DW IllegalWrite
+    .DW StackUnderflow
+    .DW StackOverflow
 
 SyscallPrint:
     SETCRS 0, 0
