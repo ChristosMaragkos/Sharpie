@@ -164,7 +164,7 @@ public partial class SharpieEmitter
                         {
                             var annotation = child.Spelling.ToString();
                             if (annotation.StartsWith("bank_"))
-                                targetBank = annotation.Substring(5);
+                                targetBank = annotation[5..];
                         }
                         return CXChildVisitResult.CXChildVisit_Continue;
                     },
@@ -172,10 +172,12 @@ public partial class SharpieEmitter
                 );
             }
 
-            if (targetBank == null && context.FunctionBanks != null && isDirectCall)
+            if (targetBank == null
+                    && context.FunctionBanks != null
+                    && isDirectCall
+                    && context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
             {
-                if (context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
-                    targetBank = mappedBank.ToString();
+                targetBank = mappedBank.ToString();
             }
 
             if (targetBank != null)
@@ -381,8 +383,17 @@ public partial class SharpieEmitter
                 context.Emit($"MOV r{target}, r{src}");
         }
 
-        if (destAddrReg != 1)
+        if (tempsToProtect.Contains(destAddrReg))
+        {
+            int destSpillOffset = context.GetSpillOffset(destAddrReg);
+            context.Emit("MOV r0, r15");
+            AccumulateOffset(0, destSpillOffset, context);
+            context.Emit("LDP r1, r0");
+        }
+        else
+        {
             context.Emit($"MOV r1, r{destAddrReg}");
+        }
 
         if (!TryEmitIntrinsic(funcName, context))
         {
@@ -396,7 +407,7 @@ public partial class SharpieEmitter
                         {
                             var annotation = child.Spelling.ToString();
                             if (annotation.StartsWith("bank_"))
-                                targetBank = annotation.Substring(5);
+                                targetBank = annotation[5..];
                         }
                         return CXChildVisitResult.CXChildVisit_Continue;
                     },
@@ -404,10 +415,11 @@ public partial class SharpieEmitter
                 );
             }
 
-            if (targetBank == null && context.FunctionBanks != null && isDirectCall)
+            if (targetBank == null && context.FunctionBanks != null
+                    && isDirectCall
+                    && context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
             {
-                if (context.FunctionBanks.TryGetValue(funcName, out int mappedBank) && mappedBank != -1)
-                    targetBank = mappedBank.ToString();
+                targetBank = mappedBank.ToString();
             }
 
             if (targetBank != null)

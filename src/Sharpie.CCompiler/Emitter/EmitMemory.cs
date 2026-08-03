@@ -49,7 +49,7 @@ public partial class SharpieEmitter
                 );
             }
 
-            var baseExpr = children.First();
+            var baseExpr = children[0];
             bool isPointer = baseExpr.Type.CanonicalType.kind == CXTypeKind.CXType_Pointer;
 
             if (isPointer)
@@ -235,6 +235,19 @@ public partial class SharpieEmitter
         EmissionContext context
     )
     {
+        if (fieldSize > 2)
+        {
+            using var srcAddrReg = context.AcquireTempRegister();
+            EmitExpression(valExpr, srcAddrReg.Value, context);
+
+            using var dstAddrReg = context.AcquireTempRegister();
+            context.Emit($"MOV r{dstAddrReg.Value}, r{destinationAddressRegister}");
+            AccumulateOffset(dstAddrReg.Value, (int)offsetBytes, context);
+
+            EmitInlineAggregateCopy(srcAddrReg.Value, dstAddrReg.Value, (int)fieldSize, context);
+            return;
+        }
+
         using var valReg = context.AcquireTempRegister();
         EmitExpression(valExpr, valReg.Value, context);
 

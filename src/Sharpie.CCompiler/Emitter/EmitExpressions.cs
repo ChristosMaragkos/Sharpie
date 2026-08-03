@@ -357,6 +357,52 @@ public partial class SharpieEmitter
                 context.Emit($"NOT r{targetReg}");
                 return;
 
+            case CXUnaryOperatorKind.CXUnaryOperator_LNot:
+            {
+                if (operand.Type.SizeOf > 2)
+                {
+                    LoadLongToHighLow(operand, PeelExpression(operand), 1, 2, context);
+                    context.Emit("LDI r3, 0");
+                    context.Emit("LDI r4, 0");
+                    context.Emit("CALL _func___injected_32bit_eq");
+                    if (targetReg >= 0)
+                        context.Emit($"MOV r{targetReg}, r2");
+                    return;
+                }
+
+                bool needsFallback = targetReg < TempRegisterStart || targetReg > TempRegisterEnd;
+                EmissionContext.TempLease fallbackLease = default;
+                var outReg = targetReg;
+
+                if (needsFallback)
+                {
+                    fallbackLease = context.AcquireTempRegister();
+                    outReg = fallbackLease.Value;
+                }
+
+                using var notValReg = context.AcquireTempRegister();
+                EmitExpression(operand, notValReg.Value, context);
+
+                var notTrueLabel = EmissionContext.GenerateLabel("not_true");
+                var notEndLabel = EmissionContext.GenerateLabel("not_end");
+
+                context.Emit($"ICMP r{notValReg.Value}, 0");
+                context.Emit($"JEQ {notTrueLabel}");
+                context.Emit($"LDI r{outReg}, 0");
+                context.Emit($"JMP {notEndLabel}");
+                context.Emit($"{notTrueLabel}:");
+                context.Emit($"LDI r{outReg}, 1");
+                context.Emit($"{notEndLabel}:");
+
+                if (targetReg >= 0 && targetReg != outReg)
+                    context.Emit($"MOV r{targetReg}, r{outReg}");
+
+                if (needsFallback)
+                    fallbackLease.Dispose();
+
+                return;
+            }
+
             default:
                 EmitExpression(operand, targetReg, context);
                 return;
