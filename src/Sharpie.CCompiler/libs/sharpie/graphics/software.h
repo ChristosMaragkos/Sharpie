@@ -1,5 +1,6 @@
 #pragma once
 #include "../defs.h"
+#include "./shared.h"
 
 #define SCREEN_WIDTH 256
 #define SCREEN_HEIGHT 256
@@ -10,41 +11,6 @@ typedef enum {
     BLT_NO_OAM = 2,
     BLT_NONE = 3
 } BlitMode;
-
-typedef enum Color : unsigned char {
-    CLR_NONE = 0,
-    CLR_WHITE,
-    CLR_RED,
-    CLR_BLUE,
-    CLR_GREEN,
-    CLR_YELLOW,
-    CLR_MAGENTA,
-    CLR_PURPLE,
-    CLR_DARK_GREEN,
-    CLR_ORANGE,
-    CLR_BROWN,
-    CLR_DARK_YELLOW,
-    CLR_DARK_RED,
-    CLR_SKY_BLUE,
-    CLR_GRAY,
-    CLR_BLACK,
-    CLR_PINK,
-    CLR_TAN,
-    CLR_PEACH,
-    CLR_CYAN,
-    CLR_LIME,
-    CLR_GOLD,
-    CLR_LAVENDER,
-    CLR_LIGHT_PURPLE,
-    CLR_LIGHT_GREEN,
-    CLR_LIGHT_ORANGE,
-    CLR_LIGHT_BROWN,
-    CLR_CHARTREUSE,
-    CLR_MINT,
-    CLR_BUBBLEGUM,
-    CLR_AQUA,
-    CLR_CHARCOAL,
-} Color;
 
 typedef struct ScreenPos {
     uint8_t x, y;
@@ -111,7 +77,6 @@ Image image_deep_copy(const Image *src, Color *copy_buffer);
 // does not allocate anything.
 Image image_from_sprite(uint8_t sprite_index);
 
-// These methods generate images. You have to deliberately opt in to use them.
 // As always, you (the programmer) are responsible for allocating a large enough
 // pixel buffer.
 typedef enum NoiseDepth : unsigned char {
