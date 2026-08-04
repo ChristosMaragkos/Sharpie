@@ -597,6 +597,39 @@ public partial class SharpieEmitter
                     context.Emit($"STA r{valReg.Value}, r{addrReg.Value}");
                     break;
                 }
+
+            case CXCursorKind.CXCursor_MemberRefExpr:
+            case CXCursorKind.CXCursor_ArraySubscriptExpr:
+                {
+                    using var addrReg = context.AcquireTempRegister();
+                    EmitLValueAddress(peeled, addrReg.Value, context);
+
+                    var isByte = peeled.Type.SizeOf == 1;
+                    var prefix = isByte ? "ALT " : "";
+
+                    using var valReg = context.AcquireTempRegister();
+                    context.Emit($"{prefix}LDP r{valReg.Value}, r{addrReg.Value}");
+
+                    if (isPost)
+                    {
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+                        context.Emit($"{op} r{valReg.Value}");
+                        if (isByte)
+                            TruncateToByte(valReg.Value, peeled.Type.SizeOf, context);
+                    }
+                    else
+                    {
+                        context.Emit($"{op} r{valReg.Value}");
+                        if (isByte)
+                            TruncateToByte(valReg.Value, peeled.Type.SizeOf, context);
+                        if (targetReg >= 0)
+                            context.Emit($"MOV r{targetReg}, r{valReg.Value}");
+                    }
+
+                    context.Emit($"{prefix}STA r{valReg.Value}, r{addrReg.Value}");
+                    break;
+                }
         }
     }
 
