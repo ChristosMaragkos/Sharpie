@@ -1,5 +1,6 @@
 #pragma once
 #include "../defs.h"
+#include "./shared.h"
 
 typedef enum {
     ATTR_NONE = 0,
@@ -26,7 +27,7 @@ void __sharpie_draw(int x, int y, char id, int attr_and_meta);
 void __sharpie_cls(int color);
 #define clear_screen(color) __sharpie_cls(color)
 
-void __sharpie_hard_cls(int color);
+void __sharpie_hard_cls(Color color);
 #define clear_screen_and_oam(color) __sharpie_hard_cls(color)
 
 void __sharpie_cam(int dx, int dy);
